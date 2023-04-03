@@ -4,6 +4,7 @@ use Symfony\Component\Console\Event\ConsoleCommandEvent;
 /**
  * Summary of plugin_ticketFilter install
  * @return boolean
+ * test
  */
 function plugin_ticketfilter_install() : bool 
 {
