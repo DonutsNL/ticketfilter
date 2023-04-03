@@ -1,16 +1,17 @@
 <?php
 
-define ("PLUGIN_MAILANALYZER_VERSION", "3.0.0");
+define ("PLUGIN_TICKETFILTER_VERSION", "1.0.0");
 
 /**
  * Summary of plugin_init_mailanalyzer
  * Init the hooks of the plugins
  */
-function plugin_init_mailanalyzer() {
+function plugin_init_ticketfilter() 
+{
 
    global $PLUGIN_HOOKS;
 
-   Plugin::registerClass('PluginMailAnalyzer');
+   Plugin::registerClass('PluginTicketFilter');
 
    $PLUGIN_HOOKS['csrf_compliant']['mailanalyzer'] = true;
 
@@ -34,13 +35,14 @@ function plugin_init_mailanalyzer() {
  * Get the name and the version of the plugin
  * @return array
  */
-function plugin_version_mailanalyzer() {
+function plugin_version_ticketfilter() 
+{
    return [
-      'name'         => __('Mail Analyzer'),
-      'version'      => PLUGIN_MAILANALYZER_VERSION,
-      'author'       => 'Olivier Moron',
+      'name'         => __('Ticket Filter'),
+      'version'      => PLUGIN_TICKETFILTER_VERSION,
+      'author'       => 'Chris Gralike, Ruben Bras',
       'license'      => 'GPLv2+',
-      'homepage'     => 'https://github.com/tomolimo/mailanalyzer',
+      'homepage'     => 'https://github.com/donutsnl/ticketfilter',
       'requirements' => [
          'glpi' => [
             'min' => '10.0',
@@ -52,11 +54,12 @@ function plugin_version_mailanalyzer() {
 
 
 /**
- * Summary of plugin_mailanalyzer_check_prerequisites
+ * Summary of plugin_ticketfilter_check_prerequisites
  * check prerequisites before install : may print errors or add to message after redirect
  * @return bool
  */
-function plugin_mailanalyzer_check_prerequisites() {
+function plugin_ticketfilter_check_prerequisites() 
+{
    if (version_compare(GLPI_VERSION, '10.0', 'lt')
        && version_compare(GLPI_VERSION, '10.1', 'ge')) {
       echo "This plugin requires GLPI >= 10.0 and < 10.1";
@@ -82,7 +85,7 @@ function plugin_mailanalyzer_check_prerequisites() {
  * Summary of plugin_mailanalyzer_check_config
  * @return bool
  */
-function plugin_mailanalyzer_check_config() {
+function plugin_ticketfilter_check_config() {
    return true;
 }
 

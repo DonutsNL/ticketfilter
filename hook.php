@@ -2,52 +2,21 @@
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 
 /**
- * Summary of plugin_mailanalyzer_install
+ * Summary of plugin_ticketFilter install
  * @return boolean
  */
-function plugin_mailanalyzer_install() {
+function plugin_ticketfilter_install() : bool 
+{
    global $DB;
-
-   if (!$DB->tableExists("glpi_plugin_mailanalyzer_message_id")) {
-         $query = "CREATE TABLE `glpi_plugin_mailanalyzer_message_id` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            `message_id` VARCHAR(255) NOT NULL DEFAULT '0',
-            `tickets_id` INT UNSIGNED NOT NULL DEFAULT '0',
-            PRIMARY KEY (`id`),
-            UNIQUE INDEX `message_id` (`message_id`),
-            INDEX `tickets_id` (`tickets_id`)
-         )
-         COLLATE='utf8mb4_unicode_ci'
-         ENGINE=innoDB;
-         ";
-
-         $DB->query($query) or die("error creating glpi_plugin_mailanalyzer_message_id " . $DB->error());
-   } else {
-      if (count($DB->listTables('glpi_plugin_mailanalyzer_message_id', ['engine' => 'MyIsam'])) > 0) {
-         $query = "ALTER TABLE glpi_plugin_mailanalyzer_message_id ENGINE = InnoDB";
-         $DB->query($query) or die("error updating ENGINE in glpi_plugin_mailanalyzer_message_id " . $DB->error());
-      }
-   }
-
-   if (!$DB->fieldExists('glpi_plugin_mailanalyzer_message_id', 'tickets_id')) {
-      // then we must change the name and the length of id and ticket_id to 11
-      $query = "ALTER TABLE `glpi_plugin_mailanalyzer_message_id`
-                  CHANGE COLUMN `id` `id` INT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,
-                  CHANGE COLUMN `ticket_id` `tickets_id` INT UNSIGNED NOT NULL DEFAULT '0' AFTER `message_id`,
-                  DROP INDEX `ticket_id`,
-                  ADD INDEX `ticket_id` (`tickets_id`);";
-      $DB->query($query) or die('Cannot alter glpi_plugin_mailanalyzer_message_id table! ' .  $DB->error());
-   }
-
    return true;
 }
 
 
 /**
- * Summary of plugin_mailanalyzer_uninstall
+ * Summary of plugin_ticketFilter uninstall
  * @return boolean
  */
-function plugin_mailanalyzer_uninstall()
+function plugin_ticketfilter_uninstall()
 {
 
    // nothing to uninstall
@@ -60,7 +29,7 @@ function plugin_mailanalyzer_uninstall()
 /**
  * Summary of PluginMailAnalyzer
  */
-class PluginMailAnalyzer
+class PluginTicketFilter
 {
 
    /**
@@ -69,7 +38,7 @@ class PluginMailAnalyzer
     * @return bool|MailCollector
     *
    */
-   static function openMailgate($mailgate_id) 
+   static function openMailgate($mailgate_id)
    {
 
       $mailgate = new MailCollector();
@@ -84,8 +53,8 @@ class PluginMailAnalyzer
             'An error occured trying to connect to collector.',
             $e->getMessage(),
             "\n",
-            $e->getTraceAsString()
-         );
+            $e->getTraceAsString());
+            
          Session::addMessageAfterRedirect(
             __('An error occured trying to connect to collector.') . "<br/>" . $e->getMessage(),
             false,
