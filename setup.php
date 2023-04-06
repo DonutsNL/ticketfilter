@@ -1,32 +1,56 @@
 <?php
-
-define ("PLUGIN_TICKETFILTER_VERSION", "1.0.0");
-
 /**
- * Summary of plugin_init_mailanalyzer
- * Init the hooks of the plugins
+ * -------------------------------------------------------------------------
+ * FilterTicket plugin for GLPI
+ * -------------------------------------------------------------------------
+ *
+ * LICENSE 
+ *
+ * This file is part of Ticket Filter.
+ *
+ * Example is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * Example is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Example. If not, see <http://www.gnu.org/licenses/>.
+ * -------------------------------------------------------------------------
+ * @copyright Copyright (C) 2023 by NOVECMASTEN.
+ * @author    Chris Gralike
+ * @author    Ruben Bras
+ * @license   MIT
+ * @link      https://github.com/DonutsNL/ticketfilter
+ * @link      https://github.com/pluginsGLPI/example/blob/develop/setup.php
+ * 
+ * -------------------------------------------------------------------------
  */
-function plugin_init_ticketfilter() 
+
+use Ticket;
+use Glpi\Plugin\Hooks;
+use GlpiPlugin\TicketFilter\TicketFilter;
+
+
+define("PLUGIN_TICKETFILTER_VERSION", "1.0.0");
+
+
+function plugin_init_ticketfilter()
 {
 
    global $PLUGIN_HOOKS;
 
-   Plugin::registerClass('PluginTicketFilter');
+   Plugin::registerClass('ticketFilter');
 
-   $PLUGIN_HOOKS['csrf_compliant']['mailanalyzer'] = true;
+   $PLUGIN_HOOKS['csrf_compliant']['ticketFilter'] = true;
 
-   $PLUGIN_HOOKS['pre_item_add']['mailanalyzer'] = [
-      'Ticket' => ['PluginMailAnalyzer', 'plugin_pre_item_add_mailanalyzer'],
+   $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD]['ticketFilter'] = [
+      Ticket::class => [ticketFilter::class, 'preItemAdd'],
    ];
-
-   $PLUGIN_HOOKS['item_add']['mailanalyzer'] = [
-      'Ticket' => ['PluginMailAnalyzer', 'plugin_item_add_mailanalyzer']
-   ];
-
-   $PLUGIN_HOOKS['item_purge']['mailanalyzer'] = [
-      'Ticket' => ['PluginMailAnalyzer', 'plugin_item_purge_mailanalyzer']
-   ];
-
 }
 
 
@@ -35,7 +59,7 @@ function plugin_init_ticketfilter()
  * Get the name and the version of the plugin
  * @return array
  */
-function plugin_version_ticketfilter() 
+function plugin_version_ticketfilter()
 {
    return [
       'name'         => __('Ticket Filter'),
@@ -52,40 +76,28 @@ function plugin_version_ticketfilter()
    ];
 }
 
-
 /**
  * Summary of plugin_ticketfilter_check_prerequisites
  * check prerequisites before install : may print errors or add to message after redirect
  * @return bool
  */
-function plugin_ticketfilter_check_prerequisites() 
+function plugin_ticketfilter_check_prerequisites() : bool
 {
    if (version_compare(GLPI_VERSION, '10.0', 'lt')
        && version_compare(GLPI_VERSION, '10.1', 'ge')) {
       echo "This plugin requires GLPI >= 10.0 and < 10.1";
       return false;
-   } else {
-      if (!class_exists('mailanalyzer_check_prerequisites')) {
-         class mailanalyzer_check_prerequisites { public $attr = 'value'; function __toString() {
-               return 'empty';}};
-      }
-      $loc = new mailanalyzer_check_prerequisites;
-      $loc2 = Toolbox::addslashes_deep($loc);
-      if (is_object($loc2) && $loc->attr === $loc2->attr) {
-         return true;
-      } else {
-         echo "This plugin requires upgraded versions of mailcollector.class.php and toolbox.class.php";
-         return false;
-      }
+   }else{
+      return true;
    }
 }
-
 
 /**
  * Summary of plugin_mailanalyzer_check_config
  * @return bool
  */
-function plugin_ticketfilter_check_config() {
+function plugin_ticketfilter_check_config() 
+{
    return true;
 }
 
