@@ -8,7 +8,6 @@ use Symfony\Component\Console\Event\ConsoleCommandEvent;
  */
 function plugin_ticketfilter_install() : bool 
 {
-   global $DB;
    return true;
 }
 

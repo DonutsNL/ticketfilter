@@ -1,103 +1,124 @@
 <?php
 /**
  * -------------------------------------------------------------------------
- * FilterTicket plugin for GLPI
+ * TicketFilter plugin for GLPI
  * -------------------------------------------------------------------------
  *
- * LICENSE 
+ * LICENSE
  *
- * This file is part of Ticket Filter.
+ * This file is part of TicketFilter.
  *
- * Example is free software; you can redistribute it and/or modify
+ * TicketFilter is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Example is distributed in the hope that it will be useful,
+ * TicketFilter is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Example. If not, see <http://www.gnu.org/licenses/>.
+ * along with TicketFilter. If not, see <http://www.gnu.org/licenses/>.
  * -------------------------------------------------------------------------
- * @copyright Copyright (C) 2023 by NOVECMASTEN.
- * @author    Chris Gralike
- * @author    Ruben Bras
- * @license   MIT
- * @link      https://github.com/DonutsNL/ticketfilter
- * @link      https://github.com/pluginsGLPI/example/blob/develop/setup.php
- * 
+ * @copyright Copyright (C) 2006-2022 by TicketFilter plugin team.
+ * @license   GPLv2 https://www.gnu.org/licenses/gpl-2.0.html
+ * @link      https://github.com/pluginsGLPI/TicketFilter
  * -------------------------------------------------------------------------
  */
 
 use Ticket;
+use MailCollector;
 use Glpi\Plugin\Hooks;
-use GlpiPlugin\TicketFilter\TicketFilter;
+use GlpiPlugin\ticketfilter\TicketFilter;
 
+define('PLUGIN_TICKETFILTER_VERSION', '1.0.0');
+// Minimal GLPI version, inclusive
+define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
+// Maximum GLPI version, exclusive
+define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
-define("PLUGIN_TICKETFILTER_VERSION", "1.0.0");
+/**
+ * Init hooks of the plugin.
+ * REQUIRED
+ *
+ * @return void
+ */
+function plugin_init_ticketfilter() {
+   global $PLUGIN_HOOKS,$CFG_GLPI;
 
-
-function plugin_init_ticketfilter()
-{
-
-   global $PLUGIN_HOOKS;
-
+   // Register our class; 
    Plugin::registerClass('ticketFilter');
 
-   $PLUGIN_HOOKS['csrf_compliant']['ticketFilter'] = true;
+   // State this plugin cross-site request forgery compliant
+   $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
 
-   $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD]['ticketFilter'] = [
+   // Add hook (callback) on the PRE_ITEM_ADD event.
+   $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD]['ticketfilter'] = [
       Ticket::class => [ticketFilter::class, 'preItemAdd'],
    ];
+
+   $PLUGIN_HOOKS['item_add']['ticketfilter'] = [
+      Ticket::class => [ticketFilter::class, 'preItemAdd']
+   ];
+
+   $PLUGIN_HOOKS['item_purge']['ticketfilter'] = [
+      Ticket::class => [ticketFilter::class, 'preItemAdd']
+   ];
+
 }
 
 
 /**
- * Summary of plugin_version_mailanalyzer
  * Get the name and the version of the plugin
+ * REQUIRED
+ *
  * @return array
  */
-function plugin_version_ticketfilter()
-{
+function plugin_version_ticketfilter() {
    return [
-      'name'         => __('Ticket Filter'),
-      'version'      => PLUGIN_TICKETFILTER_VERSION,
-      'author'       => 'Chris Gralike, Ruben Bras',
-      'license'      => 'GPLv2+',
-      'homepage'     => 'https://github.com/donutsnl/ticketfilter',
-      'requirements' => [
+      'name'           => 'Plugin TICKETFILTER',
+      'version'        => PLUGIN_TICKETFILTER_VERSION,
+      'author'         => 'TICKETFILTER plugin team',
+      'license'        => 'GPLv2+',
+      'homepage'       => '',
+      'requirements'   => [
          'glpi' => [
-            'min' => '10.0',
-            'max' => '10.1'
-            ]
+            'min' => PLUGIN_TICKETFILTER_MIN_GLPI,
+            'max' => PLUGIN_TICKETFILTER_MAX_GLPI,
          ]
+      ]
    ];
 }
 
-/**
- * Summary of plugin_ticketfilter_check_prerequisites
- * check prerequisites before install : may print errors or add to message after redirect
- * @return bool
- */
-function plugin_ticketfilter_check_prerequisites() : bool
-{
-   if (version_compare(GLPI_VERSION, '10.0', 'lt')
-       && version_compare(GLPI_VERSION, '10.1', 'ge')) {
-      echo "This plugin requires GLPI >= 10.0 and < 10.1";
-      return false;
-   }else{
-      return true;
-   }
-}
 
 /**
- * Summary of plugin_mailanalyzer_check_config
- * @return bool
+ * Check pre-requisites before install
+ * OPTIONNAL, but recommanded
+ *
+ * @return boolean
  */
-function plugin_ticketfilter_check_config() 
-{
+function plugin_ticketfilter_check_prerequisites() {
+   if (false) {
+      return false;
+   }
    return true;
 }
 
+/**
+ * Check configuration process
+ *
+ * @param boolean $verbose Whether to display message on failure. Defaults to false
+ *
+ * @return boolean
+ */
+function plugin_ticketfilter_check_config($verbose = false) {
+   if (true) { // Your configuration check
+      return true;
+   }
+
+   if ($verbose) {
+      echo __('Installed / not configured', 'TICKETFILTER');
+   }
+   return false;
+}

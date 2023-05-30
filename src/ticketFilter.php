@@ -13,6 +13,7 @@ class ticketFilter
    {
       echo "Hook called!<br><pre>";
       var_dump($param);
-      exit(0);
+      die();
+      exit(0); 
    }
 }
