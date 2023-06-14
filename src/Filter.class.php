@@ -49,7 +49,7 @@ class Filter {
                     
                     if(count($matches) == 1) {      // If there is only one ticket, we either add an followup (open) or link the new ticket (closed).
                         
-                        $matches['0'] = $rID;
+                        $rID = $matches['0'];
                         $refTicket = new Ticket();
                         $refTicket->getFromDB((integer)$rID);
                         if($refTicket->fields['status'] != CommonITILObject::CLOSED) {
