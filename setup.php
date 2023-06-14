@@ -27,15 +27,13 @@
  * -------------------------------------------------------------------------
  */
 
-use Ticket;
-use MailCollector;
 use Glpi\Plugin\Hooks;
-use GlpiPlugin\ticketfilter\TicketFilter;
+use GlpiPlugin\TicketFilter\Filter;
 
-define('PLUGIN_TICKETFILTER_VERSION', '1.0.0');
-// Minimal GLPI version, inclusive
-define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
 // Maximum GLPI version, exclusive
+// Minimal GLPI version, inclusive
+define('PLUGIN_TICKETFILTER_VERSION', '1.0.0');
+define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
 define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
 /**
@@ -44,28 +42,25 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
  *
  * @return void
  */
-function plugin_init_ticketfilter() {
-   global $PLUGIN_HOOKS,$CFG_GLPI;
+function plugin_init_ticketfilter() : void {
+   global $PLUGIN_HOOKS;
 
-   // Register our class; 
-   Plugin::registerClass('ticketFilter');
+   Plugin::registerClass(Filter::class);
+   // Nasty workaround for classfile not being included by use keyword.
+   if(!class_exists(Filter::class)){
+      $include = pathinfo(__file__)['dirname'].'/src/Filter.class.php';
+      require_once($include);
+   }
 
    // State this plugin cross-site request forgery compliant
    $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
 
    // Add hook (callback) on the PRE_ITEM_ADD event.
-   $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD]['ticketfilter'] = [
-      Ticket::class => [ticketFilter::class, 'preItemAdd'],
+   // We assume that only new tickets are potential duplicates if the
+   // source ticket system is not adding the GLPI identifier.
+   $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
+      Ticket::class       => [Filter::class, 'PreItemAdd']
    ];
-
-   $PLUGIN_HOOKS['item_add']['ticketfilter'] = [
-      Ticket::class => [ticketFilter::class, 'preItemAdd']
-   ];
-
-   $PLUGIN_HOOKS['item_purge']['ticketfilter'] = [
-      Ticket::class => [ticketFilter::class, 'preItemAdd']
-   ];
-
 }
 
 
@@ -75,7 +70,7 @@ function plugin_init_ticketfilter() {
  *
  * @return array
  */
-function plugin_version_ticketfilter() {
+function plugin_version_ticketfilter() : array{
    return [
       'name'           => 'Plugin TICKETFILTER',
       'version'        => PLUGIN_TICKETFILTER_VERSION,
