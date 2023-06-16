@@ -2,12 +2,12 @@
 
 namespace GlpiPlugin\TicketFilter;
 
-use Config;
+// use Config; todo: write config page
 use Ticket;
 use Session;
 use CommonITILObject;
 use ITILFollowup;
-use MailCollector;
+use MailCollector;              // Eval if $item->input['_followup'] property can help circumvent manual receiver error
 use Throwable;
 use Toolbox;
 
@@ -39,7 +39,6 @@ class Filter {
                 if($mailCollector = (isset($item->input['_mailgate'])) ? self::openMailGate($item->input['_mailgate']) : false) {
                     $uid = $item->input['_uid'];
                 }
-
 
                 // Search our pattern in the name field and find corresponding ticket (if any).
                 $matches = self::searchForMatches($item->input['name']);
