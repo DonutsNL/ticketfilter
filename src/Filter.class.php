@@ -148,7 +148,7 @@ class Filter {
             if($ticketFollowup->add($input) === false) {
                 Session::addMessageAfterRedirect(__("Failed to add followup to ticket {$reference->input['id']}"), true, WARNING);
                 return false;
-            } // Create a follow-up
+            }
             return true;
         } else {
             return false;
