@@ -48,10 +48,22 @@ class Filter {
                     
                     if(count($matches) == 1) {      // If there is only one ticket, we either add an followup (open) or link the new ticket (closed).
                         
-                        $rID = $matches['0'];
-                        $refTicket = new Ticket();
-                        $refTicket->getFromDB((integer)$rID);
+                        $rID = $matches['0'];       // we found a matching ticket
+
+                        $refTicket = new Ticket();  // create new ticket object
+                        $refTicket->getFromDB((integer)$rID);   // fetch matching ticket
+
                         if($refTicket->fields['status'] != CommonITILObject::CLOSED) {
+
+                            // can we use the same method as Ticket->post_addItem() 
+                            // basically populate a new ticket using the referenced Ticket
+                            // populate the [_followup][content], [type], [is_private]
+                            $refTicket->input['_followup']['content']   = $item->input['content'];
+                            if (self::DISABLENOTIF) { $refTicket['_disablenotif'] = self::DISABLENOTIF; }
+                            // Will simply replace the ticket object do the trick?
+                            $item = $refTicket;
+
+                            /*
                             // If not not closed, create followup
                             $ticketFollowup         = new ITILFollowup();
                             $input                  = $item->input;
@@ -72,12 +84,13 @@ class Filter {
 
                             // We cancelled the ticketcreation so we need to manually 
                             // Clean the email from the mailBox 
-                            $mailCollector->deleteMails($uid, MailCollector::ACCEPTED_FOLDER);
+                            // $mailCollector->deleteMails($uid, MailCollector::ACCEPTED_FOLDER);
 
                             // Verify we are in the application?
                             // warn user that new ticket was added as followup instead. 
+                            */
                             Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$rID'>Ticket was matched by to open ticket: $rID by TicketFilter and added as followup</a>"), true, WARNING);
-                            //die('followup added');
+                            die('followup added');
                         } else {
                             // If closed Link the new ticket.
                             $item->input['_link'] = ['link' => '1', 
@@ -88,37 +101,7 @@ class Filter {
                         }     
                     } else {
                         // Handle multiple tickets find the open one and add the followup.
-                        foreach($matches as $index => $rID) { // Needs cleaning to $array[] = refId instead of $array[tID] = Row;
-                            $refTicket = new Ticket();
-                            $refTicket->getFromDB((integer)$rID);
-                            if($refTicket->fields['status'] != CommonITILObject::CLOSED) {
-                                // If not not closed, create followup
-                                $ticketFollowup         = new ITILFollowup();
-                                $input                  = $item->input;
-                                $input['items_id']      = $rID;
-                                $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
-                                $input['add_reopen']    = 1;
-                                $input['itemtype']      = Ticket::class;
-                                // Do not create the element if we dont want
-                                // notifications to be send.
-                                if (self::DISABLENOTIF) { $input['_disablenotif'] = self::DISABLENOTIF; }
-
-                                unset($input['urgency']);
-                                unset($input['entities_id']);
-                                unset($input['_ruleid']);
-                                $ticketFollowup->add($input); // Create a follow-up
-                                $item->input = false;   // Clean the input of the referenced object to prevent the new ticket from being created
-                                $item->fields = false;  // Clean the input of the referenced object to prevent the new ticket from being created
-
-                                // We cancelled the ticketcreation so we need to manually 
-                                // Clean the email from the mailBox 
-                                $mailCollector->deleteMails($uid, MailCollector::ACCEPTED_FOLDER);
-
-                                // Verify we are in the application?
-                                // warn user that new ticket was added as followup instead. 
-                                Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$rID'>Ticket was matched by to open ticket: $rID by TicketFilter and added as followup</a>"), true, WARNING);
-                            }
-                        }
+                        die('more then one?!');
                     }
                 }
                 // We got nothing
