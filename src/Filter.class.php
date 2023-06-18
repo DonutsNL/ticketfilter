@@ -70,7 +70,7 @@ class Filter {
         
             if(is_array($item->input)                  // Fields should be an array with values.
                && key_exists('name', $item->input)     // Name key (that is the Subject of the email) should exist.
-               && !empty($item->input['name'])) {      // Name should not be emtpy.
+               && !empty($item->input['name'])) {      // Name should not be emtpy, could happen with recurring tickets.
                  
                 
                 // Search our pattern in the name field and find corresponding ticket (if any).
