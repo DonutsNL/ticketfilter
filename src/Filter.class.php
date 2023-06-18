@@ -33,6 +33,7 @@
  *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		    https://github.com/DonutsNL/ticketfilter
  *  @since     	    1.0.0
+ *  @todo           Keep it stupid simple!
  * ------------------------------------------------------------------------
  **/
 
@@ -97,26 +98,39 @@ class Filter {
                             if(self::createFollowup($item, $reference) == true) {
                                 Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$key'>Ticket was matched by to open ticket: $key and was added as a followup</a>"), true, INFO);
                             }
-                           
-                            // Clean the original ticket to stop creation
-                            // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
-                            $item->input = false;
-                            $item->fields = false;
-
-                            // We cancelled the ticketcreation so we need to manually 
-                            // Clean the email from the mailBox 
-                            if(self::deleteEmail($item) === true) {
-                                Session::addMessageAfterRedirect(__("Ticket removed from mailbox, save to ignore any mailgate error"), true, INFO);
-                            }
-                        }   
+                        } 
                     }
-                }
+
+                    // Clean the original ticket to stop creation
+                    // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
+                    self::emptyItem($item);
+                }   // maybe add merge operation in the future if more then 1 open ticket was found.
                 // We got nothing
                 return;
             } //  ignore the hook
             return;
         } // ignore the hook
         return;
+    }
+    
+
+    /**
+     * Clean the referenced item and delete any mailbox items remaining
+     * 
+     * @param  Ticket $item         The original ticket passed by the pre_item_add hook.
+     * @param  Ticket $reference    The matching ticket found using the patern. 
+     * @return bool                 Returns true on success false on failure. 
+     * @since                       1.0.0          
+     */
+    private static function emptyItem(Ticket $item) : void
+    {
+        // We cancelled the ticketcreation so we need to manually 
+        // Clean the email from the mailBox 
+        if(self::deleteEmail($item) == true) {
+            Session::addMessageAfterRedirect(__("Ticket removed from mailbox, it is save to ignore any mailgate error"), true, WARNING);
+        }
+        $item->input = false;
+        $item->fields = false;
     }
 
 
@@ -133,7 +147,7 @@ class Filter {
         if($ticketFollowup = new ITILFollowup()) {
             // Populate Followup fields
             $input                  = $item->input;
-            $input['items_id']      = $reference->input['id'];
+            $input['items_id']      = $reference->fields['id'];
             $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
             $input['add_reopen']    = 1;
             $input['itemtype']      = Ticket::class;
@@ -231,13 +245,15 @@ class Filter {
     private static function deleteEmail(Ticket $item) : bool
     {
         // Check if ticket is fetched from the mailCollector if so open it;
-        if($mailCollector = (isset($item->input['_mailgate'])) ? self::openMailGate($item->input['_mailgate']) : false) {
-            if($mailCollector->deleteMails($item->input['_uid'], MailCollector::ACCEPTED_FOLDER) === true) {
+        $mailCollector = (isset($item->input['_mailgate'])) ? self::openMailGate($item->input['_mailgate']) : false;
+        if(is_object($mailCollector)){
+            if($mailCollector->deleteMails($item->input['_uid'], MailCollector::ACCEPTED_FOLDER)) {
                 return true;
             } else {
                 return false;
             }
         }
+        
         return false;
     }
 }
