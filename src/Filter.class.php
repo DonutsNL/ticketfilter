@@ -52,7 +52,8 @@ class Filter {
     /**
      * Array with match strings to locate foreign ticket identifiers and
      * match them locally.
-     * @since           1.0.0             
+     * @since           1.0.0
+     * @see             https://regex101.com/r/htaEx7/1             
      */
     public const MATCHPATERNS = ['/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/',
                                  '/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/'];
