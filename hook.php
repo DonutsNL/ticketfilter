@@ -51,7 +51,7 @@ function plugin_ticketfilter_install() : bool
  * Summary of plugin_ticketFilter uninstall
  * @return boolean
  */
-function plugin_ticketfilter_uninstall()
+function plugin_ticketfilter_uninstall() : bool
 {
 
    // nothing to uninstall

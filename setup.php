@@ -46,7 +46,6 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
 /**
  * Init hooks of the plugin.
- * REQUIRED
  *
  * @return void
  */
@@ -74,7 +73,6 @@ function plugin_init_ticketfilter() : void {
 
 /**
  * Get the name and the version of the plugin
- * REQUIRED
  *
  * @return array
  */
@@ -97,11 +95,9 @@ function plugin_version_ticketfilter() : array{
 
 /**
  * Check pre-requisites before install
- * OPTIONNAL, but recommanded
- *
  * @return boolean
  */
-function plugin_ticketfilter_check_prerequisites() {
+function plugin_ticketfilter_check_prerequisites() : bool {
    if (false) {
       return false;
    }
@@ -112,10 +108,9 @@ function plugin_ticketfilter_check_prerequisites() {
  * Check configuration process
  *
  * @param boolean $verbose Whether to display message on failure. Defaults to false
- *
  * @return boolean
  */
-function plugin_ticketfilter_check_config($verbose = false) {
+function plugin_ticketfilter_check_config($verbose = false) : bool {
    if (true) { // Your configuration check
       return true;
    }
