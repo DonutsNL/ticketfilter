@@ -54,7 +54,7 @@ function plugin_init_ticketfilter() : void {
    global $PLUGIN_HOOKS;
 
    Plugin::registerClass(Filter::class);
-   // Nasty workaround for classfile not being included by use keyword.
+   // Nasty workaround for classfile not being included by registerClass().
    if(!class_exists(Filter::class)){
       $include = pathinfo(__file__)['dirname'].'/src/Filter.class.php';
       require_once($include);

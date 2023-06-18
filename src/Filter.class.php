@@ -38,7 +38,7 @@
 
 namespace GlpiPlugin\TicketFilter;
 
-// use Config; todo: write config page
+// use Config; todo: write a nice config page to administer the patterns
 use Ticket;
 use Session;
 use CommonITILObject;
@@ -58,11 +58,11 @@ class Filter {
     
     /**
      * Method called by pre_item_add hook validates the object and passes
-     * it to the RegEx Matching.
+     * it to the RegEx Matching then decides what to do.
      * 
-     * @param $item      Hooked Ticket object passed by refference.
+     * @param  Ticket $item      Hooked Ticket object passed by refference.
      * @return void  
-     * @since           1.0.0             
+     * @since                    1.0.0             
      */
     public static function PreItemAdd(Ticket $item) : void 
     {
@@ -114,6 +114,14 @@ class Filter {
     }
 
 
+    /**
+     * Create a followup to be added to the referenced ticket
+     * 
+     * @param  Ticket $item         The original ticket passed by the pre_item_add hook.
+     * @param  Ticket $reference    The matching ticket found using the patern. 
+     * @return bool                 Returns true on success false on failure. 
+     * @since                       1.0.0          
+     */
     private static function createFollowup(Ticket $item, Ticket $reference) : bool
     {
         if($ticketFollowup = new ITILFollowup()) {
@@ -146,10 +154,9 @@ class Filter {
      * a search in the database and will try to perform a merge 
      * operation.
      * 
-     * @param $tName    Ticket name containing the Subject
-     * @return int      Returns the ticket ID of the matching ticket or 0 on no match. 
-     * @since           1.0.0  
-     * @todo            Move to separate non static Match class           
+     * @param  string $tName    Ticket name containing the Subject
+     * @return int              Returns the ticket ID of the matching ticket or 0 on no match. 
+     * @since                   1.0.0            
      */
     private static function searchForMatches(string $tName) : array
     {
@@ -184,10 +191,10 @@ class Filter {
     /**
      * Returns a connected mailCollector object or []
      * 
-     * @param $Id               Mail Collector ID   
-     * @return MailCollector    | []   
-     * @since                   1.0.0  
-     * @todo                    Move to separate non static Match class           
+     * @param  int $Id               Mail Collector ID   
+     * @return MailCollector|null    Union return type might be problematic with older php versions.  
+     * @since                        1.0.0  
+     * @todo                         Move to separate non static Match class           
      */
     private static function openMailGate(int $Id) : MailCollector|null
     {
@@ -206,6 +213,15 @@ class Filter {
         return $mailCollector;
     }
 
+    /**
+     * Delete original email from the mailbox to the accepted folder. This is not performed by the mailgate
+     * if the Ticket passed by reference is nullified as described in the hook documentation. 
+     * This actually causes an error where mailgate leaves the email untouched.
+     * 
+     * @param  Ticket $item     Ticket object containing the mailgate uid
+     * @return bool             Returns true on success and false on failure 
+     * @since                   1.0.0            
+     */
     private static function deleteEmail(Ticket $item) : bool
     {
         // Check if ticket is fetched from the mailCollector if so open it;
