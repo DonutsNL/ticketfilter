@@ -88,7 +88,7 @@ class Filter {
 
                     foreach($matches as $key)       // Add followups to all matching non closed tickets
                     {
-                        // Fetch the found ticket.
+                        // Fetch found ticket.
                         $reference = new Ticket();
                         $reference->getFromDB((integer) $key);    
 
@@ -103,7 +103,7 @@ class Filter {
 
                     // Clean the original ticket to stop creation
                     // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
-                    self::emptyItem($item);
+                    self::emptyReferencedObject($item);
                 }   // maybe add merge operation in the future if more then 1 open ticket was found.
                 // We got nothing
                 return;
@@ -122,7 +122,7 @@ class Filter {
      * @return bool                 Returns true on success false on failure. 
      * @since                       1.0.0          
      */
-    private static function emptyItem(Ticket $item) : void
+    private static function emptyReferencedObject(Ticket $item) : void
     {
         // We cancelled the ticketcreation so we need to manually 
         // Clean the email from the mailBox 
@@ -174,16 +174,16 @@ class Filter {
      * a search in the database and will try to perform a merge 
      * operation.
      * 
-     * @param  string $tName    Ticket name containing the Subject
-     * @return int              Returns the ticket ID of the matching ticket or 0 on no match. 
-     * @since                   1.0.0            
+     * @param  string $ticketSubject    Ticket name containing the Subject
+     * @return int                      Returns the ticket ID of the matching ticket or 0 on no match. 
+     * @since                           1.0.0            
      */
-    private static function searchForMatches(string $tName) : array
+    private static function searchForMatches(string $ticketSubject) : array
     {
         global $DB;
         // We assume that the name always only contains one pattern and return the first matching one.
         foreach(self::MATCHPATERNS as $matchPatern){
-            if(preg_match_all($matchPatern, $tName, $matchArray)){
+            if(preg_match_all($matchPatern, $ticketSubject, $matchArray)){
                 $matchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
                 if($matchString){
                     foreach($DB->request(
