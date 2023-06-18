@@ -1,8 +1,4 @@
 <?php
-use Symfony\Component\Console\Event\ConsoleCommandEvent;
-use GlpiPlugin\ticketFilter\ticketFilter;
-
-
 
 /**
  * Summary of plugin_ticketFilter install

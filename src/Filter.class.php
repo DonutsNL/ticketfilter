@@ -7,7 +7,7 @@ use Ticket;
 use Session;
 use CommonITILObject;
 use ITILFollowup;
-use MailCollector;              // Eval if $item->input['_followup'] property can help circumvent manual receiver error
+use MailCollector;
 use Throwable;
 use Toolbox;
 
@@ -24,92 +24,85 @@ class Filter {
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching.
      * 
-     * @param $item       Expects the Ticket object by refference.
+     * @param $item      Hooked Ticket object passed by refference.
      * @return void  
      * @since           1.0.0             
      */
     public static function PreItemAdd(Ticket $item) : void 
     {
-        if(is_object($item)){
+        if(is_object($item)) {
+        
             if(is_array($item->input)                  // Fields should be an array with values.
                && key_exists('name', $item->input)     // Name key (that is the Subject of the email) should exist.
-               && !empty($item->input['name'])) {      // Name should not be emtpy, recurring tickets without template will create empty tickets without name.
+               && !empty($item->input['name'])) {      // Name should not be emtpy.
+                 
                 
-                // Check if ticket is fetched from the mailCollector if so open it;
-                if($mailCollector = (isset($item->input['_mailgate'])) ? self::openMailGate($item->input['_mailgate']) : false) {
-                    $uid = $item->input['_uid'];
-                }
-
                 // Search our pattern in the name field and find corresponding ticket (if any).
                 $matches = self::searchForMatches($item->input['name']);
                 if(is_array($matches)               // Should be an array (always)
-                   && count($matches) >= 1          // Should contain at least 1 ticket id (open ticket to add followup or closed to at least link the ticket)
-                   && count($matches) <= 2) {       // Could contain 2 tickets (closed and opened one) if more than 2 '(closed) tickets are there we give up
-                    
-                    if(count($matches) == 1) {      // If there is only one ticket, we either add an followup (open) or link the new ticket (closed).
-                        
-                        $rID = $matches['0'];       // we found a matching ticket
+                   && count($matches) >= 1) {       // Should have at least 1 element
+                          
 
-                        $refTicket = new Ticket();  // create new ticket object
-                        $refTicket->getFromDB((integer)$rID);   // fetch matching ticket
+                    foreach($matches as $key)       // Add followups to all matching non closed tickets
+                    {
+                        // Fetch the found ticket.
+                        $reference = new Ticket();
+                        $reference->getFromDB((integer) $key);    
 
-                        if($refTicket->fields['status'] != CommonITILObject::CLOSED) {
-
-                            // can we use the same method as Ticket->post_addItem() 
-                            // basically populate a new ticket using the referenced Ticket
-                            // populate the [_followup][content], [type], [is_private]
-                            $refTicket->input['_followup']['content']   = $item->input['content'];
-                            if (self::DISABLENOTIF) { $refTicket['_disablenotif'] = self::DISABLENOTIF; }
-                            // Will simply replace the ticket object do the trick?
-                            $item = $refTicket;
-
-                            /*
-                            // If not not closed, create followup
-                            $ticketFollowup         = new ITILFollowup();
-                            $input                  = $item->input;
-                            $input['items_id']      = $rID;
-                            $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
-                            $input['add_reopen']    = 1;
-                            $input['itemtype']      = Ticket::class;
-                            // Do not create the element if we dont want
-                            // notifications to be send.
-                            if (self::DISABLENOTIF) { $input['_disablenotif'] = self::DISABLENOTIF; }
-
-                            unset($input['urgency']);
-                            unset($input['entities_id']);
-                            unset($input['_ruleid']);
-                            $ticketFollowup->add($input); // Create a follow-up
-                            $item->input = false;   // Clean the input of the referenced object to prevent the new ticket from being created
-                            $item->fields = false;  // Clean the input of the referenced object to prevent the new ticket from being created
+                        // Is found ticket closed? if so do nothing.
+                        if($reference->fields['status'] != CommonITILObject::CLOSED) {
+                   
+                            if(self::createFollowup($item, $reference) == true) {
+                                Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$key'>Ticket was matched by to open ticket: $key and was added as a followup</a>"), true, INFO);
+                            }
+                           
+                            // Clean the original ticket to stop creation
+                            // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
+                            $item->input = false;
+                            $item->fields = false;
 
                             // We cancelled the ticketcreation so we need to manually 
                             // Clean the email from the mailBox 
-                            // $mailCollector->deleteMails($uid, MailCollector::ACCEPTED_FOLDER);
-
-                            // Verify we are in the application?
-                            // warn user that new ticket was added as followup instead. 
-                            */
-                            Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$rID'>Ticket was matched by to open ticket: $rID by TicketFilter and added as followup</a>"), true, WARNING);
-                            die('followup added');
-                        } else {
-                            // If closed Link the new ticket.
-                            $item->input['_link'] = ['link' => '1', 
-                                                    'tickets_id_1' => '0', 
-                                                    'tickets_id_2' => $rID];
-                            // TODO: Something with logging.
-                            Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$rID'>Ticket was matched to a closed ticket: $rID by TicketFilter and linked</a>"), true, INFO);
-                        }     
-                    } else {
-                        // Handle multiple tickets find the open one and add the followup.
-                        die('more then one?!');
+                            if(self::deleteEmail($item) === true) {
+                                Session::addMessageAfterRedirect(__("Ticket removed from mailbox, save to ignore any mailgate error"), true, INFO);
+                            }
+                        }   
                     }
                 }
                 // We got nothing
                 return;
-            } //  no fields? ignore the hook
+            } //  ignore the hook
             return;
-        } // no object? ignore the hook
+        } // ignore the hook
         return;
+    }
+
+
+    private static function createFollowup(Ticket $item, Ticket $reference) : bool
+    {
+        if($ticketFollowup = new ITILFollowup()) {
+            // Populate Followup fields
+            $input                  = $item->input;
+            $input['items_id']      = $reference->input['id'];
+            $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
+            $input['add_reopen']    = 1;
+            $input['itemtype']      = Ticket::class;
+            // Do not create the element if we dont want
+            // notifications to be send.
+            if (self::DISABLENOTIF) { $input['_disablenotif'] = self::DISABLENOTIF; }
+            // Unset some stuff
+            unset($input['urgency']);
+            unset($input['entities_id']);
+            unset($input['_ruleid']);
+
+            if($ticketFollowup->add($input) === false) {
+                Session::addMessageAfterRedirect(__("Failed to add followup to ticket {$reference->input['id']}"), true, WARNING);
+                return false;
+            } // Create a follow-up
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -160,7 +153,7 @@ class Filter {
      * @since                   1.0.0  
      * @todo                    Move to separate non static Match class           
      */
-    private static function openMailGate(int $Id) : mixed
+    private static function openMailGate(int $Id) : MailCollector|null
     {
         // Create a mailCollector
         if(is_numeric($Id)){
@@ -171,9 +164,22 @@ class Filter {
             }catch (Throwable $e) {
                 Toolbox::logError('Error opening mailCollector', $e->getMessage(), "\n", $e->getTraceAsString());
                 Session::addMessageAfterRedirect(__('TicketFilter Could not connect to the mail receiver because of an error'), true, WARNING);
-                return[];
+                return null;
             }
         }
         return $mailCollector;
+    }
+
+    private static function deleteEmail(Ticket $item) : bool
+    {
+        // Check if ticket is fetched from the mailCollector if so open it;
+        if($mailCollector = (isset($item->input['_mailgate'])) ? self::openMailGate($item->input['_mailgate']) : false) {
+            if($mailCollector->deleteMails($item->input['_uid'], MailCollector::ACCEPTED_FOLDER) === true) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
     }
 }
