@@ -53,8 +53,14 @@ class Filter {
      * match them locally.
      * @since           1.0.0             
      */
-    public const MATCHPATERNS = ['/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/']; //(CITI-1) - (CITI-1234) pattern should contain a named group (?<match>...)
-    public const DISABLENOTIF = 1;                                        // Prevent GLPI from sending notifications on added followups to break runaway conditions between automated systems and GLPI.
+    public const MATCHPATERNS = ['/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/',
+                                 '/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/'];
+
+     /**
+     * Disable notifications?
+     * @since           1.0.0             
+     */
+    public const DISABLENOTIF = 1;
     
     /**
      * Method called by pre_item_add hook validates the object and passes
