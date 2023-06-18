@@ -1,13 +1,21 @@
 ## _Match additional subject paterns to be added as followups_
 
-In some scenario's upstream ticket systems will be owning the ticket send to GLPI. In this scenario an unique identifier might be added by the upstream ticketing system and the GLPI identifier [GLPI #000001] will never be present.
+In some scenario's upstream ticket systems or monitoring systems will be owning the origin ticket or asset state sending successive email updates to GLPI. In this scenario the required unique identifier that GLPI uses (i.e. [GLPI #000001]) will never be present. Instead an foreign identifier might be present in the subject. This causes GLPI to create new tickets for each update received by email cluttering the ticket pool. 
 
-TicketFilter will allow you to add additional (foreign) paterns that should be matched in order to make sure additional updates from the upstream ticketing system are added as followups and are not created as new ticket.
+The TicketFilter plugin will allow you to add additional (foreign) paterns TicketFilter will try to match against existing tickets. If a match is found, TicketFilter will add the received email as followup in all tickets that contain the matched string. It will try to prevent notifications to be send to prevent email runaway issues.
 
-# Configure
-The current version of Ticket Filter does not have an configuration page. Instead the src\Filter.class.php needs to be edited. The Filter.class.php contains a class constant with an array holding the paterns to be matched. 
+# Installation and configuration;
+0. Create a folder 'ticketfilter' inside the GLPI_HOME/marketplace/
+1. Copy the contents of this repository into the GLPI_HOME/marketplace/ticketfilter folder.
+2. Edit the ticketfilter/src/Filter.class.php and change the matchstring to your preferences.
+3. Use the GLPI interface to install and activate the plugin.
+4. Test your matchstring by manually adding tickets that have the pattern in their subject.
+5. Test the matchstring by sending emails containing the pattern in its subject.
 
-The patern should contain a named matchgroup with the name 'match', i.e. (?<match>PATERN)
+The current version of Ticket Filter does not have an configuration page. 
+This will be added in the future.
+
+!The patern should contain a named matchgroup with the name 'match', i.e. (?<match>PATERN)
 
 Make sure to test your pattern 
 Example: https://regex101.com/r/htaEx7/1
