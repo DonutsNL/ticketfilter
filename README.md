@@ -1,4 +1,4 @@
-## _Match additional subject paterns as followups_
+## _Match additional subject paterns to be added as followups_
 
 In some scenario's upstream ticket systems will be owning the ticket send to GLPI. In this scenario an unique identifier might be added by the upstream ticketing system and the GLPI identifier [GLPI #000001] will never be present.
 
