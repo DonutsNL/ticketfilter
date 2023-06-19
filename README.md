@@ -19,3 +19,7 @@ This will be added in the future.
 
 Make sure to test your patterns
 Example: https://regex101.com/r/htaEx7/1
+
+#Uncertainties and possible issues
+1.  This plugin has not been tested with recurring tickets (that contain the matchstring) and will prob break the recurring ticket creation proces.
+2.  The current version of the plugin does require you to manually alter a provided PHP file, if it breaks redownload the plugin and start over.
