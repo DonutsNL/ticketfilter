@@ -33,7 +33,12 @@
  *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		    https://github.com/DonutsNL/ticketfilter
  *  @since     	    1.0.0
- *  @todo           Keep it stupid simple!
+ *  @todo           !Keep it stupid simple!
+ *                  -Create a fancy configuration page
+ *                   -Config [Followup Match string] [AutoSolve Match String] [Supress followups] [regEx101 testlink/comment]
+ *                   -Option to automatically merge duplicate oldest/latest ticket if more then 1 ticket is found with matchstring.
+ *                   -Option to automatically link with closed ticket(s) on match closed (how to deal with multiple closed tickets?)
+ *                  -Default GLPI behaviour is to load Plugin trazilion times with each dashboard graph, maybe create singleton pattern/caching?
  * ------------------------------------------------------------------------
  **/
 
@@ -56,7 +61,7 @@ class Filter {
      * @see             https://regex101.com/r/htaEx7/1             
      */
     public const MATCHPATERNS = ['/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/',
-                                 '/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/'];
+                                 '/.*?(?<match>\(UNIQUE-[0-9]{1,4}\)).*/'];
 
      /**
      * Disable notifications?
@@ -102,16 +107,15 @@ class Filter {
                         } 
                     }
 
-                    // Clean the original ticket to stop creation
+                    // Empty $item->input and fields to stop object from being created
                     // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
                     self::emptyReferencedObject($item);
-                }   // maybe add merge operation in the future if more then 1 open ticket was found.
-                // We got nothing
-                return;
-            } //  ignore the hook
-            return;
-        } // ignore the hook
-        return;
+                } 
+                return; // We got nothing
+            } 
+            return;     //  ignore the hook
+        } 
+        return;         // ignore the hook
     }
     
 
@@ -213,7 +217,7 @@ class Filter {
      * Returns a connected mailCollector object or []
      * 
      * @param  int $Id               Mail Collector ID   
-     * @return MailCollector|null    Union return type might be problematic with older php versions.  
+     * @return MailCollector|null    Union return types might be problematic with older php versions.  
      * @since                        1.0.0  
      * @todo                         Move to separate non static Match class           
      */
