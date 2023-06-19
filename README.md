@@ -15,7 +15,7 @@ The TicketFilter plugin will allow you to add additional (foreign) paterns Ticke
 The current version of Ticket Filter does not have an configuration page. 
 This will be added in the future.
 
-!The patern should contain a named matchgroup with the name 'match', i.e. (?&lt;match>PATERN)
+<span style="color:yellow">!The patern should contain a named matchgroup with the name 'match', i.e. (?&lt;match>PATERN)</span>
 
 Make sure to test your patterns
 Example: https://regex101.com/r/htaEx7/1
