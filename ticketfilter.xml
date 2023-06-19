@@ -5,11 +5,13 @@
 <logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/ticketfilter.png</logo>
 <description>
     <short>
-        <en>Allows you to match additional patterns in the ticket subject against existing tickets and the new updates from the mailgate (or new tickets) as followup in the matching ticket.</en>
+        <en>Allows you to match additional patterns in the ticket subject of new tickets (from the mailgate or manual ADD)
+            against the existing tickets in the GLPI ticket pool to create followups instead of new tickets</en>
         <lang>...</lang>
     </short>
     <long>
-        <en>Allows you to match additional patterns in the ticket subject against existing tickets and the new updates from the mailgate (or new tickets) as followup in the matching ticket.</en>
+        <en>Allows you to match additional patterns in the ticket subject of new tickets (from the mailgate or manual ADD)
+            against the existing tickets in the GLPI ticket pool to create followups instead of new tickets</en>
         <lang>...</lang>
     </long>
 </description>
