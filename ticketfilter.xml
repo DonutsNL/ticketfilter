@@ -2,7 +2,7 @@
 <name>Ticket Filter</name>
 <key>ticketfilter</key>
 <state>stable</state> <!-- stable | unstable | beta | alpha -->
-<logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/ticketfilter.png</logo>
+<logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/donut.png</logo>
 <description>
     <short>
         <en>Allows you to match additional patterns in the ticket subject of new tickets (from the mailgate or manual ADD)
