@@ -53,9 +53,5 @@ function plugin_ticketfilter_install() : bool
  */
 function plugin_ticketfilter_uninstall() : bool
 {
-
-   // nothing to uninstall
-   // do not delete table
-
    return true;
 }
