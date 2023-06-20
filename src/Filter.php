@@ -42,7 +42,7 @@
  * ------------------------------------------------------------------------
  **/
 
-namespace GlpiPlugin\TicketFilter;
+namespace GlpiPlugin\Ticketfilter;
 
 // use Config; todo: write a nice config page to administer the patterns
 use Ticket;

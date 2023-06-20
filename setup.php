@@ -36,8 +36,10 @@
  **/
 
 use Glpi\Plugin\Hooks;
-use GlpiPlugin\TicketFilter\Filter;
-use Sabre\VObject\Property\Boolean;
+
+// GLPI Composer convention Path should be 
+// All lowercase except GlpiPlugin and first letter of each next element.
+use GlpiPlugin\Ticketfilter\Filter;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
@@ -55,11 +57,6 @@ function plugin_init_ticketfilter() : void
    global $PLUGIN_HOOKS;
 
    Plugin::registerClass(Filter::class);
-   // Nasty workaround for classfile not being included by registerClass().
-   if(!class_exists(Filter::class)){
-      $include = pathinfo(__file__)['dirname'].DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Filter.class.php';
-      require_once($include);
-   }
 
    // State this plugin cross-site request forgery compliant
    $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
