@@ -31,14 +31,15 @@
  *  @license   	MIT
  *  @see       	https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		   https://github.com/DonutsNL/ticketfilter
- *  @since     	0.1
+ *  @since     	1.0
  * ------------------------------------------------------------------------
  **/
 
 use Glpi\Plugin\Hooks;
 
 // GLPI Composer convention Path should be 
-// All lowercase except GlpiPlugin and first letter of each next element.
+// all lowercase except GlpiPlugin and first 
+// letter of each next element.
 use GlpiPlugin\Ticketfilter\Filter;
 
 // Maximum GLPI version, exclusive
