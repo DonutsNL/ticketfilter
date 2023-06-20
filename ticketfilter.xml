@@ -5,13 +5,26 @@
 <logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/donut.png</logo>
 <description>
     <short>
-        <en>Allows you to match additional patterns in the ticket subject of new tickets (from the mailgate or manual ADD)
-            against the existing tickets in the GLPI ticket pool to create followups instead of new tickets</en>
+        <en>The TicketFilter plugin will allow you to add additional (foreign) paterns that 
+            TicketFilter will try to match against existing tickets. If a match is found, 
+            TicketFilter will add the received email as followup in all tickets that contain 
+            the matched string. It will try to prevent notifications to be send to prevent email 
+            runaway issues.</en>
         <lang>...</lang>
     </short>
     <long>
-        <en>Allows you to match additional patterns in the ticket subject of new tickets (from the mailgate or manual ADD)
-            against the existing tickets in the GLPI ticket pool to create followups instead of new tickets</en>
+        <en>AIn some scenario's upstream ticket systems or monitoring systems 
+            will be owning the origin ticket or asset state sending successive 
+            email updates to GLPI. In this scenario the required GLPI identifier 
+           (i.e. [GLPI #000001]) is most likely missing. Instead an foreign identifier 
+            might be present in the subject. This causes GLPI to create new tickets for 
+            each update that is received by email cluttering the ticket pool with duplicates.
+
+            The TicketFilter plugin will allow you to add additional (foreign) paterns that 
+            TicketFilter will try to match against existing tickets. If a match is found, 
+            TicketFilter will add the received email as followup in all tickets that contain 
+            the matched string. It will try to prevent notifications to be send to prevent email 
+            runaway issues.</en>
         <lang>...</lang>
     </long>
 </description>
@@ -31,15 +44,14 @@
 </versions>
 <langs>
     <lang>en_GB</lang>
-    <lang>...</lang>
 </langs>
-<license>GPL v2+</license>
+<license>MIT</license>
 <tags>
      <fr>
-         <tag>collecteur</tag>
+         <tag>Ticket</tag>
+         <tag>Helpdesk</tag>
       </fr>
       <en>
-         <tag>receiver</tag>
          <tag>Ticket</tag>
          <tag>Helpdesk</tag>
       </en>
