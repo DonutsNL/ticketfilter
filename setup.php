@@ -56,7 +56,7 @@ function plugin_init_ticketfilter() : void
    Plugin::registerClass(Filter::class);
    // Nasty workaround for classfile not being included by registerClass().
    if(!class_exists(Filter::class)){
-      $include = pathinfo(__file__)['dirname'].PATH_SEPARATOR.'src'.PATH_SEPARATOR.'filter.class.php';
+      $include = pathinfo(__file__)['dirname'].PATH_SEPARATOR.'src'.PATH_SEPARATOR.'Filter.class.php';
       require_once($include);
    }
 
