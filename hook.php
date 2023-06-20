@@ -41,7 +41,7 @@
  * @return boolean
  * test
  */
-function plugin_ticketfilter_install() : bool 
+function plugin_ticketfilter_install() : bool
 {
    return true;
 }

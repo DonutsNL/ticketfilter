@@ -60,8 +60,7 @@ class Filter {
      * @since           1.0.0
      * @see             https://regex101.com/r/htaEx7/1             
      */
-    public const MATCHPATERNS = ['/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/',
-                                 '/.*?(?<match>\(UNIQUE-[0-9]{1,4}\)).*/'];
+    public const MATCHPATERNS = ['/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/'];
 
      /**
      * Disable notifications?
@@ -102,7 +101,7 @@ class Filter {
                         if($reference->fields['status'] != CommonITILObject::CLOSED) {
                    
                             if(self::createFollowup($item, $reference) == true) {
-                                Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$key'>Ticket was matched by to open ticket: $key and was added as a followup</a>"), true, INFO);
+                                Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$key'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
                             }
                         } 
                     }

@@ -37,6 +37,7 @@
 
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\TicketFilter\Filter;
+use Sabre\VObject\Property\Boolean;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
@@ -49,14 +50,14 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
  *
  * @return void
  */
-function plugin_init_ticketfilter() : void 
+function plugin_init_ticketfilter() : void
 {
    global $PLUGIN_HOOKS;
 
    Plugin::registerClass(Filter::class);
    // Nasty workaround for classfile not being included by registerClass().
    if(!class_exists(Filter::class)){
-      $include = pathinfo(__file__)['dirname'].PATH_SEPARATOR.'src'.PATH_SEPARATOR.'Filter.class.php';
+      $include = pathinfo(__file__)['dirname'].DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'Filter.class.php';
       require_once($include);
    }
 
@@ -99,7 +100,7 @@ function plugin_version_ticketfilter() : array
  * Check pre-requisites before install
  * @return boolean
  */
-function plugin_ticketfilter_check_prerequisites() : bool 
+function plugin_ticketfilter_check_prerequisites() : bool
 {
    if (false) {
       return false;
@@ -113,7 +114,7 @@ function plugin_ticketfilter_check_prerequisites() : bool
  * @param boolean $verbose Whether to display message on failure. Defaults to false
  * @return boolean
  */
-function plugin_ticketfilter_check_config($verbose = false) : bool 
+function plugin_ticketfilter_check_config($verbose = false) : bool
 {
    if (true) { // Your configuration check
       return true;
