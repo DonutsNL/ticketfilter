@@ -74,7 +74,8 @@ class Filter {
      * 
      * @param  Ticket $item      Hooked Ticket object passed by refference.
      * @return void  
-     * @since                    1.0.0             
+     * @since                    1.0.0
+     * @see                      setup.php hook             
      */
     public static function PreItemAdd(Ticket $item) : void 
     {
