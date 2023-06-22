@@ -32,7 +32,9 @@ https://www.buymeacoffee.com/DonutsNL
 
 or
 
-If you like the plugin assign me some 💫 stars for my stargazer achievement 💪
+Assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
+
+Thank you! 
 
 1. WIP : Add configuration page
     - Add check to validate pattern does not exist in ticket templates;
