@@ -41,8 +41,8 @@ Thank you!
     - Add feature suggest / support button;
     - Add feature check (New features should not overlap with something that can be done using ticket business rules);
 2. Add option to automatically merge duplicates before matching;
-3. Add option to detect and change ticket status based on pattern ?<status>;
-4. Add option to detect and link monitored assets based on pattern ?<computer> ?<device> ?<etx>;
+3. Add option to detect and change ticket status based on pattern ?&lt;status>;
+4. Add option to detect and link monitored assets based on pattern ?&lt;computer> ?&lt;device> ?&lt;etc>;
     - Option to automatically add asset (using template?) when missing in assets (might be usefull in Cloud environments);
     - Option to add special marker to automatically created assets for easy searches in assetmanagement;
 5. Add tests
