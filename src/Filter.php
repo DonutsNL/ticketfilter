@@ -100,9 +100,9 @@ class Filter {
 
                         // Is found ticket closed? if so do nothing.
                         if($reference->fields['status'] != CommonITILObject::CLOSED) {
-                   
+                            // @todo: This link needs some work to generate FQDN
                             if(self::createFollowup($item, $reference) == true) {
-                                Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$key'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
+                                Session::addMessageAfterRedirect(__("<a href='/front/ticket.form.php?id=$key'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
                             }
                         } 
                     }
