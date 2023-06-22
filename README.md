@@ -7,7 +7,7 @@ The TicketFilter plugin will allow you to add additional (foreign) paterns Ticke
 # Installation and configuration;
 0. Create a folder 'ticketfilter' inside the GLPI_HOME/marketplace/
 1. Copy the contents of this repository into the GLPI_HOME/marketplace/ticketfilter folder.
-2. Edit the ticketfilter/src/Filter.class.php and change the matchstring to your preferences.
+2. Edit the ticketfilter/src/Filter.php and change the matchstring to your preferences.
 3. Use the GLPI interface to install and activate the plugin.
 4. Test your matchstring by manually adding tickets that have the pattern in their subject.
 5. Test the matchstring by sending emails containing the pattern in its subject.
