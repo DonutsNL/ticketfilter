@@ -12,6 +12,7 @@ The TicketFilter plugin will allow you to add additional (foreign) paterns Ticke
 4. Use the GLPI interface to install and activate the plugin.
 5. Test your matchstring by manually adding tickets that have the pattern in their subject.
 6. Test the matchstring by sending emails containing the pattern in its subject.
+7. Test variations on your pattern to make sure it matches correctly using regex101.com;
 
 The current version of Ticket Filter does not have an configuration page. 
 This will be added in the future.
