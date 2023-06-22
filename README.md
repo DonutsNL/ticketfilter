@@ -26,18 +26,7 @@ Example: https://regex101.com/r/htaEx7/1
 1.  This plugin has not been tested with recurring tickets (that contain the matchstring) and will prob break the recurring ticket creation proces.
 2.  The current version of the plugin does require you to manually alter a provided PHP file, if it breaks redownload the plugin and start over.
 
-
-
 # Roadmap;
-Buying me cafee is very motivational ☕
-https://www.buymeacoffee.com/DonutsNL
-
-or
-
-Assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
-
-Thank you! 
-
 1. WIP : Add configuration page
     - Add check to validate pattern does not exist in ticket templates;
     - Add feature suggest / support button;
@@ -69,4 +58,12 @@ Thank you!
     - Add convinient update button;
 15. Add ability to only add folowup to first (oldest date) or latest (last date) ticket occurrance when multiple are found instead of adding followup to all occurrances;
 
+# Do you like to plugin and want more?
+Buying me cafee is very motivational ☕
+https://www.buymeacoffee.com/DonutsNL
+or
+Assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
 
+Use the issues to suggest new features or help me prioritize
+
+Thank you in advance! 
