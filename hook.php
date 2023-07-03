@@ -36,11 +36,7 @@
  * ------------------------------------------------------------------------
  **/
 
-<<<<<<< HEAD
-use GlpiPlugin\Ticketfilter\Configs;
-=======
 use GlpiPlugin\Ticketfilter\Config;
->>>>>>> 85292ed (In development)
 /**
  * Summary of plugin_ticketFilter install
  * @return boolean
@@ -49,30 +45,17 @@ use GlpiPlugin\Ticketfilter\Config;
 // phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_install() : bool
 {
-<<<<<<< HEAD
-   /*
-=======
    
->>>>>>> 85292ed (In development)
    ProfileRight::addProfileRights(['ticketfilter:read']);
    ProfileRight::addProfileRights(['ticketfilter:create']);
    ProfileRight::addProfileRights(['ticketfilter:update']);
    ProfileRight::addProfileRights(['ticketfilter:purge']);
-<<<<<<< HEAD
-   */
-
-   if (method_exists(Configs::class, 'install')) {
-      $version   = plugin_version_ticketfilter();
-      $migration = new Migration($version['version']);
-      Configs::install($migration);
-=======
    
 
    if (method_exists(Config::class, 'install')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
       Config::install($migration);
->>>>>>> 85292ed (In development)
    }
    return true;
 }
@@ -86,30 +69,17 @@ function plugin_ticketfilter_install() : bool
 // phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_uninstall() : bool
 {
-<<<<<<< HEAD
-   /*
-=======
    
->>>>>>> 85292ed (In development)
    ProfileRight::deleteProfileRights(['ticketfilter:read']);
    ProfileRight::deleteProfileRights(['ticketfilter:create']);
    ProfileRight::deleteProfileRights(['ticketfilter:update']);
    ProfileRight::deleteProfileRights(['ticketfilter:purge']);
-<<<<<<< HEAD
-   */
-
-   if (method_exists(Configs::class, 'uninstall')) {
-      $version   = plugin_version_ticketfilter();
-      $migration = new Migration($version['version']);
-      Configs::uninstall($migration);
-=======
    
 
    if (method_exists(Config::class, 'uninstall')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
       Config::uninstall($migration);
->>>>>>> 85292ed (In development)
    }
    return true;
 }
