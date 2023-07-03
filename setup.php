@@ -36,7 +36,11 @@
  **/
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Ticketfilter\Filter;
+<<<<<<< HEAD
 use GlpiPlugin\Ticketfilter\Configs;
+=======
+use GlpiPlugin\Ticketfilter\Config;
+>>>>>>> 85292ed (In development)
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
@@ -52,6 +56,7 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 function plugin_init_ticketfilter() : void
 {
    global $PLUGIN_HOOKS;
+<<<<<<< HEAD
    if (Plugin::isPluginActive('ticketfilter')) {
       if(!Plugin::registerClass(Filter::class)){
          Toolbox::logError('Cannot resolve Ticketfilter\Filter::class');
@@ -64,11 +69,17 @@ function plugin_init_ticketfilter() : void
 
       // State this plugin cross-site request forgery compliant
       $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
+=======
+   Plugin::registerClass(Config::class);
+   Plugin::registerClass(Filter::class);
+   
+>>>>>>> 85292ed (In development)
 
       
       // Config page: redirect to dropdown page
       $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/config.php';
 
+<<<<<<< HEAD
       // Menu link
       $PLUGIN_HOOKS['menu_toadd']['ticketfilter'] = [
           Config::class => 'config',
@@ -81,6 +92,16 @@ function plugin_init_ticketfilter() : void
          Ticket::class       => [Filter::class, 'PreItemAdd']
       ];
    }
+=======
+   $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/config.php';
+
+   // Add hook (callback) on the PRE_ITEM_ADD event.
+   // We assume that only new tickets are potential duplicates if the
+   // source ticket system is not adding the GLPI identifier.
+   $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
+      Ticket::class       => [Filter::class, 'PreItemAdd']
+   ];
+>>>>>>> 85292ed (In development)
 }
 
 
@@ -92,11 +113,19 @@ function plugin_init_ticketfilter() : void
 function plugin_version_ticketfilter() : array
 {
    return [
+<<<<<<< HEAD
       'name'           => 'Ticketfilter plugin',
       'version'        => PLUGIN_TICKETFILTER_VERSION,
       'author'         => 'Chris Gralike',
       'license'        => 'MIT',
       'homepage'       => '',
+=======
+      'name'           => 'Ticketfilter',
+      'version'        => PLUGIN_TICKETFILTER_VERSION,
+      'author'         => 'Chris Gralike',
+      'license'        => 'MIT',
+      'homepage'       => 'https://github.com/DonutsNL/ticketfilter',
+>>>>>>> 85292ed (In development)
       'requirements'   => [
          'glpi' => [
             'min' => PLUGIN_TICKETFILTER_MIN_GLPI,
