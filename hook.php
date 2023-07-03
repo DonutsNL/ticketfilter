@@ -36,22 +36,50 @@
  * ------------------------------------------------------------------------
  **/
 
+use GlpiPlugin\Ticketfilter\Configs;
 /**
  * Summary of plugin_ticketFilter install
  * @return boolean
  * test
  */
+// phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_install() : bool
 {
+   /*
+   ProfileRight::addProfileRights(['ticketfilter:read']);
+   ProfileRight::addProfileRights(['ticketfilter:create']);
+   ProfileRight::addProfileRights(['ticketfilter:update']);
+   ProfileRight::addProfileRights(['ticketfilter:purge']);
+   */
+
+   if (method_exists(Configs::class, 'install')) {
+      $version   = plugin_version_ticketfilter();
+      $migration = new Migration($version['version']);
+      Configs::install($migration);
+   }
    return true;
 }
 
 
 /**
+ * 
  * Summary of plugin_ticketFilter uninstall
  * @return boolean
  */
+// phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_uninstall() : bool
 {
+   /*
+   ProfileRight::deleteProfileRights(['ticketfilter:read']);
+   ProfileRight::deleteProfileRights(['ticketfilter:create']);
+   ProfileRight::deleteProfileRights(['ticketfilter:update']);
+   ProfileRight::deleteProfileRights(['ticketfilter:purge']);
+   */
+
+   if (method_exists(Configs::class, 'uninstall')) {
+      $version   = plugin_version_ticketfilter();
+      $migration = new Migration($version['version']);
+      Configs::uninstall($migration);
+   }
    return true;
 }

@@ -153,6 +153,7 @@ class Filter {
             // Populate Followup fields
             $input                  = $item->input;
             $input['items_id']      = $reference->fields['id'];
+            $input['users_id']      = false;
             $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
             $input['add_reopen']    = 1;
             $input['itemtype']      = Ticket::class;

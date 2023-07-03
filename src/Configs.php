@@ -43,55 +43,65 @@
  **/
 
 namespace GlpiPlugin\Ticketfilter;
-
 use CommonDropdown;
-use Html;
+use DBConnection;
+use Migration;
 
-class Config extends CommonDropdown {
+class Configs extends CommonDropdown
+{
+    static function getTypeName($nb = 0) {
 
-    public function showForm($ID, array $options = []) {
-       global $CFG_GLPI;
- 
-       $this->initForm($ID, $options);
-       $this->showFormHeader($options);
- 
-       if (!isset($options['display'])) {
-          //display per default
-          $options['display'] = true;
-       }
- 
-       $params = $options;
-       //do not display called elements per default; they'll be displayed or returned here
-       $params['display'] = false;
- 
-       $out = '<tr>';
-       $out .= '<th>' . __('My label', 'Ticket Filter') . '</th>';
- 
-       $objectName = autoName(
-          $this->fields["name"],
-          "name",
-          (isset($options['withtemplate']) && $options['withtemplate']==2),
-          $this->getType(),
-          $this->fields["entities_id"]
-       );
- 
-       $out .= '<td>';
-       $out .= Html::autocompletionTextField(
-          $this,
-          'name',
-          [
-             'value'     => $objectName,
-             'display'   => false
-          ]
-       );
-       $out .= '</td>';
- 
-       $out .= $this->showFormButtons($params);
- 
-       if ($options['display'] == true) {
-          echo $out;
-       } else {
-          return $out;
-       }
+        if ($nb > 0) {
+           return __('Plugin Ticketfilter Dropdowns', 'ticketfilter');
+        }
+        return __('Plugin Ticketfilter Dropdowns', 'ticketfilter');
+     }
+
+    public static function install(Migration $migration)
+    {
+        global $DB;
+
+        $default_charset = DBConnection::getDefaultCharset();
+        $default_collation = DBConnection::getDefaultCollation();
+        $default_key_sign = DBConnection::getDefaultPrimaryKeySignOption();
+
+        $table = self::getTable();
+
+        if (!$DB->tableExists($table)) {
+            $migration->displayMessage("Installing $table");
+            $query = <<<SQL
+            CREATE TABLE IF NOT EXISTS `$table` (
+            `id` int {$default_key_sign} NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) DEFAULT NULL,
+            `is_active` tinyint NOT NULL DEFAULT '0',
+            `date_creation` timestamp NULL DEFAULT NULL,
+            `date_mod` timestamp NULL DEFAULT NULL,
+            `TicketMatchString` text NOT NULL,
+            `AssetMatchString` text NULL,
+            `SolvedMatchString` text NULL,
+            `AutomaticallyMerge` tinyint NOT NULL DEFAULT '0',
+            `LinkClosedTickets` tinyint NOT NULL DEFAULT '0',
+            `SearchTicketBody` tinyint NOT NULL DEFAULT '0',
+            `MatchSpecificSource` text NULL,
+            PRIMARY KEY (`id`),
+            KEY `name` (`name`),
+            KEY `is_active` (`is_active`),
+            KEY `date_creation` (`date_creation`),
+            KEY `date_mod` (`date_mod`)
+            ) ENGINE=InnoDB DEFAULT CHARSET={$default_charset} COLLATE={$default_collation} ROW_FORMAT=DYNAMIC;
+            SQL;
+            $DB->query($query) or die($DB->error());
+        }
     }
- }
+
+    /**
+     * Uninstall previously installed data for this class.
+     */
+    public static function uninstall(Migration $migration)
+    {
+
+        $table = self::getTable();
+        $migration->displayMessage("Uninstalling $table");
+        $migration->dropTable($table);
+    }
+}

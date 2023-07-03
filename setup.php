@@ -34,17 +34,13 @@
  *  @since     	1.0
  * ------------------------------------------------------------------------
  **/
-
 use Glpi\Plugin\Hooks;
-
-// GLPI Composer convention Path should be 
-// all lowercase except GlpiPlugin and first 
-// letter of each next element.
 use GlpiPlugin\Ticketfilter\Filter;
+use GlpiPlugin\Ticketfilter\Configs;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
-define('PLUGIN_TICKETFILTER_VERSION', '1.0.1');
+define('PLUGIN_TICKETFILTER_VERSION', '1.0.4');
 define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
 define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
@@ -56,18 +52,35 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 function plugin_init_ticketfilter() : void
 {
    global $PLUGIN_HOOKS;
+   if (Plugin::isPluginActive('ticketfilter')) {
+      if(!Plugin::registerClass(Filter::class)){
+         Toolbox::logError('Cannot resolve Ticketfilter\Filter::class');
+      }
+      if(!Plugin::registerClass(Configs::class)){
+         Toolbox::logError('Cannot resolve Ticketfilter\Config::class');
+      }
+      Toolbox::logError('INFO: loaded Ticketfilter\Config::class and Ticketfilter\Filter::class');
+      
 
-   Plugin::registerClass(Filter::class);
+      // State this plugin cross-site request forgery compliant
+      $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
 
-   // State this plugin cross-site request forgery compliant
-   $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
+      
+      // Config page: redirect to dropdown page
+      $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/config.php';
 
-   // Add hook (callback) on the PRE_ITEM_ADD event.
-   // We assume that only new tickets are potential duplicates if the
-   // source ticket system is not adding the GLPI identifier.
-   $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
-      Ticket::class       => [Filter::class, 'PreItemAdd']
-   ];
+      // Menu link
+      $PLUGIN_HOOKS['menu_toadd']['ticketfilter'] = [
+          Config::class => 'config',
+      ];
+      
+      // Add hook (callback) on the PRE_ITEM_ADD event.
+      // We assume that only new tickets are potential duplicates if the
+      // source ticket system is not adding the GLPI identifier.
+      $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
+         Ticket::class       => [Filter::class, 'PreItemAdd']
+      ];
+   }
 }
 
 
@@ -79,10 +92,10 @@ function plugin_init_ticketfilter() : void
 function plugin_version_ticketfilter() : array
 {
    return [
-      'name'           => 'Plugin TICKETFILTER',
+      'name'           => 'Ticketfilter plugin',
       'version'        => PLUGIN_TICKETFILTER_VERSION,
-      'author'         => 'TICKETFILTER plugin team',
-      'license'        => 'GPLv2+',
+      'author'         => 'Chris Gralike',
+      'license'        => 'MIT',
       'homepage'       => '',
       'requirements'   => [
          'glpi' => [
