@@ -29,26 +29,25 @@
  *  @version	   1.1.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
- *  @license   	MIT
+ *  @license   	GPLv2+
  *  @see       	https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		   https://github.com/DonutsNL/ticketfilter
  *  @since     	0.1
  * ------------------------------------------------------------------------
  **/
 
-use GlpiPlugin\Ticketfilter\FilterPaterns;
+use GlpiPlugin\Ticketfilter\FilterPattern;
 
 /**
- * Required to make the dropdown visable in the dropdowns menu.
+ * Make plugin dropdown visible in the dropdowns menu.
  * @return boolean
  * test
  */
 // phpcs:ignore PSR1.Function.CamelCapsMethodName
-function plugin_ticketfilter_getDropdown() {
-   // Table => Name
-   return [FilterPaterns::class => __("FilterPaterns", 'ticketfilter')];
+function plugin_ticketfilter_getDropdown() : array 
+{
+   return [FilterPattern::class => __("Filterpatterns", 'ticketfilter')];
 }
-
 
 
 /**
@@ -66,10 +65,10 @@ function plugin_ticketfilter_install() : bool
    ProfileRight::addProfileRights(['ticketfilter:purge']);
    
 
-   if (method_exists(FilterPaterns::class, 'install')) {
+   if (method_exists(FilterPattern::class, 'install')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
-      FilterPaterns::install($migration);
+      FilterPattern::install($migration);
    }
    return true;
 }
@@ -89,11 +88,10 @@ function plugin_ticketfilter_uninstall() : bool
    ProfileRight::deleteProfileRights(['ticketfilter:update']);
    ProfileRight::deleteProfileRights(['ticketfilter:purge']);
    
-
-   if (method_exists(FilterPaterns::class, 'uninstall')) {
+   if (method_exists(FilterPattern::class, 'uninstall')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
-      FilterPaterns::uninstall($migration);
+      FilterPattern::uninstall($migration);
    }
    return true;
 }

@@ -28,19 +28,19 @@
  *  @version	    1.1.0
  *  @author         Chris Gralike
  *  @copyright 	    Copyright (c) 2023 by Chris Gralike
- *  @license    	MIT
+ *  @license    	GPLv2+
  *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		    https://github.com/DonutsNL/ticketfilter
  *  @since     	    1.1.0
  * ------------------------------------------------------------------------
  **/
 
-use GlpiPlugin\Ticketfilter\FilterPaterns;
+use GlpiPlugin\Ticketfilter\FilterPattern;
 use Plugin;
 
 include ("../../../inc/includes.php");
 
 Plugin::load('ticketfilter', true);
 
-$dropdown = new FilterPaterns();
-include (GLPI_ROOT . "/front/dropdown.common.form.php");
+$dropdown = new FilterPattern();
+include(GLPI_ROOT . '/front/dropdown.common.php');

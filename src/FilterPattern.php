@@ -29,7 +29,7 @@
  *  @version	    1.1.0
  *  @author         Chris Gralike
  *  @copyright 	    Copyright (c) 2023 by Chris Gralike
- *  @license    	MIT
+ *  @license    	GPLv2+
  *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		    https://github.com/DonutsNL/ticketfilter
  *  @since     	    1.1.0
@@ -40,15 +40,35 @@ namespace GlpiPlugin\Ticketfilter;
 use CommonDropdown;
 use DBConnection;
 use Migration;
+use Plugin;
+use Config;
 
-class FilterPaterns extends CommonDropdown
+class FilterPattern extends CommonDropdown
 {
     static function getTypeName($nb = 0) {
-
         if ($nb > 0) {
-           return __('Plugin Ticketfilter Dropdowns', 'ticketfilter');
+           return __('Filterpatterns', 'ticketfilter');
         }
-        return __('Plugin Ticketfilter Dropdowns', 'ticketfilter');
+        return __('Filterpatterns', 'ticketfilter');
+    }
+
+    public static function getMenuContent()
+    {
+        $menu = [];
+        if (Config::canUpdate()) {
+            $menu['title'] = self::getMenuName();
+            $menu['page']  = '/' . Plugin::getWebDir('oauthimap', false) . '/front/filterpattern.php';
+            $menu['icon']  = self::getIcon();
+        }
+        if (count($menu)) {
+            return $menu;
+        }
+        return false;
+    }
+
+    public static function getIcon() 
+    { 
+        return 'fas fa-filter'; 
     }
 
 
@@ -62,38 +82,33 @@ class FilterPaterns extends CommonDropdown
             ],
             [
                 'name'     => 'TicketMatchString',
-                'label'    => __('TicketMatchString', 'ticketfilter'),
+                'label'    => __('Ticket MatchString', 'ticketfilter'),
                 'type'     => 'text',
             ],
             [
                 'name'     => 'AssetMatchString',
-                'label'    => __('AssetMatchString', 'ticketfilter'),
+                'label'    => __('Asset MatchString', 'ticketfilter'),
                 'type'     => 'text',
             ],
             [
                 'name'     => 'SolvedMatchString',
-                'label'    => __('SolvedMatchString', 'ticketfilter'),
+                'label'    => __('Solved Matchstring', 'ticketfilter'),
                 'type'     => 'text',
             ],
             [
                 'name'     => 'AutomaticallyMerge',
-                'label'    => __('AutomaticallyMerge', 'ticketfilter'),
+                'label'    => __('Automatically merge', 'ticketfilter'),
                 'type'     => 'bool',
             ],
             [
-               'name'     => 'LinkClosedTickets',
-               'label'    => __('LinkClosedTickets', 'ticketfilter'),
-               'type'     => 'bool',
+                'name'     => 'LinkClosedTickets',
+                'label'    => __('Link to closed source ticket', 'ticketfilter'),
+                'type'     => 'bool',
             ],
             [
-               'name'     => 'SearchTicketBody',
-               'label'    => __('SearchTicketBody', 'ticketfilter'),
-               'type'     => 'bool',
-            ],
-            [
-            'name'     => 'MatchSpecificSource',
-            'label'    => __('MatchSpecificSource', 'ticketfilter'),
-            'type'     => 'text',
+                'name'     => 'MatchSpecificSource',
+                'label'    => __('Match only from specific source', 'ticketfilter'),
+                'type'     => 'text',
             ],
         ];
     }
