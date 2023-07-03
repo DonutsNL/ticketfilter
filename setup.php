@@ -25,7 +25,7 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	   TicketFilter
- *  @version	   1.0.0
+ *  @version	   1.1.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
  *  @license   	MIT
@@ -36,7 +36,7 @@
  **/
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Ticketfilter\Filter;
-use GlpiPlugin\Ticketfilter\Config;
+use GlpiPlugin\Ticketfilter\Filterpaterns;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
@@ -54,6 +54,10 @@ function plugin_init_ticketfilter() : void
    global $PLUGIN_HOOKS;
 
    Plugin::registerClass(Filter::class);
+   Plugin::registerClass(FilterPaterns::class);
+
+   // Config page: redirect to dropdown page
+   $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/filterpaterns.php';
 
    // State this plugin cross-site request forgery compliant
    $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
@@ -78,8 +82,8 @@ function plugin_version_ticketfilter() : array
       'name'           => 'Plugin TICKETFILTER',
       'version'        => PLUGIN_TICKETFILTER_VERSION,
       'author'         => 'TICKETFILTER plugin team',
-      'license'        => 'GPLv2+',
-      'homepage'       => '',
+      'license'        => 'MIT',
+      'homepage'       => 'https://github.com/DonutsNL/ticketfilter',
       'requirements'   => [
          'glpi' => [
             'min' => PLUGIN_TICKETFILTER_MIN_GLPI,

@@ -26,19 +26,13 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	    TicketFilter
- *  @version	    1.0.0
+ *  @version	    1.1.0
  *  @author         Chris Gralike
  *  @copyright 	    Copyright (c) 2023 by Chris Gralike
  *  @license    	MIT
  *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		    https://github.com/DonutsNL/ticketfilter
- *  @since     	    1.0.0
- *  @todo           !Keep it stupid simple!
- *                  -Create a fancy configuration page
- *                   -Config [Followup Match string] [AutoSolve Match String] [Supress followups] [regEx101 testlink/comment]
- *                   -Option to automatically merge duplicate oldest/latest ticket if more then 1 ticket is found with matchstring.
- *                   -Option to automatically link with closed ticket(s) on match closed (how to deal with multiple closed tickets?)
- *                  -Default GLPI behaviour is to load Plugin trazilion times with each dashboard graph, maybe create singleton pattern/caching?
+ *  @since     	    1.0.1
  * ------------------------------------------------------------------------
  **/
 

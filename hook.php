@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	   TicketFilter
- *  @version	   1.0.0
+ *  @version	   1.1.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
  *  @license   	MIT
@@ -36,7 +36,21 @@
  * ------------------------------------------------------------------------
  **/
 
-use GlpiPlugin\Ticketfilter\Config;
+use GlpiPlugin\Ticketfilter\FilterPaterns;
+
+/**
+ * Required to make the dropdown visable in the dropdowns menu.
+ * @return boolean
+ * test
+ */
+// phpcs:ignore PSR1.Function.CamelCapsMethodName
+function plugin_ticketfilter_getDropdown() {
+   // Table => Name
+   return [FilterPaterns::class => __("FilterPaterns", 'ticketfilter')];
+}
+
+
+
 /**
  * Summary of plugin_ticketFilter install
  * @return boolean
@@ -52,10 +66,10 @@ function plugin_ticketfilter_install() : bool
    ProfileRight::addProfileRights(['ticketfilter:purge']);
    
 
-   if (method_exists(Config::class, 'install')) {
+   if (method_exists(FilterPaterns::class, 'install')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
-      Config::install($migration);
+      FilterPaterns::install($migration);
    }
    return true;
 }
@@ -76,10 +90,10 @@ function plugin_ticketfilter_uninstall() : bool
    ProfileRight::deleteProfileRights(['ticketfilter:purge']);
    
 
-   if (method_exists(Config::class, 'uninstall')) {
+   if (method_exists(FilterPaterns::class, 'uninstall')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
-      Config::uninstall($migration);
+      FilterPaterns::uninstall($migration);
    }
    return true;
 }
