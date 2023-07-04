@@ -35,7 +35,7 @@
     <version>
         <num>1.1.0</num>
         <compatibility>~10.0.7</compatibility>
-        <download_url>https://github.com/DonutsNL/ticketfilter/archive/refs/tags/Stable.zip</download_url>
+        <download_url>https://github.com/DonutsNL/ticketfilter/</download_url>
     </version>
 </versions>
 <langs>
