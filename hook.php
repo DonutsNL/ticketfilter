@@ -58,12 +58,6 @@ function plugin_ticketfilter_getDropdown() : array
 // phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_install() : bool
 {
-   
-   ProfileRight::addProfileRights(['ticketfilter:read']);
-   ProfileRight::addProfileRights(['ticketfilter:create']);
-   ProfileRight::addProfileRights(['ticketfilter:update']);
-   ProfileRight::addProfileRights(['ticketfilter:purge']);
-   
 
    if (method_exists(FilterPattern::class, 'install')) {
       $version   = plugin_version_ticketfilter();
@@ -71,6 +65,7 @@ function plugin_ticketfilter_install() : bool
       FilterPattern::install($migration);
    }
    return true;
+   
 }
 
 
@@ -83,15 +78,11 @@ function plugin_ticketfilter_install() : bool
 function plugin_ticketfilter_uninstall() : bool
 {
    
-   ProfileRight::deleteProfileRights(['ticketfilter:read']);
-   ProfileRight::deleteProfileRights(['ticketfilter:create']);
-   ProfileRight::deleteProfileRights(['ticketfilter:update']);
-   ProfileRight::deleteProfileRights(['ticketfilter:purge']);
-   
    if (method_exists(FilterPattern::class, 'uninstall')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
       FilterPattern::uninstall($migration);
    }
    return true;
+
 }

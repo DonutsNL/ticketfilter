@@ -36,11 +36,11 @@
  **/
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Ticketfilter\Filter;
-use GlpiPlugin\Ticketfilter\Filterpatern;
+use GlpiPlugin\Ticketfilter\Filterpattern;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
-define('PLUGIN_TICKETFILTER_VERSION', '1.0.4');
+define('PLUGIN_TICKETFILTER_VERSION', '1.0.5');
 define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
 define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
@@ -54,17 +54,16 @@ function plugin_init_ticketfilter() : void
    global $PLUGIN_HOOKS;
 
    Plugin::registerClass(Filter::class);
-   Plugin::registerClass(FilterPatern::class);
+   Plugin::registerClass(FilterPattern::class);
 
-   // Config page: redirect to dropdown page
-   $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/filterpatern.php';
+   // Config page: redirect to filterpatterns dropdown page
+   $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/filterpattern.php';
 
    // State this plugin cross-site request forgery compliant
    $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
 
    // Add hook (callback) on the PRE_ITEM_ADD event.
-   // We assume that only new tickets are potential duplicates if the
-   // source ticket system is not adding the GLPI identifier.
+   // All new tickets are to be evaluated no matter the source.
    $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
       Ticket::class       => [Filter::class, 'PreItemAdd']
    ];
@@ -72,16 +71,16 @@ function plugin_init_ticketfilter() : void
 
 
 /**
- * Get the name and the version of the plugin
+ * Returns the name and the version of the plugin
  *
  * @return array
  */
 function plugin_version_ticketfilter() : array
 {
    return [
-      'name'           => 'Plugin TICKETFILTER',
+      'name'           => 'Ticketfilter',
       'version'        => PLUGIN_TICKETFILTER_VERSION,
-      'author'         => 'TICKETFILTER plugin team',
+      'author'         => 'Chris Gralike',
       'license'        => 'GPLv2+',
       'homepage'       => 'https://github.com/DonutsNL/ticketfilter',
       'requirements'   => [

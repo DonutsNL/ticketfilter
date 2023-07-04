@@ -38,7 +38,7 @@
 
 namespace GlpiPlugin\Ticketfilter;
 
-// use Config; todo: write a nice config page to administer the patterns
+use GlpiPlugin\Ticketfilter\FilterPattern;
 use Ticket;
 use Session;
 use CommonITILObject;
@@ -46,6 +46,7 @@ use ITILFollowup;
 use MailCollector;
 use Throwable;
 use Toolbox;
+
 
 class Filter {
     /**
@@ -79,14 +80,14 @@ class Filter {
                && key_exists('name', $item->input)     // Name key (that is the Subject of the email) should exist.
                && !empty($item->input['name'])) {      // Name should not be emtpy, could happen with recurring tickets.
                  
-                
-                // Search our pattern in the name field and find corresponding ticket (if any).
-                $matches = self::searchForMatches($item->input['name']);
-                if(is_array($matches)               // Should be an array (always)
-                   && count($matches) >= 1) {       // Should have at least 1 element
+                // Search our pattern in the name field and find corresponding ticket(s) (if any).
+                $matches = self::searchForNameMatches($item->input['name']);
+                if(is_array($matches['tickets'])                // Should be an array (always)
+                   && count($matches['tickets']) >= 1           // Should have at least 1 element
+                   && is_array($matches['filterpattern'])) {    // The matching pattern should be present   
                           
-
-                    foreach($matches as $key)       // Add followups to all matching non closed tickets
+                    // Add followups to each matching tickets
+                    foreach($matches['tickets'] as $key)       
                     {
                         // Fetch found ticket.
                         $reference = new Ticket();
@@ -96,6 +97,7 @@ class Filter {
                         if($reference->fields['status'] != CommonITILObject::CLOSED) {
                             // @todo: This link needs some work to generate FQDN
                             if(self::createFollowup($item, $reference) == true) {
+                                
                                 Session::addMessageAfterRedirect(__("<a href='/front/ticket.form.php?id=$key'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
                             }
                         } 
@@ -178,34 +180,83 @@ class Filter {
      * @return int                      Returns the ticket ID of the matching ticket or 0 on no match. 
      * @since                           1.0.0            
      */
-    private static function searchForMatches(string $ticketSubject) : array
+    private static function searchForNameMatches(string $ticketSubject) : array
     {
         global $DB;
-        // We assume that the name always only contains one pattern and return the first matching one.
-        foreach(self::MATCHPATERNS as $matchPatern){
-            if(preg_match_all($matchPatern, $ticketSubject, $matchArray)){
-                $matchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
-                if($matchString){
-                    foreach($DB->request(
-                        'glpi_tickets',
-                        [
-                            'AND' =>
+        // Get the patterns if any;
+        $patterns = self::getFilterPatterns();
+
+        if(is_array($patterns)
+        && count($patterns) >= 1
+        && array_key_exists('TicketMatchString', $patterns['0']))
+        {
+            // We assume that the name always only contains one pattern and return the first matching one.
+            foreach($patterns as $k => $Filterpattern){
+                // Data fetched from DB includes tons of HTML entities that need cleaning.
+                $p = html_entity_decode($Filterpattern['TicketMatchString']);
+                if(preg_match_all("/$p/", $ticketSubject, $matchArray)){
+                    // If we have a match, use it to compose a searchstring for our sql query.
+                    $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
+                    if($searchString){
+                        foreach($DB->request(
+                            'glpi_tickets',
                             [
-                                'name'       => ['LIKE', $matchString],
-                                'is_deleted' => ['=', 0]
+                                'AND' =>
+                                [
+                                    'name'       => ['LIKE', $searchString],
+                                    'is_deleted' => ['=', 0]
+                                ]
                             ]
-                        ]
-                    ) as $id => $row) {
-                        $r[]=$id;
+                        ) as $id => $row) {
+                            $r[]=$id;
+                        }
+                        // If we find tickets using our matchString then return
+                        // stop processing, return tickets and the matching
+                        // Filterpattern configuration. 
+                        if(is_array($r)
+                        && count($r) > 0) {
+                            return ['tickets' => $r,
+                                    'filterpattern' => $Filterpattern];
+                        }
                     }
-                    if(is_array($r)
-                       && count($r) > 0) {
-                        return $r;
-                    }
+
                 }
-            }
+            }               
+        } else {
+            trigger_error("No ticketfilter patterns found, please configure them or disable the plugin", E_USER_NOTICE);
         }
         return [];
+    }
+
+    /**
+     * Get match patterns and config from dropdowns
+     *   
+     * @return patterns              Array with all configured patterns
+     * @since                        1.1.0
+     * @todo    Figure out if there isnt an method in the dropdown object
+     *          that allows us to retrieve the reference table contents in
+     *          one itteration.            
+     */
+    private static function getFilterPatterns() : array
+    {
+        global $DB;
+        $patterns = [];
+        $dropdown = new FilterPattern();
+        $table = $dropdown::getTable();
+        foreach($DB->request($table) as $id => $row){
+            $patterns[] = ['name'               => $row['name'],
+                           'is_active'          => $row['is_active'],
+                           'date_creation'      => $row['date_creation'],
+                           'date_mod'           => $row['date_mod'],
+                           'TicketMatchString'  => $row['TicketMatchString'],
+                           'AssetMatchString'   => $row['AssetMatchString'],
+                           'SolvedMatchString'  => $row['SolvedMatchString'],
+                           'AutomaticallyMerge' => $row['AutomaticallyMerge'],
+                           'LinkClosedTickets'  => $row['LinkClosedTickets'],
+                           'SearchTicketBody'   => $row['SearchTicketBody'],
+                           'MatchSpecificSource'=> $row['MatchSpecificSource']];
+        }
+        return $patterns;
     }
 
     /**
