@@ -106,25 +106,25 @@ class FilterPattern extends CommonDropdown
                 'type'      => 'text',
                 'list'      => true,
             ],
-            [
+/*          [
                 'name'      => 'LinkClosedTickets',
                 'label'     => __('Link to closed source ticket', 'ticketfilter'),
                 'type'      => 'bool',
                 'list'      => true,
             ],
-            [
+*/          [
                 'name'      => 'AssetMatchString',
                 'label'     => __('Asset MatchString', 'ticketfilter'),
                 'type'      => 'text',
                 'list'      => true,
             ],
-            [
+/*          [
                 'name'      => 'AutomaticallyMerge',
                 'label'     => __('Automatically merge', 'ticketfilter'),
                 'type'      => 'bool',
                 'list'      => true,
             ],
-            [
+*/          [
                 'name'      => 'SolvedMatchString',
                 'label'     => __('Solved Matchstring', 'ticketfilter'),
                 'type'      => 'text',
@@ -184,7 +184,7 @@ class FilterPattern extends CommonDropdown
             'name'               => __('Solved Match String', 'ticketfilter'),
             'datatype'           => 'text',
         ];
-
+/*
         $tab[] = [
             'id'                 => '8',
             'table'              => $this->getTable(),
@@ -200,7 +200,7 @@ class FilterPattern extends CommonDropdown
             'name'               => __('Link To Closed Tickets', 'ticketfilter'),
             'datatype'           => 'text',
         ];
-
+*/
         $tab[] = [
             'id'                 => '9',
             'table'              => $this->getTable(),

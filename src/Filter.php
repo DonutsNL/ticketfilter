@@ -39,6 +39,7 @@
 namespace GlpiPlugin\Ticketfilter;
 
 use GlpiPlugin\Ticketfilter\FilterPattern;
+use CommonDBTM;
 use Ticket;
 use Session;
 use CommonITILObject;
@@ -48,27 +49,13 @@ use Throwable;
 use Toolbox;
 
 
-class Filter {
-    /**
-     * Array with match strings to locate foreign ticket identifiers and
-     * match them locally.
-     * @since           1.0.0
-     * @see             https://regex101.com/r/htaEx7/1             
-     */
-    public const MATCHPATERNS = ['/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/'];
-
-     /**
-     * Disable notifications?
-     * @since           1.0.0             
-     */
-    public const DISABLENOTIF = 1;
-    
+class Filter extends CommonDBTM {
     /**
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
      * 
      * @param  Ticket $item      Hooked Ticket object passed by refference.
-     * @return void  
+     * @return void              Object is passed by reference, no return values required
      * @since                    1.0.0
      * @see                      setup.php hook             
      */
@@ -97,19 +84,18 @@ class Filter {
                         if($reference->fields['status'] != CommonITILObject::CLOSED) {
                             // @todo: This link needs some work to generate FQDN
                             if(self::createFollowup($item, $reference) == true) {
-                                
-                                Session::addMessageAfterRedirect(__("<a href='/front/ticket.form.php?id=$key'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
+                                Session::addMessageAfterRedirect(__("<a href='".$reference->getLinkURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
                             }
                         } 
                     }
 
-                    // Empty $item->input and fields to stop object from being created
+                    // Clear $item->input and fields to stop object from being created
                     // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
                     self::emptyReferencedObject($item);
                 } 
-                return; // We got nothing
+                return; // ignore the hook
             } 
-            return;     //  ignore the hook
+            return;     // ignore the hook
         } 
         return;         // ignore the hook
     }
@@ -125,8 +111,8 @@ class Filter {
      */
     private static function emptyReferencedObject(Ticket $item) : void
     {
-        // We cancelled the ticketcreation so we need to manually 
-        // Clean the email from the mailBox 
+        // We cancelled the ticket creation and by doing so the mailgate will not clean the
+        // email from the mailbox. We need to clean it manually.  
         if(self::deleteEmail($item) == true) {
             Session::addMessageAfterRedirect(__("Ticket removed from mailbox, it is save to ignore any mailgate error"), true, WARNING);
         }
@@ -136,10 +122,10 @@ class Filter {
 
 
     /**
-     * Create a followup to be added to the referenced ticket
+     * Create a followup in the matching ticket using the processed ticket.
      * 
-     * @param  Ticket $item         The original ticket passed by the pre_item_add hook.
-     * @param  Ticket $reference    The matching ticket found using the patern. 
+     * @param  Ticket $item         The processed ticket passed by the pre_item_add hook.
+     * @param  Ticket $reference    The matching ticket found using the pattern. 
      * @return bool                 Returns true on success false on failure. 
      * @since                       1.0.0          
      */
@@ -155,7 +141,7 @@ class Filter {
             $input['itemtype']      = Ticket::class;
             // Do not create the element if we dont want
             // notifications to be send.
-            if (self::DISABLENOTIF) { $input['_disablenotif'] = self::DISABLENOTIF; }
+            $input['_disablenotif'] = true;
             // Unset some stuff
             unset($input['urgency']);
             unset($input['entities_id']);
@@ -172,9 +158,8 @@ class Filter {
     }
 
     /**
-     * Perform a match on the given matchString if found perform
-     * a search in the database and will try to perform a merge 
-     * operation.
+     * Perform a search in the glpi_tickets table using the searchString if one is found applying the 
+     * provided ticket match patterns from dropdown on the ticket name (email subject).
      * 
      * @param  string $ticketSubject    Ticket name containing the Subject
      * @return int                      Returns the ticket ID of the matching ticket or 0 on no match. 
@@ -194,7 +179,7 @@ class Filter {
             foreach($patterns as $k => $Filterpattern){
                 // Data fetched from DB includes tons of HTML entities that need cleaning.
                 $p = html_entity_decode($Filterpattern['TicketMatchString']);
-                if(preg_match_all("/$p/", $ticketSubject, $matchArray)){
+                if(preg_match_all("$p", $ticketSubject, $matchArray)){
                     // If we have a match, use it to compose a searchstring for our sql query.
                     $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
                     if($searchString){
