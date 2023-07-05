@@ -28,35 +28,40 @@ Example: https://regex101.com/r/htaEx7/1
 
 # Roadmap;
 1. WIP : Add configuration page
+    - Add extensive checks to validate user input en validate pattern correctness;
+    -     ^/ .... /$ delimiters should be present
+    -     ..(?<match>...) named match group should be present
+    -     .+ as singular pattern should not be allowed i.e. /(?<match>.+)/
+    -     .* as singular pattern should not be allowed i.e. /(?<match>.*)/  
     - Add check to validate pattern does not exist in ticket templates;
     - Add feature suggest / support button;
     - Add feature check (New features should not overlap with something that can be done using ticket business rules);
-2. Add option to automatically merge duplicates before matching;
-3. Add option to detect and change ticket status based on pattern ?&lt;status>;
-4. Add option to detect and link monitored assets based on pattern ?&lt;computer> ?&lt;device> ?&lt;etc>;
+3. Add option to automatically merge duplicates before matching;
+4. Add option to detect and change ticket status based on pattern ?&lt;status>;
+5. Add option to detect and link monitored assets based on pattern ?&lt;computer> ?&lt;device> ?&lt;etc>;
     - Option to automatically add asset (using template?) when missing in assets (might be usefull in Cloud environments);
     - Option to add special marker to automatically created assets for easy searches in assetmanagement;
-5. Add tests
+6. Add tests
     - Check for hard coded urls;
     - Check (unit test) base functions of plugin;
     - Check database consistancy;
     - Check version references in files;
     - Check copyright headers present;
-6. Add documentation on patterns, possible problems and assumptions
+7. Add documentation on patterns, possible problems and assumptions
     - /^([0-9]+?).*/
     - Assumptions on upstream handling
-7. Add ability to automatically link to close tickets while creating a new one;
-8. Document plugin behaviour on matching
+8. Add ability to automatically link to close tickets while creating a new one;
+9. Document plugin behaviour on matching
     - Matches all occurences and adds followups to all;
-9. Ability to also search for patterns in ticket body 
+10. Ability to also search for patterns in ticket body 
     - (consideration could have serious functional or performance impact i.e. a huge emailchain with multiple matches and objects)
-10. Ability to only search in tickets from specific source;
-11. Add additional debugging options (log match results);
-12. Add PHP version check in prereq (minimal 8.x);
-13. Add RegMatch availability in prereq;
-14. Add version check (against GIT)
+11. Ability to only search in tickets from specific source;
+12. Add additional debugging options (log match results);
+13. Add PHP version check in prereq (minimal 8.x);
+14. Add RegMatch availability in prereq;
+15. Add version check (against GIT)
     - Add convinient update button;
-15. Add ability to only add folowup to first (oldest date) or latest (last date) ticket occurrance when multiple are found instead of adding followup to all occurrances;
+16. Add ability to only add folowup to first (oldest date) or latest (last date) ticket occurrance when multiple are found instead of adding followup to all occurrances;
 
 # Do you like to plugin and want more?
 Buying me cafee is very motivational ☕
