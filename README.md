@@ -33,7 +33,7 @@ Ticketfilter uses regular expressions as patterns to be evaluated. These pattern
 * The expression should include the regex delimiters i.e. `/.../`
 * The following match all expressions should not be used `/(?<match>.*)/` or `/(?<match>.+)/`
 * Currently only the `TICKET MATCH STRING` configuration field is used, other fields are for future usage.
-* You are able totest you patterns by manually 
+* You are able to test you patterns by manually adding tickets with the configured pattern. 
 
 ## Do you like to plugin and want more
 
