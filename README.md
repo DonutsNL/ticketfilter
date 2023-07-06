@@ -1,24 +1,32 @@
-## _Match additional subject paterns to be added as followups_
+#  Ticketfilter
 
-In some scenario's upstream ticket systems or monitoring systems will be owning the origin ticket or asset state sending successive email updates to GLPI. In this scenario the required unique identifier that GLPI uses (i.e. [GLPI #000001]) will never be present. Instead an foreign identifier might be present in the subject. This causes GLPI to create new tickets for each update received by email cluttering the ticket pool. 
+> In some scenario's upstream ticket systems or monitoring systems will be owning the origin ticket or asset state sending successive email updates to GLPI. In this scenario the required unique identifier that GLPI uses (i.e. [GLPI #000001]) will never be present. Instead an foreign identifier might be present in the subject. This causes GLPI to create new tickets for each update received by email cluttering the ticket pool. 
 
-The TicketFilter plugin will allow you to add additional (foreign) paterns TicketFilter will try to match against existing tickets. If a match is found, TicketFilter will add the received email as followup in all tickets that contain the matched string. It will try to prevent notifications to be send to prevent email runaway issues.
+> The TicketFilter plugin will allow you to add additional (foreign) paterns TicketFilter will try to match against existing tickets. If a match is found, TicketFilter will add the received email as followup in all tickets that contain the matched string. It will try to prevent notifications to be send to prevent email runaway issues.
 
-How to install
-^^^^^^^^^^^^^^
+## How to install
 
-* Download the latest release from GitHub.
-* Rename the folder inside the zipfile to `ticketfilter` (i didnt strip the version... yet)
-* Copy the `ticketfilter` folder into the `GLPI_ROOT/marketplace/` folder.
-* Open the GLPI plugins page and install the `ticketfilter` plugin.
-* Click the `config` box or browse to `Setup > Dropdowns > Ticketfilter > Filterpatterns` to configure the patterns you want to match.
 
-What does the plugin do?
-^^^^^^^^^^^^^^^^^^^^^^^^
-Basically the plugin is referenced using a HOOK in the GLPI Ticket pre_item_add phase. In this phase the 'to be added' ticket is passed to the plugin. The plugin then reads the 'name' of the ticket (which is the Subject field of an email send tot GLPI) and tries to find ONE of the `TICKET MATCH STRING` patterns you configured. If it finds a pattern it will use the data found to perform a search in the ticket database for tickets with the same data in their names. If tickets with simular patterns are found, then these tickets are loaded and the new ticket is added as a new followup in each of the found tickets. The plugin will not discriminate these tickets and will simply add followups to all of them no matter what. When the followup is added, the creation of a new ticket is canceled and the originating email (if the mailgate was used to create the new ticket) is deleted from the mailbox. The matching algorithm will evaluate all match patterns configured in sequence and will stop evaluation when the first succesfull match is made. It will then work with that specific configuration. From this point forward all other configurations are ignored. 
+- Download the latest release from GitHub.
+- Rename the folder inside the zipfile to `ticketfilter` (i didnt strip the version... yet)
+- Copy the `ticketfilter` folder into the `GLPI_ROOT/marketplace/` folder.
+- Open the GLPI plugins page and install the `ticketfilter` plugin.
+- Click the `config` box or browse to `Setup > Dropdowns > Ticketfilter > Filterpatterns` to configure the patterns you want to match.
 
-How to create a pattern?
-^^^^^^^^^^^^^^^^^^^^^^^^
+## What does the plugin do?
+
+Basically the plugin is referenced using a so called hook during the GLPI Ticket pre_item_add phase. In this phase the 'to be added' ticket is passed to the plugin. 
+
+The plugin then reads the `name` of the ticket (which is the Subject field of an email send tot GLPI) and tries to match the `TICKET MATCH STRING` patterns you configured. If it finds a pattern it will use the data corresponding with the pattern to perform a search in the ticket database for tickets with the same pattern in their names.
+
+The matching algorithm will evaluate** all **match patterns configured in sequence and **will stop evaluation** when the first succesfull match is made. It will then work with that specific configuration. From this point onward all other configurations are ignored.
+
+If tickets with simular patterns are found, then these tickets are loaded and the new ticket is **added as a new followup** in **each of the found tickets**. The plugin will not discriminate these tickets and will simply add followups to all of them no matter what the state or status. 
+
+When the followup is added succesfully, the creation of a new ticket is canceled and the originating email (if the mailgate was used to create the new ticket) is deleted from the mailbox.
+
+## How to create a pattern?
+
 Ticketfilter uses regular expressions as patterns to be evaluated. These patterns can be created and tested using https://regex101.com/r/htaEx7/1. This link also includes an example to work from. Please consider the following:
 
 * The expression used MUST include a named matchgroup called 'match' i.e. `...(?<match>PATTERN)...`
@@ -27,8 +35,8 @@ Ticketfilter uses regular expressions as patterns to be evaluated. These pattern
 * Currently only the `TICKET MATCH STRING` configuration field is used, other fields are for future usage.
 * You are able totest you patterns by manually 
 
-Do you like to plugin and want more
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+## Do you like to plugin and want more
+
 Buying me cafee is very motivational ☕
 https://www.buymeacoffee.com/DonutsNL
 or
@@ -38,13 +46,11 @@ Assign me some 💫 stars here and on the plugin page for my stargazer achieveme
 
 Thank you in advance! 
 
-Uncertainties and possible issues
-+++++++++++++++++++++++++++++++++
+## Uncertainties and possible issues
 1.  This plugin has not been tested with recurring tickets (that contain the matchstring) and will prob break the recurring ticket creation proces.
 2.  The current version of the plugin does require you to manually alter a provided PHP file, if it breaks redownload the plugin and start over.
 
-Roadmap
-+++++++
+## Roadmap
 1. WIP : Add configuration page
     - Add extensive checks to validate user input en validate pattern correctness;
     -     ^/ .... /$ delimiters should be present
