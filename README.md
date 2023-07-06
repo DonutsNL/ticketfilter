@@ -11,7 +11,7 @@
 - Rename the folder inside the zipfile to `ticketfilter` (i didnt strip the version... yet)
 - Copy the `ticketfilter` folder into the `GLPI_ROOT/marketplace/` folder.
 - Open the GLPI plugins page and install the `ticketfilter` plugin.
-- Click the `config` box or browse to `Setup > Dropdowns > Ticketfilter > Filterpatterns` to configure the patterns you want to match.
+- Click the `config` box or browse to `Setup > Dropdowns > Ticketfilter > Filterpatterns` to configure the patterns you want ticketfilter to match.
 
 ## What does the plugin do?
 
