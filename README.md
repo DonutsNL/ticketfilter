@@ -37,10 +37,9 @@ Ticketfilter uses regular expressions as patterns to be evaluated. These pattern
 
 ## Do you like to plugin and want more
 
-Buying me cafee is very motivational ☕
+Buying me caffee is very motivational ☕
 https://www.buymeacoffee.com/DonutsNL
-or
-Assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
+or assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
 
 * Use the issues to suggest new features or help me prioritize
 
