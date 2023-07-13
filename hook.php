@@ -26,36 +26,63 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	   TicketFilter
- *  @version	   1.0.0
+ *  @version	   1.1.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
- *  @license   	MIT
+ *  @license   	GPLv2+
  *  @see       	https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		   https://github.com/DonutsNL/ticketfilter
  *  @since     	0.1
  * ------------------------------------------------------------------------
  **/
 
+use GlpiPlugin\Ticketfilter\FilterPattern;
+
+/**
+ * Make plugin dropdown visible in the dropdowns menu.
+ * @return boolean
+ * test
+ */
+// phpcs:ignore PSR1.Function.CamelCapsMethodName
+function plugin_ticketfilter_getDropdown() : array 
+{
+   return [FilterPattern::class => __("Filterpatterns", 'ticketfilter')];
+}
+
+
 /**
  * Summary of plugin_ticketFilter install
  * @return boolean
  * test
  */
-function plugin_ticketfilter_install() : bool 
+// phpcs:ignore PSR1.Function.CamelCapsMethodName
+function plugin_ticketfilter_install() : bool
 {
+
+   if (method_exists(FilterPattern::class, 'install')) {
+      $version   = plugin_version_ticketfilter();
+      $migration = new Migration($version['version']);
+      FilterPattern::install($migration);
+   }
    return true;
+   
 }
 
 
 /**
+ * 
  * Summary of plugin_ticketFilter uninstall
  * @return boolean
  */
+// phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_uninstall() : bool
 {
-
-   // nothing to uninstall
-   // do not delete table
-
+   
+   if (method_exists(FilterPattern::class, 'uninstall')) {
+      $version   = plugin_version_ticketfilter();
+      $migration = new Migration($version['version']);
+      FilterPattern::uninstall($migration);
+   }
    return true;
+
 }

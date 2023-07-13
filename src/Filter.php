@@ -26,20 +26,20 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	    TicketFilter
- *  @version	    1.0.0
+ *  @version	    1.1.0
  *  @author         Chris Gralike
  *  @copyright 	    Copyright (c) 2023 by Chris Gralike
- *  @license    	MIT
+ *  @license    	GPLv2+
  *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		    https://github.com/DonutsNL/ticketfilter
- *  @since     	    1.0.0
- *  @todo           Keep it stupid simple!
+ *  @since     	    1.0.1
  * ------------------------------------------------------------------------
  **/
 
-namespace GlpiPlugin\TicketFilter;
+namespace GlpiPlugin\Ticketfilter;
 
-// use Config; todo: write a nice config page to administer the patterns
+use GlpiPlugin\Ticketfilter\FilterPattern;
+use CommonDBTM;
 use Ticket;
 use Session;
 use CommonITILObject;
@@ -48,29 +48,16 @@ use MailCollector;
 use Throwable;
 use Toolbox;
 
-class Filter {
-    /**
-     * Array with match strings to locate foreign ticket identifiers and
-     * match them locally.
-     * @since           1.0.0
-     * @see             https://regex101.com/r/htaEx7/1             
-     */
-    public const MATCHPATERNS = ['/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/',
-                                 '/.*?(?<match>\(CITI-[0-9]{1,4}\)).*/'];
 
-     /**
-     * Disable notifications?
-     * @since           1.0.0             
-     */
-    public const DISABLENOTIF = 1;
-    
+class Filter extends CommonDBTM {
     /**
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
      * 
      * @param  Ticket $item      Hooked Ticket object passed by refference.
-     * @return void  
-     * @since                    1.0.0             
+     * @return void              Object is passed by reference, no return values required
+     * @since                    1.0.0
+     * @see                      setup.php hook             
      */
     public static function PreItemAdd(Ticket $item) : void 
     {
@@ -80,14 +67,14 @@ class Filter {
                && key_exists('name', $item->input)     // Name key (that is the Subject of the email) should exist.
                && !empty($item->input['name'])) {      // Name should not be emtpy, could happen with recurring tickets.
                  
-                
-                // Search our pattern in the name field and find corresponding ticket (if any).
-                $matches = self::searchForMatches($item->input['name']);
-                if(is_array($matches)               // Should be an array (always)
-                   && count($matches) >= 1) {       // Should have at least 1 element
+                // Search our pattern in the name field and find corresponding ticket(s) (if any).
+                $matches = self::searchForNameMatches($item->input['name']);
+                if(is_array($matches['tickets'])                // Should be an array (always)
+                   && count($matches['tickets']) >= 1           // Should have at least 1 element
+                   && is_array($matches['filterpattern'])) {    // The matching pattern should be present   
                           
-
-                    foreach($matches as $key)       // Add followups to all matching non closed tickets
+                    // Add followups to each matching tickets
+                    foreach($matches['tickets'] as $key)       
                     {
                         // Fetch found ticket.
                         $reference = new Ticket();
@@ -95,23 +82,22 @@ class Filter {
 
                         // Is found ticket closed? if so do nothing.
                         if($reference->fields['status'] != CommonITILObject::CLOSED) {
-                   
+                            // @todo: This link needs some work to generate FQDN
                             if(self::createFollowup($item, $reference) == true) {
-                                Session::addMessageAfterRedirect(__("<a href='https://mc.trippie.fun/glpi/front/ticket.form.php?id=$key'>Ticket was matched by to open ticket: $key and was added as a followup</a>"), true, INFO);
+                                Session::addMessageAfterRedirect(__("<a href='".$reference->getLinkURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
                             }
                         } 
                     }
 
-                    // Clean the original ticket to stop creation
+                    // Clear $item->input and fields to stop object from being created
                     // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
                     self::emptyReferencedObject($item);
-                }   // maybe add merge operation in the future if more then 1 open ticket was found.
-                // We got nothing
-                return;
-            } //  ignore the hook
-            return;
-        } // ignore the hook
-        return;
+                } 
+                return; // ignore the hook
+            } 
+            return;     // ignore the hook
+        } 
+        return;         // ignore the hook
     }
     
 
@@ -125,8 +111,8 @@ class Filter {
      */
     private static function emptyReferencedObject(Ticket $item) : void
     {
-        // We cancelled the ticketcreation so we need to manually 
-        // Clean the email from the mailBox 
+        // We cancelled the ticket creation and by doing so the mailgate will not clean the
+        // email from the mailbox. We need to clean it manually.  
         if(self::deleteEmail($item) == true) {
             Session::addMessageAfterRedirect(__("Ticket removed from mailbox, it is save to ignore any mailgate error"), true, WARNING);
         }
@@ -136,10 +122,10 @@ class Filter {
 
 
     /**
-     * Create a followup to be added to the referenced ticket
+     * Create a followup in the matching ticket using the processed ticket.
      * 
-     * @param  Ticket $item         The original ticket passed by the pre_item_add hook.
-     * @param  Ticket $reference    The matching ticket found using the patern. 
+     * @param  Ticket $item         The processed ticket passed by the pre_item_add hook.
+     * @param  Ticket $reference    The matching ticket found using the pattern. 
      * @return bool                 Returns true on success false on failure. 
      * @since                       1.0.0          
      */
@@ -149,12 +135,13 @@ class Filter {
             // Populate Followup fields
             $input                  = $item->input;
             $input['items_id']      = $reference->fields['id'];
+            $input['users_id']      = false;
             $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
             $input['add_reopen']    = 1;
             $input['itemtype']      = Ticket::class;
             // Do not create the element if we dont want
             // notifications to be send.
-            if (self::DISABLENOTIF) { $input['_disablenotif'] = self::DISABLENOTIF; }
+            $input['_disablenotif'] = true;
             // Unset some stuff
             unset($input['urgency']);
             unset($input['entities_id']);
@@ -171,49 +158,97 @@ class Filter {
     }
 
     /**
-     * Perform a match on the given matchString if found perform
-     * a search in the database and will try to perform a merge 
-     * operation.
+     * Perform a search in the glpi_tickets table using the searchString if one is found applying the 
+     * provided ticket match patterns from dropdown on the ticket name (email subject).
      * 
      * @param  string $ticketSubject    Ticket name containing the Subject
      * @return int                      Returns the ticket ID of the matching ticket or 0 on no match. 
      * @since                           1.0.0            
      */
-    private static function searchForMatches(string $ticketSubject) : array
+    private static function searchForNameMatches(string $ticketSubject) : array
     {
         global $DB;
-        // We assume that the name always only contains one pattern and return the first matching one.
-        foreach(self::MATCHPATERNS as $matchPatern){
-            if(preg_match_all($matchPatern, $ticketSubject, $matchArray)){
-                $matchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
-                if($matchString){
-                    foreach($DB->request(
-                        'glpi_tickets',
-                        [
-                            'AND' =>
+        // Get the patterns if any;
+        $patterns = self::getFilterPatterns();
+
+        if(is_array($patterns)
+        && count($patterns) >= 1
+        && array_key_exists('TicketMatchString', $patterns['0']))
+        {
+            // We assume that the name always only contains one pattern and return the first matching one.
+            foreach($patterns as $k => $Filterpattern){
+                // Data fetched from DB includes tons of HTML entities that need cleaning.
+                $p = html_entity_decode($Filterpattern['TicketMatchString']);
+                if(preg_match_all("$p", $ticketSubject, $matchArray)){
+                    // If we have a match, use it to compose a searchstring for our sql query.
+                    $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
+                    if($searchString){
+                        foreach($DB->request(
+                            'glpi_tickets',
                             [
-                                'name'       => ['LIKE', $matchString],
-                                'is_deleted' => ['=', 0]
+                                'AND' =>
+                                [
+                                    'name'       => ['LIKE', $searchString],
+                                    'is_deleted' => ['=', 0]
+                                ]
                             ]
-                        ]
-                    ) as $id => $row) {
-                        $r[]=$id;
+                        ) as $id => $row) {
+                            $r[]=$id;
+                        }
+                        // If we find tickets using our matchString then return
+                        // stop processing, return tickets and the matching
+                        // Filterpattern configuration. 
+                        if(is_array($r)
+                        && count($r) > 0) {
+                            return ['tickets' => $r,
+                                    'filterpattern' => $Filterpattern];
+                        }
                     }
-                    if(is_array($r)
-                       && count($r) > 0) {
-                        return $r;
-                    }
+
                 }
-            }
+            }               
+        } else {
+            trigger_error("No ticketfilter patterns found, please configure them or disable the plugin", E_USER_NOTICE);
         }
         return [];
+    }
+
+    /**
+     * Get match patterns and config from dropdowns
+     *   
+     * @return patterns              Array with all configured patterns
+     * @since                        1.1.0
+     * @todo    Figure out if there isnt an method in the dropdown object
+     *          that allows us to retrieve the reference table contents in
+     *          one itteration.            
+     */
+    private static function getFilterPatterns() : array
+    {
+        global $DB;
+        $patterns = [];
+        $dropdown = new FilterPattern();
+        $table = $dropdown::getTable();
+        foreach($DB->request($table) as $id => $row){
+            $patterns[] = ['name'               => $row['name'],
+                           'is_active'          => $row['is_active'],
+                           'date_creation'      => $row['date_creation'],
+                           'date_mod'           => $row['date_mod'],
+                           'TicketMatchString'  => $row['TicketMatchString'],
+                           'AssetMatchString'   => $row['AssetMatchString'],
+                           'SolvedMatchString'  => $row['SolvedMatchString'],
+                           'AutomaticallyMerge' => $row['AutomaticallyMerge'],
+                           'LinkClosedTickets'  => $row['LinkClosedTickets'],
+                           'SearchTicketBody'   => $row['SearchTicketBody'],
+                           'MatchSpecificSource'=> $row['MatchSpecificSource']];
+        }
+        return $patterns;
     }
 
     /**
      * Returns a connected mailCollector object or []
      * 
      * @param  int $Id               Mail Collector ID   
-     * @return MailCollector|null    Union return type might be problematic with older php versions.  
+     * @return MailCollector|null    Union return types might be problematic with older php versions.  
      * @since                        1.0.0  
      * @todo                         Move to separate non static Match class           
      */

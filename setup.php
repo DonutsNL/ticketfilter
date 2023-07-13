@@ -25,22 +25,22 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	   TicketFilter
- *  @version	   1.0.0
+ *  @version	   1.1.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
- *  @license   	MIT
+ *  @license   	GPLv2+
  *  @see       	https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		   https://github.com/DonutsNL/ticketfilter
- *  @since     	0.1
+ *  @since     	1.0
  * ------------------------------------------------------------------------
  **/
-
 use Glpi\Plugin\Hooks;
-use GlpiPlugin\TicketFilter\Filter;
+use GlpiPlugin\Ticketfilter\Filter;
+use GlpiPlugin\Ticketfilter\Filterpattern;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
-define('PLUGIN_TICKETFILTER_VERSION', '1.0.0');
+define('PLUGIN_TICKETFILTER_VERSION', '1.1.0');
 define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
 define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
@@ -49,22 +49,21 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
  *
  * @return void
  */
-function plugin_init_ticketfilter() : void {
+function plugin_init_ticketfilter() : void
+{
    global $PLUGIN_HOOKS;
 
    Plugin::registerClass(Filter::class);
-   // Nasty workaround for classfile not being included by registerClass().
-   if(!class_exists(Filter::class)){
-      $include = pathinfo(__file__)['dirname'].'/src/Filter.class.php';
-      require_once($include);
-   }
+   Plugin::registerClass(FilterPattern::class);
+
+   // Config page: redirect to filterpatterns dropdown page
+   $PLUGIN_HOOKS['config_page']['ticketfilter'] = 'front/filterpattern.php';
 
    // State this plugin cross-site request forgery compliant
    $PLUGIN_HOOKS['csrf_compliant']['ticketfilter'] = true;
 
    // Add hook (callback) on the PRE_ITEM_ADD event.
-   // We assume that only new tickets are potential duplicates if the
-   // source ticket system is not adding the GLPI identifier.
+   // All new tickets are to be evaluated no matter the source.
    $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
       Ticket::class       => [Filter::class, 'PreItemAdd']
    ];
@@ -72,17 +71,18 @@ function plugin_init_ticketfilter() : void {
 
 
 /**
- * Get the name and the version of the plugin
+ * Returns the name and the version of the plugin
  *
  * @return array
  */
-function plugin_version_ticketfilter() : array{
+function plugin_version_ticketfilter() : array
+{
    return [
-      'name'           => 'Plugin TICKETFILTER',
+      'name'           => 'Ticketfilter',
       'version'        => PLUGIN_TICKETFILTER_VERSION,
-      'author'         => 'TICKETFILTER plugin team',
+      'author'         => 'Chris Gralike',
       'license'        => 'GPLv2+',
-      'homepage'       => '',
+      'homepage'       => 'https://github.com/DonutsNL/ticketfilter',
       'requirements'   => [
          'glpi' => [
             'min' => PLUGIN_TICKETFILTER_MIN_GLPI,
@@ -97,7 +97,8 @@ function plugin_version_ticketfilter() : array{
  * Check pre-requisites before install
  * @return boolean
  */
-function plugin_ticketfilter_check_prerequisites() : bool {
+function plugin_ticketfilter_check_prerequisites() : bool
+{
    if (false) {
       return false;
    }
@@ -110,7 +111,8 @@ function plugin_ticketfilter_check_prerequisites() : bool {
  * @param boolean $verbose Whether to display message on failure. Defaults to false
  * @return boolean
  */
-function plugin_ticketfilter_check_config($verbose = false) : bool {
+function plugin_ticketfilter_check_config($verbose = false) : bool
+{
    if (true) { // Your configuration check
       return true;
    }

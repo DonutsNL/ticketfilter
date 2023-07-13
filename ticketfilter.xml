@@ -1,0 +1,59 @@
+<root>
+<name>Ticket Filter</name>
+<key>ticketfilter</key>
+<state>stable</state> <!-- stable | unstable | beta | alpha -->
+<logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/donut.png</logo>
+<description>
+    <short>
+        <en>The TicketFilter plugin will allow you to add additional (foreign) paterns that 
+            TicketFilter will try to match against existing tickets. If a match is found, 
+            TicketFilter will add the received email as followup in all tickets that contain 
+            the matched string. It will try to prevent notifications to be send to prevent email 
+            runaway issues.</en>
+    </short>
+    <long>
+        <en>In some scenario's upstream ticket systems or monitoring systems 
+            will be owning the origin ticket or asset state sending successive 
+            email updates to GLPI. In this scenario the required GLPI identifier 
+            (i.e. [GLPI #000001]) is most likely missing. Instead an foreign identifier 
+            might be present in the subject. This causes GLPI to create new tickets for 
+            each update that is received by email cluttering the ticket pool with duplicates. 
+            Ticketfilter uses expressions to automatically add tickets with matching patterns 
+            as a ticket followup instead of creating new ones. More features (like automatic asset matching)
+            planned. 
+        </en>
+    </long>
+</description>
+<homepage>https://github.com/DonutsNL/ticketfilter</homepage>
+<download>https://github.com/DonutsNL/ticketfilter/releases/tag/Stable</download>
+<issues>https://github.com/DonutsNL/ticketfilter/issues</issues>
+<readme>https://github.com/DonutsNL/ticketfilter/blob/Stable/README.md</readme>
+<authors>
+    <author>Chris Gralike</author>
+</authors>
+<versions>
+    <version>
+        <num>1.1.0</num>
+        <compatibility>~10.0.7</compatibility>
+        <download_url>https://github.com/DonutsNL/ticketfilter/</download_url>
+    </version>
+</versions>
+<langs>
+    <lang>en_GB</lang>
+</langs>
+<license>GPLv2+</license>
+<tags>
+     <fr>
+         <tag>Ticket</tag>
+         <tag>Helpdesk</tag>
+      </fr>
+      <en>
+         <tag>Ticket</tag>
+         <tag>Helpdesk</tag>
+      </en>
+</tags>
+<screenshots>
+      <screenshot>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/TicketFilter_scr1.png</screenshot>
+      <screenshot>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/TicketFilter_scr2.png</screenshot>
+   </screenshots>
+</root>
