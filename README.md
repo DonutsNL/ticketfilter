@@ -4,6 +4,7 @@
 
 > The TicketFilter plugin will allow you to add additional (foreign) paterns TicketFilter will try to match against existing tickets. If a match is found, TicketFilter will add the received email as followup in all tickets that contain the matched string. It will try to prevent notifications to be send to prevent email runaway issues.
 
+
 ## How to install
 
 
@@ -84,4 +85,3 @@ Thank you in advance!
 15. Add version check (against GIT)
     - Add convinient update button;
 16. Add ability to only add folowup to first (oldest date) or latest (last date) ticket occurrance when multiple are found instead of adding followup to all occurrances;
-
