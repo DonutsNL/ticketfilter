@@ -1,6 +1,15 @@
 {
     "name": "donutsnl/ticketfilter",
     "description": "Searches for foreign identifiers and merge tickets using these identifiers",
+    "license": "GPL-3.0-or-later",
     "require": {
     }
+    "authors": [
+        {
+            "name": "Chris Gralike",
+            "email": "",
+            "homepage": "https://github.com/DonutsNL/",
+            "role": "Developer"
+        },
+    ]
 }
