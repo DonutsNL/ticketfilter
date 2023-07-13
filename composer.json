@@ -12,9 +12,4 @@
             "role": "Developer"
         }
     ],
-     "scan-files": [
-        "front/**/*.php",
-        "src/**/*.php",
-        "/*.php"
-    ]
 }
