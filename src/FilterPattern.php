@@ -45,6 +45,25 @@ use Config;
 
 class FilterPattern extends CommonDropdown
 {
+
+    /**
+     * Table fields
+     */
+    const NAME              = 'name';
+    const ACTIVE            = 'is_active';
+    const DATE_CREATION     = 'date_creation';
+    const DATE_MOD          = 'date_mod';
+    const TICKETMATCHSTR    = 'TicketMatchString';
+    const TICKETMATCHSTRLEN = 'TicketMatchStringLength';
+    const ASSETMATCHSTR     = 'AssetMatchString';
+    const ASSETMATCHSTRLEN  = 'AssetMatchStringLenght';
+    const SOLVEDMATCHSTR    = 'SolvedMatchString';
+    const SOLVEDMATCHSTRLEN = 'SolvedMatchStringLength';
+    const AUTOMERGE         = 'AutomaticallyMerge';
+    const LINKCLOSED        = 'LinkClosedTickets';
+    const SEARCHBODY        = 'SearchTicketBody';
+    const MATCHSOURCE       = 'MatchSpecificSource';
+
      /**
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
@@ -239,6 +258,40 @@ class FilterPattern extends CommonDropdown
         return $tab;
     }
     
+    /**
+     * Get match patterns and config from dropdowns
+     *
+     * @return patterns              Array with all configured patterns
+     * @since                        1.1.0
+     * @todo    Figure out if there isnt an method in the dropdown object
+     *          that allows us to retrieve the reference table contents in
+     *          one itteration.
+     */
+    public static function getFilterPatterns() : array
+    {
+        global $DB;
+        $patterns = [];
+        $dropdown = new FilterPattern();
+        $table = $dropdown::getTable();
+        foreach($DB->request($table) as $id => $row){
+            $patterns[] = [self::NAME                => $row[self::NAME],
+                           self::ACTIVE              => $row[self::ACTIVE],
+                           self::DATE_CREATION       => $row[self::DATE_CREATION],
+                           self::DATE_MOD            => $row[self::DATE_MOD],
+                           self::TICKETMATCHSTR      => $row[self::TICKETMATCHSTR],
+                           self::TICKETMATCHSTRLEN   => $row[self::TICKETMATCHSTRLEN],
+                           self::ASSETMATCHSTR       => $row[self::ASSETMATCHSTR],
+                           self::ASSETMATCHSTRLEN    => $row[self::ASSETMATCHSTRLEN],
+                           self::SOLVEDMATCHSTR      => $row[self::SOLVEDMATCHSTR],
+                           self::SOLVEDMATCHSTRLEN   => $row[self::SOLVEDMATCHSTRLEN],
+                           self::AUTOMERGE           => $row[self::AUTOMERGE],
+                           self::LINKCLOSED          => $row[self::LINKCLOSED],
+                           self::SEARCHBODY          => $row[self::SEARCHBODY],
+                           self::MATCHSOURCE         => $row[self::MATCHSOURCE]];
+        }
+        return $patterns;
+    }
+
     /**
      * Install table needed for dropdowns
      * 
