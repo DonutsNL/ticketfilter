@@ -43,6 +43,7 @@ use CommonDBTM;
 use Ticket;
 use Session;
 use CommonITILObject;
+use Exception;
 use ITILFollowup;
 use MailCollector;
 use Throwable;
@@ -68,7 +69,7 @@ class Filter extends CommonDBTM {
                && !empty($item->input['name'])) {      // Name should not be emtpy, could happen with recurring tickets.
                  
                 // Search our pattern in the name field and find corresponding ticket(s) (if any).
-                $matches = self::searchForNameMatches($item->input['name']);
+                $matches = self::searchForTicketMatches($item->input['name']);
                 if(is_array($matches['tickets'])                // Should be an array (always)
                    && count($matches['tickets']) >= 1           // Should have at least 1 element
                    && is_array($matches['filterpattern'])) {    // The matching pattern should be present   
@@ -165,7 +166,7 @@ class Filter extends CommonDBTM {
      * @return int                      Returns the ticket ID of the matching ticket or 0 on no match. 
      * @since                           1.0.0            
      */
-    private static function searchForNameMatches(string $ticketSubject) : array
+    private static function searchForTicketMatches(string $ticketSubject) : array
     {
         global $DB;
         // Get the patterns if any;
@@ -176,35 +177,49 @@ class Filter extends CommonDBTM {
         && array_key_exists('TicketMatchString', $patterns['0']))
         {
             // We assume that the name always only contains one pattern and return the first matching one.
-            foreach($patterns as $k => $Filterpattern){
-                // Data fetched from DB includes tons of HTML entities that need cleaning.
-                $p = html_entity_decode($Filterpattern['TicketMatchString']);
-                if(preg_match_all("$p", $ticketSubject, $matchArray)){
-                    // If we have a match, use it to compose a searchstring for our sql query.
-                    $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
-                    if($searchString){
-                        foreach($DB->request(
-                            'glpi_tickets',
-                            [
-                                'AND' =>
-                                [
-                                    'name'       => ['LIKE', $searchString],
-                                    'is_deleted' => ['=', 0]
-                                ]
-                            ]
-                        ) as $id => $row) {
-                            $r[]=$id;
-                        }
-                        // If we find tickets using our matchString then return
-                        // stop processing, return tickets and the matching
-                        // Filterpattern configuration. 
-                        if(is_array($r)
-                        && count($r) > 0) {
-                            return ['tickets' => $r,
-                                    'filterpattern' => $Filterpattern];
-                        }
-                    }
+            foreach($patterns as $k => $Filterpattern)
+            {
 
+                // If pattern is active process
+                if($Filterpattern['is_active']) {
+
+                    // decode html_entities_encoded string from database.
+                    $p = html_entity_decode($Filterpattern['TicketMatchString']);
+                    if(preg_match_all("$p", $ticketSubject, $matchArray)) {
+
+                        // If we have a match, use it to compose a searchstring for our sql query.
+                        $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
+                        if($searchString){
+
+                            // Protect against SQL injections validate length is
+                            // equal to what we expect it to be.
+                            if(strlen($searchString) <= $Filterpattern['TicketMatchStringLength']) {
+                                foreach($DB->request(
+                                    'glpi_tickets',
+                                    [
+                                        'AND' =>
+                                        [
+                                            'name'       => ['LIKE', $searchString],
+                                            'is_deleted' => ['=', 0]
+                                        ]
+                                    ]
+                                ) as $id => $row) {
+                                    $r[]=$id;
+                                }
+                                // If we find tickets using our matchString then return
+                                // stop processing, return tickets and the matching
+                                // Filterpattern configuration. 
+                                if(is_array($r)
+                                && count($r) > 0) {
+                                    return ['tickets' => $r,
+                                            'filterpattern' => $Filterpattern];
+                                }
+                            } else {
+                                Session::addMessageAfterRedirect('Searchstring length was longer then configured Ticket Match String Length');
+                            }
+                        }
+
+                    }
                 }
             }               
         } else {
@@ -229,17 +244,20 @@ class Filter extends CommonDBTM {
         $dropdown = new FilterPattern();
         $table = $dropdown::getTable();
         foreach($DB->request($table) as $id => $row){
-            $patterns[] = ['name'               => $row['name'],
-                           'is_active'          => $row['is_active'],
-                           'date_creation'      => $row['date_creation'],
-                           'date_mod'           => $row['date_mod'],
-                           'TicketMatchString'  => $row['TicketMatchString'],
-                           'AssetMatchString'   => $row['AssetMatchString'],
-                           'SolvedMatchString'  => $row['SolvedMatchString'],
-                           'AutomaticallyMerge' => $row['AutomaticallyMerge'],
-                           'LinkClosedTickets'  => $row['LinkClosedTickets'],
-                           'SearchTicketBody'   => $row['SearchTicketBody'],
-                           'MatchSpecificSource'=> $row['MatchSpecificSource']];
+            $patterns[] = ['name'                    => $row['name'],
+                           'is_active'               => $row['is_active'],
+                           'date_creation'           => $row['date_creation'],
+                           'date_mod'                => $row['date_mod'],
+                           'TicketMatchString'       => $row['TicketMatchString'],
+                           'TicketMatchStringLength' => $row['TicketMatchStringLength'],
+                           'AssetMatchString'        => $row['AssetMatchString'],
+                           'AssetMatchStringLength'  => $row['TicketMatchStringLength'],
+                           'SolvedMatchString'       => $row['SolvedMatchString'],
+                           'SolvedMatchStringLength' => $row['TicketMatchStringLength'],
+                           'AutomaticallyMerge'      => $row['AutomaticallyMerge'],
+                           'LinkClosedTickets'       => $row['LinkClosedTickets'],
+                           'SearchTicketBody'        => $row['SearchTicketBody'],
+                           'MatchSpecificSource'     => $row['MatchSpecificSource']];
         }
         return $patterns;
     }
