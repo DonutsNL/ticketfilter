@@ -63,6 +63,7 @@ class FilterPattern extends CommonDropdown
     const LINKCLOSED        = 'LinkClosedTickets';
     const SEARCHBODY        = 'SearchTicketBody';
     const MATCHSOURCE       = 'MatchSpecificSource';
+    const SUPPRESNOTIF      = 'SuppressNotification';
 
      /**
      * Method called by pre_item_add hook validates the object and passes
@@ -288,13 +289,14 @@ class FilterPattern extends CommonDropdown
                            self::AUTOMERGE           => $row[self::AUTOMERGE],
                            self::LINKCLOSED          => $row[self::LINKCLOSED],
                            self::SEARCHBODY          => $row[self::SEARCHBODY],
-                           self::MATCHSOURCE         => $row[self::MATCHSOURCE]];
+                           self::MATCHSOURCE         => $row[self::MATCHSOURCE],
+                           self::SUPPRESNOTIF        => $row[self::SUPPRESNOTIF]];
         }
         return $patterns;
     }
 
     /**
-     * Install table needed for dropdowns
+     * Install table needed for Ticket Filter configuration dropdowns
      * 
      * @return void
      * @see             hook.php:plugin_ticketfilter_install()  
@@ -341,8 +343,8 @@ class FilterPattern extends CommonDropdown
 
             // insert example rule;
             $query = <<<SQL
-            INSERT INTO `$table`(name, comment, is_active, TicketMatchString) 
-            VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/');
+            INSERT INTO `$table`(name, comment, is_active, TicketMatchString, TicketMatchStringLength) 
+            VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/', '11');
             SQL;
             $DB->query($query) or die($DB->error());
         }       

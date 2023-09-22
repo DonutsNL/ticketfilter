@@ -39,18 +39,15 @@
 namespace GlpiPlugin\Ticketfilter;
 
 use GlpiPlugin\Ticketfilter\FilterPattern;
+use GlpiPlugin\Ticketfilter\TicketHandler;
 use Ticket;
 use Session;
 use CommonITILObject;
-use ITILFollowup;
 use MailCollector;
 use Throwable;
 use Toolbox;
 
-
 class Filter {
-
-
     /**
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
@@ -70,23 +67,28 @@ class Filter {
 
                 // Search our pattern in the name field and find corresponding ticket(s) (if any)
                 $matches = self::searchForTicketMatches($item->input['name']);
+
                 if(is_array($matches['tickets'])                // Should be an array (always)
                    && count($matches['tickets']) >= 1           // Should have at least 1 element
                    && is_array($matches['filterpattern'])) {    // The matching pattern should be present
 
-                    // Add followups to each matching tickets
+                    // Loop through each of the matched tickets
                     foreach($matches['tickets'] as $key)
                     {
-                        // Fetch found ticket.
-                        $reference = new Ticket();
-                        $reference->getFromDB((integer) $key);
+                        // Initialize the ticketHandler.
+                        $handler = new TicketHandler();
+                        $handler->initHandler($key, $matches['filterpattern']);
 
                         // Is found ticket closed? if so do nothing.
-                        if($reference->fields['status'] != CommonITILObject::CLOSED) {
+                        if($handler->getStatus() != CommonITILObject::CLOSED) {
                             // @todo: This link needs some work to generate FQDN
-                            if(self::createFollowup($item, $reference) == true) {
-                                Session::addMessageAfterRedirect(__("<a href='".$reference->getLinkURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
+                            if ( $handler->linkAsFollowup($item) ) {
+                                Session::addMessageAfterRedirect(__("<a href='".$handler->getTicketURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
+                            } else {
+                                Session::addMessageAfterRedirect(__("Unable to add notification"), true, WARNING);
                             }
+                        }else{
+
                         } 
                     }
 
@@ -98,7 +100,6 @@ class Filter {
         }
     }
     
-
     /**
      * Clean the referenced item and delete any mailbox items remaining
      *
@@ -116,43 +117,6 @@ class Filter {
         }
         $item->input = false;
         $item->fields = false;
-    }
-
-
-    /**
-     * Create a followup in the matching ticket using the processed ticket.
-     *
-     * @param  Ticket $item         The processed ticket passed by the pre_item_add hook.
-     * @param  Ticket $reference    The matching ticket found using the pattern.
-     * @return bool                 Returns true on success false on failure.
-     * @since                       1.0.0
-     */
-    private static function createFollowup(Ticket $item, Ticket $reference) : bool
-    {
-        if($ticketFollowup = new ITILFollowup()) {
-            // Populate Followup fields
-            $input                  = $item->input;
-            $input['items_id']      = $reference->fields['id'];
-            $input['users_id']      = false;
-            $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
-            $input['add_reopen']    = 1;
-            $input['itemtype']      = Ticket::class;
-            // Do not create the element if we dont want
-            // notifications to be send.
-            $input['_disablenotif'] = true;
-            // Unset some stuff
-            unset($input['urgency']);
-            unset($input['entities_id']);
-            unset($input['_ruleid']);
-
-            if($ticketFollowup->add($input) === false) {
-                Session::addMessageAfterRedirect(__("Failed to add followup to ticket {$reference->input['id']}"), true, WARNING);
-                return false;
-            }
-            return true;
-        } else {
-            return false;
-        }
     }
 
     /**
