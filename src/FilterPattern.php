@@ -127,18 +127,19 @@ class FilterPattern extends CommonDropdown
             ],
             [
                 'name'      => 'TicketMatchStringLength',
-                'label'     => __('Ticket match group length', 'ticketfilter'),
+                'label'     => __('Ticket matched string maximum length', 'ticketfilter'),
                 'type'      => 'integer',
                 'list'      => true,
                 'min'       => 1,
             ],
-/*          [
-                'name'      => 'LinkClosedTickets',
-                'label'     => __('Link to closed source ticket', 'ticketfilter'),
+/* Future use 
+            [
+                'name'      => 'reopenClosedTickets',
+                'label'     => __('reopen Closed ticket if found', 'ticketfilter'),
                 'type'      => 'bool',
                 'list'      => true,
             ],
-*/          [
+            [
                 'name'      => 'AssetMatchString',
                 'label'     => __('Asset match string', 'ticketfilter'),
                 'type'      => 'text',
@@ -151,7 +152,7 @@ class FilterPattern extends CommonDropdown
                 'list'      => true,
                 'min'       => 1,
             ],
-/*          [
+            [
                 'name'      => 'AutomaticallyMerge',
                 'label'     => __('Automatically merge', 'ticketfilter'),
                 'type'      => 'bool',

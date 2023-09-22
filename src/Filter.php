@@ -39,7 +39,6 @@
 namespace GlpiPlugin\Ticketfilter;
 
 use GlpiPlugin\Ticketfilter\FilterPattern;
-use CommonDBTM;
 use Ticket;
 use Session;
 use CommonITILObject;
@@ -189,8 +188,8 @@ class Filter {
                         $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
                         if($searchString){
 
-                            // Protect against SQL injections validate length is
-                            // equal to what we expect it to be.
+                            // Protect against risky patterns or SQL injections by validating the length
+                            // of the matchstring against what we expect it to be.
                             if(strlen($searchString) <= $Filterpattern['TicketMatchStringLength']) {
                                 foreach($DB->request(
                                     'glpi_tickets',
@@ -213,7 +212,7 @@ class Filter {
                                             'filterpattern' => $Filterpattern];
                                 }
                             } else {
-                                Session::addMessageAfterRedirect('Searchstring length was longer then configured Ticket Match String Length');
+                                Session::addMessageAfterRedirect('Length of'.$searchString.' is longer then allowed by configured Ticket Match String Length');
                             }
                         }
 

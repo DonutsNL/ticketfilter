@@ -1,7 +1,7 @@
 <?php
 /**
  *  ------------------------------------------------------------------------
- *  Chris Gralike, Ruben Bras - Ticket Filter
+ *  Chris Gralike Ticket Filter
  *  Copyright (C) 2023 by Chris Gralike
  *  ------------------------------------------------------------------------
  *
