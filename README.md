@@ -1,13 +1,7 @@
 #  Ticketfilter
-
-> In some scenario's upstream ticket systems or monitoring systems will be owning the origin ticket or asset state sending successive email updates to GLPI. In this scenario the required unique identifier that GLPI uses (i.e. [GLPI #000001]) will never be present. Instead an foreign identifier might be present in the subject. This causes GLPI to create new tickets for each update received by email cluttering the ticket pool. 
-
-> The TicketFilter plugin will allow you to add additional (foreign) paterns TicketFilter will try to match against existing tickets. If a match is found, TicketFilter will add the received email as followup in all tickets that contain the matched string. It will try to prevent notifications to be send to prevent email runaway issues.
-
+Ticketfilter will allow you to configure ticket title or emailsubject match patterns that, if matched against existing tickets, will add that tickets content as an followup instead of creating a new ticket. This allows you for example to link monitoring systems that use destinct identifiers in their notifications to update GLPI tickets without being aware of the GLPI identifier [GLPI #12345]. This can also be used to link upstream ticket systems like JIRA with GLPI using mail notification. In addition to matching the upstream identifiers, ticket filter will allow you to detect additional terms in the subject that, if detected, will update the ticket status to solved. This feature will ensure that false positive monitoring notifications, or tickets being closed upstream will also be closed in GLPI.
 
 ## How to install
-
-
 - Download the latest release from GitHub.
 - Rename the folder inside the zipfile to `ticketfilter` (i didnt strip the version... yet)
 - Copy the `ticketfilter` folder into the `GLPI_ROOT/marketplace/` folder.
@@ -15,73 +9,33 @@
 - Click the `config` box or browse to `Setup > Dropdowns > Ticketfilter > Filterpatterns` to configure the patterns you want ticketfilter to match.
 
 ## What does the plugin do?
+Each time a ticket is created by GLPI, either manually or by the mailgate, the plugin in called before the ticket is processed. Ticketfilter will then load all the patterns configured in the ticketfilter dropdown. After loading the patterns it start evaluating these patterns using regular expression match against the ticket title (or email subject). If one of the configured patterns matches, it will use the found pattern to perform a search in the ticketpool (not deleted). If one or multiple tickets are found it will add the ticket being processed as an followup to those tickets. After the followup(s) is/are added it will prevent GLPI from creating a new ticket.
 
-Basically the plugin is referenced using a so called hook during the GLPI Ticket pre_item_add phase. In this phase the 'to be added' ticket is passed to the plugin. 
-
-The plugin then reads the `name` of the ticket (which is the Subject field of an email send tot GLPI) and tries to match the `TICKET MATCH STRING` patterns you configured. If it finds a pattern it will use the data corresponding with the pattern to perform a search in the ticket database for tickets with the same pattern in their names.
-
-The matching algorithm will evaluate** all **match patterns configured in sequence and **will stop evaluation** when the first succesfull match is made. It will then work with that specific configuration. From this point onward all other configurations are ignored.
-
-If tickets with simular patterns are found, then these tickets are loaded and the new ticket is **added as a new followup** in **each of the found tickets**. The plugin will not discriminate these tickets and will simply add followups to all of them no matter what the state or status. 
-
-When the followup is added succesfully, the creation of a new ticket is canceled and the originating email (if the mailgate was used to create the new ticket) is deleted from the mailbox.
+Each time a matched ticket is being processed, it will perform additional evaluations. For example it will evaluate the current status of the found ticket. If the ticket is closed, and the given pattern config allow to reopen, it will add the followup to the closed ticket and reopen it with the status 'NEW.' It will also evaluate if it needs to suppress notifications on adding followups. Finally it evaluates the solved pattern in the given ticket title/email subject. If the additional term (for example 'Closed') is found, it will additionally update the ticket status to solved. The plugin will perform these evaluations on each of the tickets found with the configured ticket match string.
 
 ## How to create a pattern?
-
 Ticketfilter uses regular expressions as patterns to be evaluated. These patterns can be created and tested using https://regex101.com/r/htaEx7/1. This link also includes an example to work from. Please consider the following:
 
-* The expression used MUST include a named matchgroup called 'match' i.e. `...(?<match>PATTERN)...`
-* The expression should include the regex delimiters i.e. `/.../`
+* The ticket expressions used MUST include a named matchgroup called 'match' i.e. `...(?<match>PATTERN)...`
+* The all expression should include the regex delimiters i.e. `/.../`
 * The following match all expressions should not be used `/(?<match>.*)/` or `/(?<match>.+)/`
-* Currently only the `TICKET MATCH STRING` configuration field is used, other fields are for future usage.
+* It is VERY IMPORTANT that the matchstring will only match UNIQUE identifier for example '[GLPI #12345]'
+  matching something generic will result in multiple unintended tickets to be matched and processed!
 * You are able to test you patterns by manually adding tickets with the configured pattern. 
+
+## Need help?
+* Simply ask by creating an issue
+* Also used for bugs and suggestions for new features or helping me prioritize
 
 ## Do you like to plugin and want more
 
+Assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
+
+Feeling gracious? 
 Buying me caffee is very motivational ☕
 https://www.buymeacoffee.com/DonutsNL
-or assign me some 💫 stars here and on the plugin page for my stargazer achievements 💪
 
-* Use the issues to suggest new features or help me prioritize
-
-Thank you in advance! 
 
 ## Uncertainties and possible issues
-1.  This plugin has not been tested with recurring tickets (that contain the matchstring) and will prob break the recurring ticket creation proces.
-
-## Roadmap
-1. WIP : Add configuration page
-    - Add extensive checks to validate user input en validate pattern correctness;
-    -     ^/ .... /$ delimiters should be present
-    -     ..(?<match>...) named match group should be present
-    -     .+ as singular pattern should not be allowed i.e. /(?<match>.+)/
-    -     .* as singular pattern should not be allowed i.e. /(?<match>.*)/  
-    - Add check to validate pattern does not exist in ticket templates;
-    - Add feature suggest / support button;
-    - Add feature check (New features should not overlap with something that can be done using ticket business rules);
-3. Add option to automatically merge duplicates before matching;
-4. Add option to detect and change ticket status based on pattern ?&lt;status>;
-5. Add option to detect and link monitored assets based on pattern ?&lt;computer> ?&lt;device> ?&lt;etc>;
-    - Option to automatically add asset (using template?) when missing in assets (might be usefull in Cloud environments);
-    - Option to add special marker to automatically created assets for easy searches in assetmanagement;
-6. Add tests
-    - Check for hard coded urls;
-    - Check (unit test) base functions of plugin;
-    - Check database consistancy;
-    - Check version references in files;
-    - Check copyright headers present;
-7. Add documentation on patterns, possible problems and assumptions
-    - /^([0-9]+?).*/
-    - Assumptions on upstream handling
-8. Add ability to automatically link to close tickets while creating a new one;
-9. Document plugin behaviour on matching
-    - Matches all occurences and adds followups to all;
-10. Ability to also search for patterns in ticket body 
-    - (consideration could have serious functional or performance impact i.e. a huge emailchain with multiple matches and objects)
-11. Ability to only search in tickets from specific source;
-12. Add additional debugging options (log match results);
-13. Add PHP version check in prereq (minimal 8.x);
-14. Add RegMatch availability in prereq;
-15. Add version check (against GIT)
-    - Add convinient update button;
-16. Add ability to only add folowup to first (oldest date) or latest (last date) ticket occurrance when multiple are found instead of adding followup to all occurrances;
+1.  This plugin is manually tested and might still have bugs;
+2.  Configuring generic matchstrings like /(?<match>.*)/ might just work but might also fail hard, so always test before flight!
