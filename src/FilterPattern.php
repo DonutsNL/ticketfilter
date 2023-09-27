@@ -56,11 +56,11 @@ class FilterPattern extends CommonDropdown
     const TICKETMATCHSTR    = 'TicketMatchString';
     const TICKETMATCHSTRLEN = 'TicketMatchStringLength';
     const ASSETMATCHSTR     = 'AssetMatchString';
-    const ASSETMATCHSTRLEN  = 'AssetMatchStringLenght';
+    const ASSETMATCHSTRLEN  = 'AssetMatchStringLength';
     const SOLVEDMATCHSTR    = 'SolvedMatchString';
     const SOLVEDMATCHSTRLEN = 'SolvedMatchStringLength';
     const AUTOMERGE         = 'AutomaticallyMerge';
-    const LINKCLOSED        = 'LinkClosedTickets';
+    const REOPENCLOSED      = 'ReopenClosedTickets';
     const SEARCHBODY        = 'SearchTicketBody';
     const MATCHSOURCE       = 'MatchSpecificSource';
     const SUPPRESNOTIF      = 'SuppressNotification';
@@ -133,13 +133,7 @@ class FilterPattern extends CommonDropdown
                 'list'      => true,
                 'min'       => 1,
             ],
-/* Future use 
-            [
-                'name'      => 'reopenClosedTickets',
-                'label'     => __('reopen Closed ticket if found', 'ticketfilter'),
-                'type'      => 'bool',
-                'list'      => true,
-            ],
+            /*
             [
                 'name'      => 'AssetMatchString',
                 'label'     => __('Asset match string', 'ticketfilter'),
@@ -183,19 +177,26 @@ class FilterPattern extends CommonDropdown
                 'type'      => 'text',
                 'list'      => true,
             ],
+            /*
             [
                 'name'      => 'MatchStringLength',
                 'label'     => __('The maximum length of the matchstring', 'ticketfilter'),
                 'type'      => 'text',
                 'list'      => true,
             ],
+            */
             [
                 'name'      => 'SuppressNotification',
                 'label'     => __('Suppress Notifications', 'ticketfilter'),
                 'type'      => 'bool',
                 'list'      => true,
             ],
-            
+            [
+                'name'      => 'ReopenClosedTickets',
+                'label'     => __('Reopen any closed ticket if matched', 'ticketfilter'),
+                'type'      => 'bool',
+                'list'      => true,
+            ],
         ];
     }
 
@@ -287,7 +288,7 @@ class FilterPattern extends CommonDropdown
                            self::SOLVEDMATCHSTR      => $row[self::SOLVEDMATCHSTR],
                            self::SOLVEDMATCHSTRLEN   => $row[self::SOLVEDMATCHSTRLEN],
                            self::AUTOMERGE           => $row[self::AUTOMERGE],
-                           self::LINKCLOSED          => $row[self::LINKCLOSED],
+                           self::REOPENCLOSED        => $row[self::REOPENCLOSED],
                            self::SEARCHBODY          => $row[self::SEARCHBODY],
                            self::MATCHSOURCE         => $row[self::MATCHSOURCE],
                            self::SUPPRESNOTIF        => $row[self::SUPPRESNOTIF]];
@@ -322,13 +323,13 @@ class FilterPattern extends CommonDropdown
             `date_creation`             timestamp NULL DEFAULT NULL,
             `date_mod`                  timestamp NULL DEFAULT NULL,
             `TicketMatchString`         text NOT NULL,
-            `TicketMatchStringLength`   INT NOT NULL default 5,
+            `TicketMatchStringLength`   INT NOT NULL default 11,
             `AssetMatchString`          text NULL,
-            `AssetMatchStringLength`    INT NOT NULL default 5,
+            `AssetMatchStringLength`    INT NOT NULL default 10,
             `SolvedMatchString`         text NULL,
-            `SolvedMatchStringLength`   INT NOT NULL default 5,
+            `SolvedMatchStringLength`   INT NOT NULL default 10,
             `AutomaticallyMerge`        tinyint NOT NULL DEFAULT '0',
-            `LinkClosedTickets`         tinyint NOT NULL DEFAULT '0',
+            `ReopenClosedTickets`       tinyint NOT NULL DEFAULT '0',
             `SearchTicketBody`          tinyint NOT NULL DEFAULT '0',
             `MatchSpecificSource`       text NULL,
             `SuppressNotification`      tinyint NOT NULL DEFAULT '1',

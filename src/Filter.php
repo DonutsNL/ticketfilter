@@ -42,12 +42,12 @@ use GlpiPlugin\Ticketfilter\FilterPattern;
 use GlpiPlugin\Ticketfilter\TicketHandler;
 use Ticket;
 use Session;
-use CommonITILObject;
 use MailCollector;
 use Throwable;
 use Toolbox;
 
 class Filter {
+
     /**
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
@@ -66,36 +66,7 @@ class Filter {
                && !empty($item->input['name'])) {      // Name should not be emtpy, could happen with recurring tickets.
 
                 // Search our pattern in the name field and find corresponding ticket(s) (if any)
-                $matches = self::searchForTicketMatches($item->input['name']);
-
-                if(is_array($matches['tickets'])                // Should be an array (always)
-                   && count($matches['tickets']) >= 1           // Should have at least 1 element
-                   && is_array($matches['filterpattern'])) {    // The matching pattern should be present
-
-                    // Loop through each of the matched tickets
-                    foreach($matches['tickets'] as $key)
-                    {
-                        // Initialize the ticketHandler.
-                        $handler = new TicketHandler();
-                        $handler->initHandler($key, $matches['filterpattern']);
-
-                        // Is found ticket closed? if so do nothing.
-                        if($handler->getStatus() != CommonITILObject::CLOSED) {
-                            // @todo: This link needs some work to generate FQDN
-                            if ( $handler->linkAsFollowup($item) ) {
-                                Session::addMessageAfterRedirect(__("<a href='".$handler->getTicketURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
-                            } else {
-                                Session::addMessageAfterRedirect(__("Unable to add notification"), true, WARNING);
-                            }
-                        }else{
-
-                        } 
-                    }
-
-                    // Clear $item->input and fields to stop object from being created
-                    // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
-                    self::emptyReferencedObject($item);
-                }
+                self::searchForMatches($item);
             }
         }
     }
@@ -127,9 +98,10 @@ class Filter {
      * @return int                      Returns the ticket ID of the matching ticket or 0 on no match.
      * @since                           1.0.0
      */
-    private static function searchForTicketMatches(string $ticketSubject) : array
+    private static function searchForMatches(Ticket $item) : bool
     {
         global $DB;
+        $itemIsMatched = false;
         // Get the patterns if any;
         $patterns = FilterPattern::getFilterPatterns();
 
@@ -146,7 +118,7 @@ class Filter {
 
                     // decode html_entities_encoded string from database.
                     $p = html_entity_decode($Filterpattern['TicketMatchString']);
-                    if(preg_match_all("$p", $ticketSubject, $matchArray)) {
+                    if(preg_match_all("$p", $item->input['name'], $matchArray)) {
 
                         // If we have a match, use it to compose a searchstring for our sql query.
                         $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
@@ -167,16 +139,31 @@ class Filter {
                                 ) as $id => $row) {
                                     $r[]=$id;
                                 }
-                                // If we find tickets using our matchString then return
-                                // stop processing, return tickets and the matching
-                                // Filterpattern configuration. 
+
+                                // If we find a ticket then add followups to each of the found tickets.
                                 if(is_array($r)
                                 && count($r) > 0) {
-                                    return ['tickets' => $r,
-                                            'filterpattern' => $Filterpattern];
+                                    // Indicate passed item was matched against existing ticket.
+                                    $itemIsMatched = true;
+                                    foreach($r as $key)
+                                    {
+                                        // Initialize the ticketHandler.
+                                        $handler = new TicketHandler();
+                                        $handler->initHandler($key, $Filterpattern);
+
+                                        // @todo: This link needs some work to generate FQDN
+                                        if ( $handler->processTicket($item) ) {
+                                            Session::addMessageAfterRedirect(__("<a href='".$handler->getTicketURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
+                                        } else {
+                                            Session::addMessageAfterRedirect(__("Unable to add notification"), true, WARNING);
+                                            // Adding followup failed, dont clear referenced object;
+                                            $itemIsMatched = false;
+                                        }
+                                    }
                                 }
                             } else {
                                 Session::addMessageAfterRedirect('Length of'.$searchString.' is longer then allowed by configured Ticket Match String Length');
+                                return false;
                             }
                         }
 
@@ -185,8 +172,15 @@ class Filter {
             }               
         } else {
             trigger_error("No ticketfilter patterns found, please configure them or disable the plugin", E_USER_NOTICE);
+            return false;
         }
-        return [];
+
+        if($itemIsMatched){
+            // Clear $item->input and fields to stop object from being created
+            // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
+            self::emptyReferencedObject($item);
+        }
+        return true;
     }
 
     /**
