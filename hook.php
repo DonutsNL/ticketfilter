@@ -26,13 +26,13 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	   TicketFilter
- *  @version	   1.1.0
+ *  @version	   1.2.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
  *  @license   	GPLv2+
  *  @see       	https://github.com/DonutsNL/ticketfilter/readme.md
  *  @link		   https://github.com/DonutsNL/ticketfilter
- *  @since     	0.1
+ *  @since     	0.1.0
  * ------------------------------------------------------------------------
  **/
 

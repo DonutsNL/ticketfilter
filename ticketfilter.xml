@@ -33,9 +33,9 @@
 </authors>
 <versions>
     <version>
-        <num>1.1.0</num>
+        <num>1.2.0</num>
         <compatibility>~10.0.7</compatibility>
-        <download_url>https://github.com/DonutsNL/ticketfilter/</download_url>
+        <download_url>https://github.com/DonutsNL/ticketfilter/ticketfilter_1.2.0.zip</download_url>
     </version>
 </versions>
 <langs>

@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	    TicketFilter
- *  @version	    1.1.0
+ *  @version	    1.2.0
  *  @author         Chris Gralike
  *  @copyright 	    Copyright (c) 2023 by Chris Gralike
  *  @license    	GPLv2+
@@ -37,6 +37,7 @@
  **/
 
 namespace GlpiPlugin\Ticketfilter;
+
 use CommonDropdown;
 use DBConnection;
 use Migration;
@@ -66,6 +67,7 @@ class FilterPattern extends CommonDropdown
     const SUPPRESNOTIF      = 'SuppressNotification';
 
      /**
+     * getTypeName(int nb) : string - 
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
      * 
@@ -82,6 +84,7 @@ class FilterPattern extends CommonDropdown
 
 
     /**
+     * getMenuContent() : array | bool -
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
      * 
@@ -102,6 +105,7 @@ class FilterPattern extends CommonDropdown
     }
 
     /**
+     * getIcon() : string -
      * Sets icon for object.
      * 
      * @return string   $icon   
@@ -112,6 +116,7 @@ class FilterPattern extends CommonDropdown
     }
 
     /**
+     * getAdditionalFields() : array -
      * Fetch fields for Dropdown 'add' form. Array order is equal with
      * field order in the form
      * 
@@ -201,6 +206,7 @@ class FilterPattern extends CommonDropdown
     }
 
     /**
+     * rawSearchOptions() : array -
      * Add fields to search and potential table columns
      * 
      * @return array   $rawSearchOptions   
@@ -262,13 +268,11 @@ class FilterPattern extends CommonDropdown
     }
     
     /**
+     * getFilterPatterns() : array -
      * Get match patterns and config from dropdowns
      *
      * @return patterns              Array with all configured patterns
      * @since                        1.1.0
-     * @todo    Figure out if there isnt an method in the dropdown object
-     *          that allows us to retrieve the reference table contents in
-     *          one itteration.
      */
     public static function getFilterPatterns() : array
     {
@@ -297,6 +301,7 @@ class FilterPattern extends CommonDropdown
     }
 
     /**
+     * install(Migration migration) : void -
      * Install table needed for Ticket Filter configuration dropdowns
      * 
      * @return void
@@ -352,6 +357,7 @@ class FilterPattern extends CommonDropdown
     }
 
     /**
+     * uninstall(Migration migration) : void -
      * Uninstall tables uncomment the line to make plugin clean table.
      * 
      * @return void

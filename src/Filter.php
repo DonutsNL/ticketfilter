@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	    TicketFilter
- *  @version	    1.1.0
+ *  @version	    1.2.0
  *  @author         Chris Gralike
  *  @copyright 	    Copyright (c) 2023 by Chris Gralike
  *  @license    	GPLv2+
@@ -49,6 +49,7 @@ use Toolbox;
 class Filter {
 
     /**
+     * PreItemAdd(Ticket item) : void -
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
      *
@@ -67,11 +68,12 @@ class Filter {
 
                 // Search our pattern in the name field and find corresponding ticket(s) (if any)
                 self::searchForMatches($item);
-            }
-        }
+            } // Not an array with expected keys
+        } // Not a valid object.
     }
     
     /**
+     * emptyReferencedObject(Ticket item) : void - 
      * Clean the referenced item and delete any mailbox items remaining
      *
      * @param  Ticket $item         The original ticket passed by the pre_item_add hook.
@@ -92,6 +94,7 @@ class Filter {
     }
 
     /**
+     * searchForMatches(Ticket item) : bool - 
      * Perform a search in the glpi_tickets table using the searchString if one is found applying the
      * provided ticket match patterns from dropdown on the ticket name (email subject).
      *
@@ -166,31 +169,30 @@ class Filter {
     }
 
     /**
+     * openMailGate(int Id) : MailCollector|null -
      * Returns a connected mailCollector object or []
      * 
      * @param  int $Id               Mail Collector ID   
      * @return MailCollector|null    Union return types might be problematic with older php versions.  
-     * @since                        1.0.0  
-     * @todo                         Move to separate non static Match class           
+     * @since                        1.0.0             
      */
     private static function openMailGate(int $Id) : MailCollector|null
     {
         // Create a mailCollector
-        if(is_numeric($Id)){
-            $mailCollector = new MailCollector();
-            $mailCollector->getFromDB((integer)$Id);
-            try {
-                $mailCollector->connect();
-            }catch (Throwable $e) {
-                Toolbox::logError('Error opening mailCollector', $e->getMessage(), "\n", $e->getTraceAsString());
-                Session::addMessageAfterRedirect(__('TicketFilter Could not connect to the mail receiver because of an error'), true, WARNING);
-                return null;
-            }
+        $mailCollector = new MailCollector();
+        $mailCollector->getFromDB((integer)$Id);
+        try {
+            $mailCollector->connect();
+        }catch (Throwable $e) {
+            Toolbox::logError('Error opening mailCollector', $e->getMessage(), "\n", $e->getTraceAsString());
+            Session::addMessageAfterRedirect(__('TicketFilter Could not connect to the mail receiver because of an error'), true, WARNING);
+            return null;
         }
         return $mailCollector;
     }
 
     /**
+     * deleteEmail(Ticket item) : bool -
      * Delete original email from the mailbox to the accepted folder. This is not performed by the mailgate
      * if the Ticket passed by reference is nullified as described in the hook documentation. 
      * This actually causes an error where mailgate leaves the email untouched.
@@ -209,8 +211,7 @@ class Filter {
             } else {
                 return false;
             }
-        }
-        
+        } // instantiation of mailCollector failed
         return false;
     }
 }
