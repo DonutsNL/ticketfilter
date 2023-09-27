@@ -344,8 +344,8 @@ class FilterPattern extends CommonDropdown
 
             // insert example rule;
             $query = <<<SQL
-            INSERT INTO `$table`(name, comment, is_active, TicketMatchString, TicketMatchStringLength) 
-            VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/', '11');
+            INSERT INTO `$table`(name, comment, is_active, TicketMatchString, TicketMatchStringLength, SolvedMatchString, SolvedMatchStringLength) 
+            VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/', '11', '/.*?(?<solved>Closed).*/', '6');
             SQL;
             $DB->query($query) or die($DB->error());
         }       

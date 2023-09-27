@@ -83,8 +83,9 @@ class Filter {
     {
         // We cancelled the ticket creation and by doing so the mailgate will not clean the
         // email from the mailbox. We need to clean it manually.
+        // Send a meaningfull message if mailgate was triggered by user from UI.
         if(self::deleteEmail($item) == true) {
-            Session::addMessageAfterRedirect(__("Ticket removed from mailbox, it is save to ignore any mailgate error"), true, WARNING);
+            Session::addMessageAfterRedirect(__("Ticket removed from mailbox, it is save to ignore related mailgate error"), true, WARNING);
         }
         $item->input = false;
         $item->fields = false;
@@ -100,86 +101,67 @@ class Filter {
      */
     private static function searchForMatches(Ticket $item) : bool
     {
-        global $DB;
-        $itemIsMatched = false;
-        // Get the patterns if any;
+        $itemIsMatched = [];        // Start with an empty array
+
+        // Fetch patterns
         $patterns = FilterPattern::getFilterPatterns();
 
+        // Evaluate patterns
         if(is_array($patterns)
         && count($patterns) >= 1
-        && array_key_exists('TicketMatchString', $patterns['0']))
+        && array_key_exists(FilterPattern::TICKETMATCHSTR, $patterns['0']))
         {
-            // We assume that the name always only contains one pattern and return the first matching one.
+            // Loop through the patterns
             foreach($patterns as $k => $Filterpattern)
             {
-
                 // If pattern is active process
                 if($Filterpattern['is_active']) {
-
                     // decode html_entities_encoded string from database.
-                    $p = html_entity_decode($Filterpattern['TicketMatchString']);
+                    $p = html_entity_decode($Filterpattern[FilterPattern::TICKETMATCHSTR]);
                     if(preg_match_all("$p", $item->input['name'], $matchArray)) {
 
-                        // If we have a match, use it to compose a searchstring for our sql query.
+                        // If we found a match, use it to compose a searchstring for our sql query.
                         $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
                         if($searchString){
 
                             // Protect against risky patterns or SQL injections by validating the length
                             // of the matchstring against what we expect it to be.
-                            if(strlen($searchString) <= $Filterpattern['TicketMatchStringLength']) {
-                                foreach($DB->request(
-                                    'glpi_tickets',
-                                    [
-                                        'AND' =>
-                                        [
-                                            'name'       => ['LIKE', $searchString],
-                                            'is_deleted' => ['=', 0]
-                                        ]
-                                    ]
-                                ) as $id => $row) {
-                                    $r[]=$id;
-                                }
+                            // todo: move to separate method for readability.
+                            if(strlen($searchString) <= $Filterpattern[FilterPattern::TICKETMATCHSTRLEN]) {
+                                $handler = new TicketHandler();
+                                $r = $handler->searchTicketPool($searchString);
 
                                 // If we find a ticket then add followups to each of the found tickets.
-                                if(is_array($r)
-                                && count($r) > 0) {
-                                    // Indicate passed item was matched against existing ticket.
-                                    $itemIsMatched = true;
+                                if(count($r) > 0) {
                                     foreach($r as $key)
                                     {
-                                        // Initialize the ticketHandler.
-                                        $handler = new TicketHandler();
                                         $handler->initHandler($key, $Filterpattern);
-
-                                        // @todo: This link needs some work to generate FQDN
+                                        // Keep track what tickets where matched
                                         if ( $handler->processTicket($item) ) {
-                                            Session::addMessageAfterRedirect(__("<a href='".$handler->getTicketURL($key)."'>New ticket was matched to open ticket: $key and was added as a followup</a>"), true, INFO);
-                                        } else {
-                                            Session::addMessageAfterRedirect(__("Unable to add notification"), true, WARNING);
-                                            // Adding followup failed, dont clear referenced object;
-                                            $itemIsMatched = false;
+                                            $itemIsMatched[$key] = 'matched';
                                         }
-                                    }
-                                }
+                                    } // Loop.
+                                } // No matching tickets found.
                             } else {
-                                Session::addMessageAfterRedirect('Length of'.$searchString.' is longer then allowed by configured Ticket Match String Length');
-                                return false;
+                                trigger_error('TicketFilter: Length of'.$searchString.' is longer then allowed by configured Ticket Match String Length', E_USER_WARNING);
                             }
-                        }
-
+                        } // No searchstring found with provided patterns.
+                    } else {
+                        trigger_error("TicketFilter: PregMatch failed! please review the pattern $p and correct it", E_USER_WARNING);
                     }
-                }
-            }               
+                } // Pattern is configured inactive.
+            } // Loop.           
         } else {
-            trigger_error("No ticketfilter patterns found, please configure them or disable the plugin", E_USER_NOTICE);
-            return false;
+            trigger_error("TicketFilter: No ticketfilter patterns found, please configure them or disable the plugin", E_USER_WARNING);
         }
 
-        if($itemIsMatched){
+        // Do we have at least 1 succesfull followup, prevent GLPI from creating a new ticket
+        if(is_array($itemIsMatched) && 
+           in_array("matched", $itemIsMatched)) {
             // Clear $item->input and fields to stop object from being created
             // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
             self::emptyReferencedObject($item);
-        }
+        }   
         return true;
     }
 

@@ -2,6 +2,7 @@
 namespace GlpiPlugin\Ticketfilter;
 
 use Ticket;
+use Session;
 use ITILFollowup;
 use CommonITILObject;
 use GlpiPlugin\Ticketfilter\FilterPattern;
@@ -101,16 +102,55 @@ class TicketHandler{
     }
 
     /**
+     * setStatusToSolved(void) : bool -
+     * Updates the status of the loaded ticket to NEW int(1)
+     *
+     * @param  void              
+     * @return bool            Allways returns true
+     * @since                  1.2.0
+     */
+    public function setStatusToSolved() : bool 
+    {
+        global $DB;
+        // Update status
+        $update['status'] = CommonITILObject::SOLVED;
+
+        $DB->update(
+            $this->ticket->getTable(),
+            $update,
+            ['id' => $this->getId()]
+        );
+
+        return true;
+    }
+
+    /**
      * addSolvedMessage() : bool -
-     * Adds private followup that plugin auto solved the ticket if solvedstring was found.
+     * Adds private followup that plugin reopend the ticket if ticket was closed.
      *
      * @param  void            
      * @return bool          
      * @since                    1.2.0
      */
-    public function addSolvedMessage() : bool
+    public function addReopenedMessage($patternName = '') : bool
     {
-        return true;
+        if($ItilFollowup = new ITILFollowup()) {
+            $input['items_id']      = $this->getId();
+            $input['content']       = "This closed ticket was reopened by the <b>ticketfilter plugin</b><br>
+                                       as per configuration in pattern: $patternName.";
+            $input['users_id']      = false;
+            $input['add_reopen']    = 1;
+            $input['itemtype']      = Ticket::class;
+            // Check notification config
+            if($this->pattern[FilterPattern::SUPPRESNOTIF]) {
+                $input['_disablenotif'] = true;
+            }
+            if($ItilFollowup->add($input) === false) {
+                return false;
+            } else {
+                return true;
+            }
+        }
     }
 
     /**
@@ -128,45 +168,64 @@ class TicketHandler{
             // Do we need to reopen the closed ticket?
             if($this->getStatus() == CommonITILObject::CLOSED) {
                 if($this->pattern[FilterPattern::REOPENCLOSED]) {
-                    $this->setStatusToNew();
+                    if($this->setStatusToNew()){
+                        $this->addReopenedMessage($this->pattern[FilterPattern::NAME]);
+                    } else {
+                        trigger_error('TicketFilter: Unable to update ticket closed status to new, database available?', E_USER_WARNING);
+                    }
                 } else {
-                    // do nothing, let GLPI continue processing the new ticket.
+                    // do nothing, dont add followup.
+                    Session::addMessageAfterRedirect(__("<a href='".$this->getTicketURL()."'>A closed ticket with id: ".$this->getId()." was found</a>, but config prevented us from reopening it and adding a followup"), true, WARNING);
                     return false;
                 }
-            } else {
-                // Add the followup
-                if($ItilFollowup = new ITILFollowup()) {
-                    // Populate Followup fields
-                    $input                  = $item->input;
-                    $input['items_id']      = $this->getId();
-                    $input['users_id']      = false;
-                    $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
-                    $input['add_reopen']    = 1;
-                    $input['itemtype']      = Ticket::class;
-                    
-                    // Check notification config
-                    if($this->pattern[FilterPattern::SUPPRESNOTIF]) {
-                        $input['_disablenotif'] = true;
-                    }
-                    // Unset some stuff
-                    unset($input['urgency']);
-                    unset($input['entities_id']);
-                    unset($input['_ruleid']);
+            }
 
-                    if($ItilFollowup->add($input) === false) {
-                        return false;
-                    }
+            // Add the followup
+            if($ItilFollowup = new ITILFollowup()) {
+                // Populate Followup fields
+                $input                  = $item->input;
+                $input['items_id']      = $this->getId();
+                $input['users_id']      = false;
+                $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
+                $input['add_reopen']    = 1;
+                $input['itemtype']      = Ticket::class;
 
-                    // Assess the title and close the ticket if matched.
-                    if($this->pattern[FilterPattern::SOLVEDMATCHSTR]) {
-                        // Future use
-                        // If matched, add followup with descriptive message;
-                        // If matched, update status to solved;
-                    }
-                    return true;
-                } else {
-                    return false;
+                // Check notification config
+                if($this->pattern[FilterPattern::SUPPRESNOTIF]) {
+                    $input['_disablenotif'] = true;
                 }
+                // Unset some stuff
+                unset($input['urgency']);
+                unset($input['entities_id']);
+                unset($input['_ruleid']);
+
+                if($ItilFollowup->add($input) === false) {
+                    return false;
+                    trigger_error('TicketFilter: Unable to add a new followup, database available?', E_USER_WARNING);
+                }
+
+                // Assess the title and solve the ticket if matched.
+                if($this->pattern[FilterPattern::SOLVEDMATCHSTR]) {
+                    if(!empty($this->pattern[FilterPattern::SOLVEDMATCHSTR])) {
+                        $p = html_entity_decode($this->pattern[FilterPattern::SOLVEDMATCHSTR]);
+                        // Perform the search
+                        if(preg_match_all("$p", $item->input['name'], $matchArray)) {
+                            // Do we have a match
+                            if(is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('solved', $matchArray)) {
+                                if(strlen($matchArray['solved']['0']) <= $this->pattern[FilterPattern::SOLVEDMATCHSTRLEN]) {
+                                    // Set status to solved.
+                                    $this->setStatusToSolved();
+                                } else {
+                                    trigger_error('TicketFilter: Length of'.$matchArray['solved']['0'].' is longer then allowed by configured Ticket Match String Length', E_USER_WARNING);
+                                }
+                            } // Solved pattern not found
+                        } else {
+                            trigger_error("TicketFilter: PregMatch failed! please review the Solved pattern $p and correct it", E_USER_WARNING);
+                        }
+                    } // No solved pattern configured
+                }
+                Session::addMessageAfterRedirect(__("<a href='".$this->getTicketURL()."'>New ticket was matched to open ticket: ".$this->getId()." and was added as a followup</a>"), true, INFO);
+                return true;
             }
         } else {
             return false;
@@ -189,5 +248,34 @@ class TicketHandler{
         } else {
             return '0';
         }
+    }
+
+    /**
+     * searchTicketPool(string $searchString) : array -
+     * Search for non deleted tickets using searchstring as needle and return array of found ticket IDs or
+     * an empty array with no hits.
+     *
+     * @param  string $searchString    The needle on which to perform a search in the ticketpool subjects.
+     * @return array                   Returns an array of matched ticket IDs.
+     * @since                          1.0.0
+     */
+    public function searchTicketPool(string $searchString) : array
+    {
+        global $DB;
+        $t = new Ticket();
+        $r = [];
+        foreach($DB->request(
+            $t->getTable(),
+            [
+                'AND' =>
+                [
+                    'name'       => ['LIKE', $searchString],
+                    'is_deleted' => ['=', 0]
+                ]
+            ]
+        ) as $id => $row) {
+            $r[]=$id;
+        }
+        return $r;
     }
 }
