@@ -40,7 +40,7 @@ use GlpiPlugin\Ticketfilter\Filterpattern;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
-define('PLUGIN_TICKETFILTER_VERSION', '1.1.0');
+define('PLUGIN_TICKETFILTER_VERSION', '1.2.0');
 define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
 define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
 
