@@ -5,12 +5,8 @@
 <logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/donut.png</logo>
 <description>
     <short>
-        <en>The TicketFilter plugin will allow you to add additional regular expressions that 
-            TicketFilter will use locate unique identifiers in received tickets. If a match is found, 
-            TicketFilter will use the found identifier to locate existing tickets with the same identifier and 
-            add the received email as followup in all tickets that contain that identifier. If configured ticketfilter 
-            will try to prevent notifications to be send to prevent email runaway issues, reopen closed tickets with status
-            new, or update the ticket to a solved state if specific keywords where found in the received email subject.</en>
+        <en>Matches foreign (ticket, monitoring, crm) identifiers in the mailsubject of mailgate processed or locally created tickets 
+            and adds these as followups to existing tickets with the same identifier and more.</en>
     </short>
     <long>
         <en>The TicketFilter plugin will allow you to add additional regular expressions that 
