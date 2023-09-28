@@ -5,8 +5,8 @@
 <logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/donut.png</logo>
 <description>
     <short>
-        <en>Matches foreign (ticket, monitoring, crm) identifiers in the mailsubject of mailgate processed or locally created tickets 
-            and adds these as followups to existing tickets with the same identifier and more.</en>
+        <en>Matches foreign (ticket, monitoring, crm) identifiers in the mailsubject of mailgate processed tickets or manually created tickets 
+            and adds successfully matched tickets as followups in existing tickets with the same identifier and more.</en>
     </short>
     <long>
         <en>The TicketFilter plugin will allow you to add additional regular expressions that 
