@@ -335,23 +335,47 @@ class TicketHandler{
      * @return array                   Returns an array of matched ticket IDs.
      * @since                          1.2.0
      */
-    public function searchTicketPool(string $searchString, string $source) : array
+    public function searchTicketPool(string $searchString, string $source = null) : array
     {
-        global $DB;
-        $t = new Ticket();
-        $r = [];
-        foreach($DB->request(
-            $t->getTable(),
-            [
-                'AND' =>
+        if(!$source){
+            global $DB;
+            $t = new Ticket();
+            $r = [];
+            foreach($DB->request(
+                $t->getTable(),
                 [
-                    'name'       => ['LIKE', $searchString],
-                    'is_deleted' => ['=', 0]
+                    'AND' =>
+                    [
+                        'name'       => ['LIKE', $searchString],
+                        'is_deleted' => ['=', 0]
+                    ]
                 ]
-            ]
-        ) as $id => $row) {
-            $r[]=$id;
+            ) as $id => $row) {
+                $r[]=$id;
+            }
+            return $r;
+        }else{
+            // query required to find tickets requested by specific user
+            // as per: https://github.com/DonutsNL/ticketfilter/issues/4
+            $query = <<<SQL
+                        SELECT glpi_tickets_users.tickets_id as tid,
+                            glpi_useremails.email,
+                            glpi_tickets_users.users_id,
+                            glpi_tickets_users.type,
+                            glpi_tickets_users.alternative_email,
+                            glpi_tickets.name,
+                            glpi_tickets.is_deleted
+                        FROM glpi_tickets_users
+                        LEFT JOIN glpi_useremails
+                        ON (glpi_tickets_users.users_id = glpi_useremails.users_id)
+                        LEFT JOIN glpi_tickets
+                        ON (glpi_tickets.id = glpi_tickets_users.tickets_id)
+                        WHERE 1=1
+                        AND (glpi_useremails.email = 'test@google.com' OR glpi_tickets_users.alternative_email = 'test@google.com')
+                        AND glpi_tickets_users.type = '1'
+                        AND glpi_tickets.is_deleted = '0'
+                        AND glpi_tickets.name like '%(JIRA-1234)%'
+                        SQL;
         }
-        return $r;
     }
 }

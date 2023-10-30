@@ -132,7 +132,7 @@ class Filter {
                             // todo: move to separate method for readability.
                             if(strlen($searchString) <= $Filterpattern[FilterPattern::TICKETMATCHSTRLEN]) {
                                 $handler = new TicketHandler();
-                                $r = $handler->searchTicketPool($searchString);
+                                $r = $handler->searchTicketPool($searchString, '');
 
                                 // If we find a ticket then add followups to each of the found tickets.
                                 if(count($r) > 0) {
