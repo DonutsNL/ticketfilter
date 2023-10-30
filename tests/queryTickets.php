@@ -31,6 +31,10 @@ while($row = $result->fetch_assoc()){
     print_r($row['tid'].':'.$row['email'].':'.$row['alternative_email'].':'.$row['name'].'<br>');
 }
 
+// not sure GLPI query builder can handle multiple joins. Documentation only covers 1 join per query
+// https://glpi-developer-documentation.readthedocs.io/en/master/devapi/database/dbiterator.html
+// Maybe do some research in the GLPI sourcecode. Idealy we use the querybuilder and not hand written
+// SQL code. 
 var_dump($DB->request(
     [
         'FIELDS' => ['glpi_tickets_users' => ['tickets_id', 'users_id', 'type', 'alternative_email'], 
