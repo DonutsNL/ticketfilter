@@ -176,10 +176,13 @@ class FilterPattern extends CommonDropdown
                 'label'     => __('Active', 'ticketfilter'),
                 'type'      => 'bool',
             ],
+              // version 1.3.0 changes;
+              // Made config more descriptive as per enhancement
+              // https://github.com/DonutsNL/ticketfilter/issues/4
             [
                 'name'      => 'MatchSpecificSource',
-                'label'     => __('From Source', 'ticketfilter'),
-                'type'      => 'text',
+                'label'     => __('Only apply with identical sources', 'ticketfilter'),
+                'type'      => 'bool',
                 'list'      => true,
             ],
             /*
@@ -310,13 +313,14 @@ class FilterPattern extends CommonDropdown
     public static function install(Migration $migration) : void
     {
         global $DB;
-
         $default_charset = DBConnection::getDefaultCharset();
         $default_collation = DBConnection::getDefaultCollation();
         $default_key_sign = DBConnection::getDefaultPrimaryKeySignOption();
 
         $table = self::getTable();
 
+        // Create the base table if it does not yet exist;
+        // Dont update this table for later versions, use the migration class;
         if (!$DB->tableExists($table)) {
             $migration->displayMessage("Installing $table");
             $query = <<<SQL
@@ -336,7 +340,7 @@ class FilterPattern extends CommonDropdown
             `AutomaticallyMerge`        tinyint NOT NULL DEFAULT '0',
             `ReopenClosedTickets`       tinyint NOT NULL DEFAULT '0',
             `SearchTicketBody`          tinyint NOT NULL DEFAULT '0',
-            `MatchSpecificSource`       text NULL,
+            `MatchSpecificSource`       text NULL, 
             `SuppressNotification`      tinyint NOT NULL DEFAULT '1',
             PRIMARY KEY (`id`),
             KEY `name` (`name`),
@@ -353,7 +357,13 @@ class FilterPattern extends CommonDropdown
             VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/', '11', '/.*?(?<solved>Closed).*/', '6');
             SQL;
             $DB->query($query) or die($DB->error());
-        }       
+        }
+        
+        // version 1.3.0 changes;
+        // Updated 1.3.0 alter MatchSpecific Source to tinyint (yes/no) as configuration for enhancement
+        // https://github.com/DonutsNL/ticketfilter/issues/4
+        $migration->changeField($table, 'MatchSpecificSource', 'MatchSpecificSource', 'tinyint', ['null' => false, 'value' => '1']);
+        $migration->migrationOneTable($table);
     }
 
     /**

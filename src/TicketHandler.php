@@ -335,7 +335,7 @@ class TicketHandler{
      * @return array                   Returns an array of matched ticket IDs.
      * @since                          1.2.0
      */
-    public function searchTicketPool(string $searchString) : array
+    public function searchTicketPool(string $searchString, string $source) : array
     {
         global $DB;
         $t = new Ticket();
