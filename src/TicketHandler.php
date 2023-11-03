@@ -41,6 +41,7 @@ use Ticket;
 use Session;
 use ITILFollowup;
 use CommonITILObject;
+use CommonITILActor;
 use GlpiPlugin\Ticketfilter\FilterPattern;
 
 class TicketHandler{
@@ -220,19 +221,67 @@ class TicketHandler{
             }
         }
     }
-
     /**
      * processTicket(Ticket ticket) : bool -
      * Adds a followup based on the passed ticket to the loaded ticket residing in ticketHandler->ticket,
      * also performs validations and evaluates if the loaded ticket needs to be reopend, resolved or assets 
      * should be linked based on the provided pattern configuration in ticketHandler->pattern.
      *
-     * @param  Ticket $item             
+     * @param  Ticket $item      // Ticket object received from the pre_item_add hook.       
      * @return bool          
      * @since                    1.1.0
      */
     public function processTicket(Ticket $item) : bool
     {
+        // Match mailsender with ticket requester.
+        if($this->pattern[FilterPattern::MATCHSOURCE]) {
+            // https://github.com/DonutsNL/ticketfilter/issues/4
+            $succesfullUserMatch = false; 
+
+            // Get all the users from the ticket Object received from the pre_item_add hook.
+            foreach($item->input['_actors']["requester"] as $null => $mailUser){
+                $usersToBeMatched[] = [ 
+                    'userId'    => $mailUser['items_id'],
+                    'userEmail' => ($mailUser['default_email']) ? $mailUser['default_email'] : $mailUser['alternative_email']
+                ];
+            }
+
+            // Fetch and match the requesters of the currently processed ticket.
+            // With the requesters in the ticket object received from the pre_item_add hook.
+            $usrObj = new $this->ticket->userlinkclass();
+            $actors = $usrObj->getActors($this->getId());
+            foreach ( $actors as $null => $ticketUsers) {
+                // Verify there are users assigned to process
+                if(is_array($ticketUsers) && count($ticketUsers) > 0) {
+                    foreach($ticketUsers as $null => $userType) {
+                        // Only evaluate user type requesters ignore watchers and technicians
+                        if($userType['type'] == CommonITILActor::REQUESTER){
+                            // First search alternative email because we dont want
+                            // to match an users_id:int(0) that would match with all anonymous users
+                            // assigned to the ticket.
+                            if($userType['alternative_email']) {
+                                if(array_search(($userType['alternative_email']), array_column($usersToBeMatched, 'userEmail'))){
+                                    $succesfullUserMatch = true;
+                                }
+                            } else {
+                                // Try to match any non zero users_id in usersToBeMatched.
+                                if(array_search($userType['users_id'], array_column($usersToBeMatched, 'userId'))){
+                                    $succesfullUserMatch = true;
+                                }
+                            }
+                        } // Ignore the user that is either watcher or technician @see glpi/src/Ticket_User.php
+                    } // foreach
+                }// No requesters assigned to ticket
+            }// foreach
+
+            // We did not match any user from the email with the referenced ticket
+            // Per configuration do not merge the followup.
+            if(!$succesfullUserMatch){
+                return false;
+            }
+        }
+
+        // Process the followup.
         if($this->status == '1') {
             // Do we need to reopen the closed ticket?
             if($this->getStatus() == CommonITILObject::CLOSED) {
@@ -335,47 +384,23 @@ class TicketHandler{
      * @return array                   Returns an array of matched ticket IDs.
      * @since                          1.2.0
      */
-    public function searchTicketPool(string $searchString, string $source = null) : array
+    public function searchTicketPool(string $searchString) : array
     {
-        if(!$source){
-            global $DB;
-            $t = new Ticket();
-            $r = [];
-            foreach($DB->request(
-                $t->getTable(),
+        global $DB;
+        $t = new Ticket();
+        $r = [];
+        foreach($DB->request(
+            $t->getTable(),
+            [
+                'AND' =>
                 [
-                    'AND' =>
-                    [
-                        'name'       => ['LIKE', $searchString],
-                        'is_deleted' => ['=', 0]
-                    ]
+                    'name'       => ['LIKE', $searchString],
+                    'is_deleted' => ['=', 0]
                 ]
-            ) as $id => $row) {
-                $r[]=$id;
-            }
-            return $r;
-        }else{
-            // query required to find tickets requested by specific user
-            // as per: https://github.com/DonutsNL/ticketfilter/issues/4
-            $query = <<<SQL
-                        SELECT glpi_tickets_users.tickets_id as tid,
-                            glpi_useremails.email,
-                            glpi_tickets_users.users_id,
-                            glpi_tickets_users.type,
-                            glpi_tickets_users.alternative_email,
-                            glpi_tickets.name,
-                            glpi_tickets.is_deleted
-                        FROM glpi_tickets_users
-                        LEFT JOIN glpi_useremails
-                        ON (glpi_tickets_users.users_id = glpi_useremails.users_id)
-                        LEFT JOIN glpi_tickets
-                        ON (glpi_tickets.id = glpi_tickets_users.tickets_id)
-                        WHERE 1=1
-                        AND (glpi_useremails.email = 'test@google.com' OR glpi_tickets_users.alternative_email = 'test@google.com')
-                        AND glpi_tickets_users.type = '1'
-                        AND glpi_tickets.is_deleted = '0'
-                        AND glpi_tickets.name like '%(JIRA-1234)%'
-                        SQL;
+            ]
+        ) as $id => $row) {
+            $r[]=$id;
         }
+        return $r; 
     }
 }
