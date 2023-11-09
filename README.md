@@ -2,6 +2,7 @@
 Ticketfilter will allow you to configure ticket title or emailsubject match patterns that, if matched against existing tickets, will add that tickets content as an followup instead of creating a new ticket. This allows you for example to link monitoring systems that use destinct identifiers in their notifications to update GLPI tickets without being aware of the GLPI identifier [GLPI #12345]. This can also be used to link upstream ticket systems like JIRA with GLPI using mail notification. In addition to matching the upstream identifiers, ticket filter will allow you to detect additional terms in the subject that, if detected, will update the ticket status to solved. This feature will ensure that false positive monitoring notifications, or tickets being closed upstream will also be closed in GLPI.
 
 ## How to install
+- Make sure your installation runs on at least PHP8. 
 - Download the latest release from GitHub.
 - Rename the folder inside the zipfile to `ticketfilter` (i didnt strip the version... yet)
 - Copy the `ticketfilter` folder into the `GLPI_ROOT/marketplace/` folder.
