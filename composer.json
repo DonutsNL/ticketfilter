@@ -2,8 +2,6 @@
     "name": "donutsnl/ticketfilter",
     "description": "Searches for foreign identifiers and merge tickets using these identifiers",
     "license": "GPL-3.0-or-later",
-    "require": {
-    },
     "authors": [
         {
             "name": "Chris Gralike",
@@ -11,5 +9,8 @@
             "homepage": "https://github.com/DonutsNL/",
             "role": "Developer"
         }
-    ]
+    ],
+    "require-dev": {
+        "symfony/test-pack": "^1.1"
+    }
 }
