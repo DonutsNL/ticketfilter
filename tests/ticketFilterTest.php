@@ -1,5 +1,6 @@
 <?php
 namespace tests;
+require('./tests/bootstrap.php');
 
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
