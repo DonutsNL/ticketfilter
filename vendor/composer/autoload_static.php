@@ -92,6 +92,9 @@ class ComposerStaticInit8a12cb57e3eb97f4aa6da10e056269a3
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'GlpiPlugin\\Ticketfilter\\Filter' => __DIR__ . '/../..' . '/src/Filter.php',
+        'GlpiPlugin\\Ticketfilter\\FilterPattern' => __DIR__ . '/../..' . '/src/FilterPattern.php',
+        'GlpiPlugin\\Ticketfilter\\TicketHandler' => __DIR__ . '/../..' . '/src/TicketHandler.php',
         'PHPUnit\\Exception' => __DIR__ . '/..' . '/phpunit/phpunit/src/Exception.php',
         'PHPUnit\\Framework\\ActualValueIsNotAnObjectException' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Exception/ActualValueIsNotAnObjectException.php',
         'PHPUnit\\Framework\\Assert' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert.php',

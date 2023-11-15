@@ -7,13 +7,13 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-use GlpiPlugin\Ticketfilter;
+use GlpiPlugin\Ticketfilter\TicketHandler;
 
 class ticketFilterTest extends Testcase
 {
-    public function testTicketFilter()
+    public function testTicketHandler()
     {
-        $tf = new TicketFilter();
+        $tf = new TicketHandler();
     }
 
     public function testWithoutDelay()

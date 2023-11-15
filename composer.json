@@ -14,6 +14,9 @@
         "symfony/test-pack": "^1.1"
     },
     "autoload": {
-        "psr-4": {"GlpiPlugin\\": "src/"}
+        "psr-4": {"GlpiPlugin\\": "src/"},
+        "classmap": [
+            "src/"
+        ]
     }
 }
