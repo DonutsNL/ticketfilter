@@ -13,6 +13,6 @@ jobs:
       - run: pwd
       - uses: php-actions/composer@v6
       - run: echo "Composer dependencies have been installed"
-      - run: vendor/bin/phpunit ./tests/ticketFilterTest.php
+      - run: vendor/bin/phpunit --bootstrap ./tests/bootstrap.php ./tests/ticketFilterTest.php
 
       

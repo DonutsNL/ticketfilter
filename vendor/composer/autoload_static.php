@@ -32,6 +32,10 @@ class ComposerStaticInit8a12cb57e3eb97f4aa6da10e056269a3
         array (
             'Masterminds\\' => 12,
         ),
+        'G' => 
+        array (
+            'GlpiPlugin\\Ticketfilter\\' => 24,
+        ),
         'D' => 
         array (
             'Doctrine\\Instantiator\\' => 22,
@@ -71,6 +75,10 @@ class ComposerStaticInit8a12cb57e3eb97f4aa6da10e056269a3
         'Masterminds\\' => 
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
+        ),
+        'GlpiPlugin\\Ticketfilter\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src',
         ),
         'Doctrine\\Instantiator\\' => 
         array (
