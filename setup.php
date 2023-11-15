@@ -87,6 +87,9 @@ function plugin_version_ticketfilter() : array
          'glpi' => [
             'min' => PLUGIN_TICKETFILTER_MIN_GLPI,
             'max' => PLUGIN_TICKETFILTER_MAX_GLPI,
+         ],
+         'php'    => [
+            'min' => '8.0'
          ]
       ]
    ];
