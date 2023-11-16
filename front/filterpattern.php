@@ -38,9 +38,9 @@
 use GlpiPlugin\Ticketfilter\FilterPattern;
 use Plugin;
 
-include ("../../../inc/includes.php");
+include_once "../../../inc/includes.php";
 
 Plugin::load('ticketfilter', true);
 
 $dropdown = new FilterPattern();
-include(GLPI_ROOT . '/front/dropdown.common.php');
+include_once GLPI_ROOT . '/front/dropdown.common.php';

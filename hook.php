@@ -44,7 +44,7 @@ use GlpiPlugin\Ticketfilter\FilterPattern;
  * test
  */
 // phpcs:ignore PSR1.Function.CamelCapsMethodName
-function plugin_ticketfilter_getDropdown() : array 
+function plugin_ticketfilter_getDropdown() : array
 {
    return [FilterPattern::class => __("Filterpatterns", 'ticketfilter')];
 }
@@ -52,10 +52,10 @@ function plugin_ticketfilter_getDropdown() : array
 
 /**
  * Summary of plugin_ticketFilter install
- * @return boolean
+ * @return booleansyste
  * test
  */
-// phpcs:ignore PSR1.Function.CamelCapsMethodName
+//phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_install() : bool
 {
 
@@ -70,11 +70,10 @@ function plugin_ticketfilter_install() : bool
 
 
 /**
- * 
  * Summary of plugin_ticketFilter uninstall
  * @return boolean
  */
-// phpcs:ignore PSR1.Function.CamelCapsMethodName
+//phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_uninstall() : bool
 {
    

@@ -1,5 +1,4 @@
 <?php
-
 /**
  *  ------------------------------------------------------------------------
  *  Chris Gralike Ticket Filter
@@ -67,14 +66,14 @@ class FilterPattern extends CommonDropdown
     const SUPPRESNOTIF      = 'SuppressNotification';
 
      /**
-     * getTypeName(int nb) : string - 
+     * getTypeName(int nb) : string -
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
-     * 
+     *
      * @param  int      $nb     number of items.
-     * @return void             
+     * @return void
      */
-    static function getTypeName($nb = 0) : string
+    public static function getTypeName($nb = 0) : string
     {
         if ($nb > 0) {
            return __('Filterpatterns', 'ticketfilter');
@@ -87,8 +86,8 @@ class FilterPattern extends CommonDropdown
      * getMenuContent() : array | bool -
      * Method called by pre_item_add hook validates the object and passes
      * it to the RegEx Matching then decides what to do.
-     * 
-     * @return mixed             boolean|array       
+     *
+     * @return mixed             boolean|array
      */
     public static function getMenuContent()
     {
@@ -107,20 +106,20 @@ class FilterPattern extends CommonDropdown
     /**
      * getIcon() : string -
      * Sets icon for object.
-     * 
-     * @return string   $icon   
+     *
+     * @return string   $icon
      */
     public static function getIcon() : string
-    { 
-        return 'fas fa-filter'; 
+    {
+        return 'fas fa-filter';
     }
 
     /**
      * getAdditionalFields() : array -
      * Fetch fields for Dropdown 'add' form. Array order is equal with
      * field order in the form
-     * 
-     * @return string   $icon   
+     *
+     * @return string   $icon
      */
     public function getAdditionalFields()
     {
@@ -211,8 +210,8 @@ class FilterPattern extends CommonDropdown
     /**
      * rawSearchOptions() : array -
      * Add fields to search and potential table columns
-     * 
-     * @return array   $rawSearchOptions   
+     *
+     * @return array   $rawSearchOptions
      */
     public function rawSearchOptions() : array
     {
@@ -242,23 +241,7 @@ class FilterPattern extends CommonDropdown
             'name'               => __('Solved Match String', 'ticketfilter'),
             'datatype'           => 'text',
         ];
-/*
-        $tab[] = [
-            'id'                 => '8',
-            'table'              => $this->getTable(),
-            'field'              => 'AutomaticallyMerge',
-            'name'               => __('Automatically Merge', 'ticketfilter'),
-            'datatype'           => 'text',
-        ];
-
-        $tab[] = [
-            'id'                 => '9',
-            'table'              => $this->getTable(),
-            'field'              => 'LinkClosedTickets',
-            'name'               => __('Link To Closed Tickets', 'ticketfilter'),
-            'datatype'           => 'text',
-        ];
-*/
+        
         $tab[] = [
             'id'                 => '9',
             'table'              => $this->getTable(),
@@ -306,9 +289,9 @@ class FilterPattern extends CommonDropdown
     /**
      * install(Migration migration) : void -
      * Install table needed for Ticket Filter configuration dropdowns
-     * 
+     *
      * @return void
-     * @see             hook.php:plugin_ticketfilter_install()  
+     * @see             hook.php:plugin_ticketfilter_install()
      */
     public static function install(Migration $migration) : void
     {
@@ -340,7 +323,7 @@ class FilterPattern extends CommonDropdown
             `AutomaticallyMerge`        tinyint NOT NULL DEFAULT '0',
             `ReopenClosedTickets`       tinyint NOT NULL DEFAULT '0',
             `SearchTicketBody`          tinyint NOT NULL DEFAULT '0',
-            `MatchSpecificSource`       text NULL, 
+            `MatchSpecificSource`       text NULL,
             `SuppressNotification`      tinyint NOT NULL DEFAULT '1',
             PRIMARY KEY (`id`),
             KEY `name` (`name`),
@@ -353,7 +336,7 @@ class FilterPattern extends CommonDropdown
 
             // insert example rule;
             $query = <<<SQL
-            INSERT INTO `$table`(name, comment, is_active, TicketMatchString, TicketMatchStringLength, SolvedMatchString, SolvedMatchStringLength) 
+            INSERT INTO `$table`(name, comment, is_active, TicketMatchString, TicketMatchStringLength, SolvedMatchString, SolvedMatchStringLength)
             VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/', '11', '/.*?(?<solved>Closed).*/', '6');
             SQL;
             $DB->query($query) or die($DB->error());
@@ -369,7 +352,7 @@ class FilterPattern extends CommonDropdown
     /**
      * uninstall(Migration migration) : void -
      * Uninstall tables uncomment the line to make plugin clean table.
-     * 
+     *
      * @return void
      * @see             hook.php:plugin_ticketfilter_uninstall()
      */

@@ -47,9 +47,10 @@ use GlpiPlugin\Ticketfilter\FilterPattern;
 class TicketHandler{
 
     private $ticket;             // The referenced ticket object
-    private $pattern = false;    // The pattern configuration 
+    private $pattern = false;    // The pattern configuration
     private $status = '-1';      // Status of this object, 1 if reference ticket is loaded.
 
+    // Not used
     public function __construct() {}
 
     /**
@@ -58,7 +59,7 @@ class TicketHandler{
      * and populates used pattern config for various evals.
      *
      * @param  int ticketId      identity of the ticket that needs to be loaded
-     * @param  array pattern     array holding the pattern used for the match. 
+     * @param  array pattern     array holding the pattern used for the match.
      * @return void              Object is passed by reference, no return values required
      * @since                    1.1.0
      */
@@ -87,8 +88,8 @@ class TicketHandler{
      /**
      * getId() : int -
      * Returns ticket ID of ticket being handled or (int) 0 if no ticket was loaded by initHandler();
-     * 
-     * @param  void              
+     *
+     * @param  void
      * @return int               Status identifier or 0 if no ticket was loaded;
      * @since                    1.1.0
      */
@@ -104,8 +105,8 @@ class TicketHandler{
     /**
      * getStatus() : int -
      * Returns ticket status of ticket being handled or (int) 0 if no ticket was loaded by initHandler();
-     * 
-     * @param  void              
+     *
+     * @param  void
      * @return int               Status identifier or 0 if no ticket was loaded;
      * @since                    1.1.0
      */
@@ -122,11 +123,11 @@ class TicketHandler{
      * setStatusToNew() : bool -
      * Updates the status of the loaded ticket to NEW int(1)
      *
-     * @param  void              
+     * @param  void
      * @return bool            Allways returns true
      * @since                  1.2.0
      */
-    public function setStatusToNew() : bool 
+    public function setStatusToNew() : bool
     {
         global $DB;
         // Update status
@@ -144,11 +145,11 @@ class TicketHandler{
      * setStatusToSolved() : bool -
      * Updates the status of the loaded ticket to SOLVED int(5)
      *
-     * @param  void              
+     * @param  void
      * @return bool            Allways returns true
      * @since                  1.2.0
      */
-    public function setStatusToSolved() : bool 
+    public function setStatusToSolved() : bool
     {
         global $DB;
         // Update status
@@ -167,13 +168,13 @@ class TicketHandler{
      * addReopendMessage(string patternName = '') : bool -
      * Adds a followup to indicate that ticketfilter reopend the closed ticket .
      *
-     * @param  void            
-     * @return bool          
+     * @param  void
+     * @return bool
      * @since                    1.2.0
      */
     public function addReopenedMessage($patternName = '') : bool
     {
-        if($ItilFollowup = new ITILFollowup()) {
+        if($itilFollowup = new ITILFollowup()) {
             // Check notification config
             if($this->pattern[FilterPattern::SUPPRESNOTIF]) {
                 $input['_disablenotif'] = true;
@@ -184,11 +185,7 @@ class TicketHandler{
             $input['users_id']      = false;
             $input['add_reopen']    = 1;
             $input['itemtype']      = Ticket::class;
-            if($ItilFollowup->add($input) === false) {
-                return false;
-            } else {
-                return true;
-            }
+            return ($itilFollowup->add($input) === false) ? false : true;
         }
     }
 
@@ -196,13 +193,13 @@ class TicketHandler{
      * addSolvedMessage(string patternName = '') : bool -
      * Adds followup to indicate that ticketfilter updated the status to solved.
      *
-     * @param  void            
-     * @return bool          
+     * @param  void
+     * @return bool
      * @since                    1.2.0
      */
     public function addSolvedMessage($patternName = '') : bool
     {
-        if($ItilFollowup = new ITILFollowup()) {
+        if($itilFollowup = new ITILFollowup()) {
             // Check notification config
             if($this->pattern[FilterPattern::SUPPRESNOTIF]) {
                 $input['_disablenotif'] = true;
@@ -214,21 +211,17 @@ class TicketHandler{
             $input['add_reopen']    = 1;
             $input['itemtype']      = Ticket::class;
 
-            if($ItilFollowup->add($input) === false) {
-                return false;
-            } else {
-                return true;
-            }
+            return ($itilFollowup->add($input) === false) ? false : true;
         }
     }
     /**
      * processTicket(Ticket ticket) : bool -
      * Adds a followup based on the passed ticket to the loaded ticket residing in ticketHandler->ticket,
-     * also performs validations and evaluates if the loaded ticket needs to be reopend, resolved or assets 
+     * also performs validations and evaluates if the loaded ticket needs to be reopend, resolved or assets
      * should be linked based on the provided pattern configuration in ticketHandler->pattern.
      *
-     * @param  Ticket $item      // Ticket object received from the pre_item_add hook.       
-     * @return bool          
+     * @param  Ticket $item      // Ticket object received from the pre_item_add hook.
+     * @return bool
      * @since                    1.1.0
      */
     public function processTicket(Ticket $item) : bool
@@ -236,11 +229,11 @@ class TicketHandler{
         // Match mailsender with ticket requester.
         if($this->pattern[FilterPattern::MATCHSOURCE]) {
             // https://github.com/DonutsNL/ticketfilter/issues/4
-            $succesfullUserMatch = false; 
+            $succesfullUserMatch = false;
 
             // Get all the users from the ticket Object received from the pre_item_add hook.
             foreach($item->input['_actors']["requester"] as $null => $mailUser){
-                $usersToBeMatched[] = [ 
+                $usersToBeMatched[] = [
                     'userId'    => $mailUser['items_id'],
                     'userEmail' => ($mailUser['default_email']) ? $mailUser['default_email'] : $mailUser['alternative_email']
                 ];
@@ -299,7 +292,7 @@ class TicketHandler{
             }
 
             // Add the followup
-            if($ItilFollowup = new ITILFollowup()) {
+            if($itilFollowup = new ITILFollowup()) {
                 // Populate Followup fields
                 $input                  = $item->input;
                 $input['items_id']      = $this->getId();
@@ -318,20 +311,17 @@ class TicketHandler{
                 unset($input['entities_id']);
                 unset($input['_ruleid']);
 
-                if($ItilFollowup->add($input) === false) {
-                    return false;
+                if($itilFollowup->add($input) === false) {
                     trigger_error('TicketFilter: Unable to add a new followup, database available?', E_USER_WARNING);
+                    return false;
                 }
 
                 Session::addMessageAfterRedirect(__("<a href='".$this->getTicketURL()."'>New ticket was matched to open ticket: ".$this->getId()." and was added as a followup</a>"), true, INFO);
             }
 
-            // Do we need to link assets to this ticket?
-            // Future feature.
-
             // Assess the title and solve the ticket if matched with the solved match string.
-            if($this->pattern[FilterPattern::SOLVEDMATCHSTR]) {
-                if(!empty($this->pattern[FilterPattern::SOLVEDMATCHSTR])) {
+            if($this->pattern[FilterPattern::SOLVEDMATCHSTR] &&
+               !empty($this->pattern[FilterPattern::SOLVEDMATCHSTR])) {
                     $p = html_entity_decode($this->pattern[FilterPattern::SOLVEDMATCHSTR]);
                     // Perform the search
                     if(preg_match_all("$p", $item->input['name'], $matchArray)) {
@@ -349,7 +339,6 @@ class TicketHandler{
                     } else {
                         trigger_error("TicketFilter: PregMatch failed! please review the Solved pattern $p and correct it", E_USER_WARNING);
                     }
-                } // No solved pattern configured
             }
             return true;
         } else {
@@ -359,10 +348,10 @@ class TicketHandler{
 
     /**
      * getTicketUrl(void) : string -
-     * Returns the url to the ticket loaded by the handler or returns (string) '0' 
+     * Returns the url to the ticket loaded by the handler or returns (string) '0'
      * no ticket was loaded by initHandler().
      *
-     * @param  void              
+     * @param  void
      * @return string            Returns human readable ticket status or (string) '0'
      * @since                    1.1.0
      */
@@ -401,6 +390,6 @@ class TicketHandler{
         ) as $id => $row) {
             $r[]=$id;
         }
-        return $r; 
+        return $r;
     }
 }

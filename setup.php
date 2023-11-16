@@ -65,7 +65,7 @@ function plugin_init_ticketfilter() : void
    // Add hook (callback) on the PRE_ITEM_ADD event.
    // All new tickets are to be evaluated no matter the source.
    $PLUGIN_HOOKS[HOOKS::PRE_ITEM_ADD]['ticketfilter'] = [
-      Ticket::class       => [Filter::class, 'PreItemAdd']
+      Ticket::class       => [Filter::class, 'preItemAdd']
    ];
 }
 
@@ -102,9 +102,6 @@ function plugin_version_ticketfilter() : array
  */
 function plugin_ticketfilter_check_prerequisites() : bool
 {
-   if (false) {
-      return false;
-   }
    return true;
 }
 
@@ -116,12 +113,8 @@ function plugin_ticketfilter_check_prerequisites() : bool
  */
 function plugin_ticketfilter_check_config($verbose = false) : bool
 {
-   if (true) { // Your configuration check
-      return true;
-   }
-
    if ($verbose) {
       echo __('Installed / not configured', 'TICKETFILTER');
    }
-   return false;
+   return (true) ? true : false;
 }

@@ -58,22 +58,19 @@ class Filter {
      * @since                    1.0.0
      * @see                      setup.php hook
      */
-    public static function PreItemAdd(Ticket $item) : void 
+    public static function preItemAdd(Ticket $item) : void
     {
-        if(is_object($item)) {
-
-            if(is_array($item->input)                  // Fields should be an array with values.
-               && key_exists('name', $item->input)     // Name key (that is the Subject of the email) should exist.
-               && !empty($item->input['name'])) {      // Name should not be emtpy, could happen with recurring tickets.
-
-                // Search our pattern in the name field and find corresponding ticket(s) (if any)
-                self::searchForMatches($item);
-            } // Not an array with expected keys
-        } // Not a valid object.
+        if(is_object($item) &&
+           is_array($item->input) &&
+           key_exists('name', $item->input) &&      // Name key (that is the Subject of the email) should exist.
+           !empty($item->input['name'])) {          // Name should not be emtpy, could happen with recurring tickets.
+           // Search our pattern in the name field and find corresponding ticket(s) (if any)
+           self::searchForMatches($item);
+        }
     }
     
     /**
-     * emptyReferencedObject(Ticket item) : void - 
+     * emptyReferencedObject(Ticket item) : void -
      * Clean the referenced item and delete any mailbox items remaining
      *
      * @param  Ticket $item         The original ticket passed by the pre_item_add hook.
@@ -86,7 +83,7 @@ class Filter {
         // We cancelled the ticket creation and by doing so the mailgate will not clean the
         // email from the mailbox. We need to clean it manually.
         // Send a meaningfull message if mailgate was triggered by user from UI.
-        if(self::deleteEmail($item) == true) {
+        if(self::deleteEmail($item) === true) {
             Session::addMessageAfterRedirect(__("Ticket removed from mailbox, it is save to ignore related mailgate error"), true, WARNING);
         }
         $item->input = false;
@@ -94,7 +91,7 @@ class Filter {
     }
 
     /**
-     * searchForMatches(Ticket item) : bool - 
+     * searchForMatches(Ticket item) : bool -
      * Perform a search in the glpi_tickets table using the searchString if one is found applying the
      * provided ticket match patterns from dropdown on the ticket name (email subject).
      *
@@ -111,7 +108,7 @@ class Filter {
 
         // Evaluate patterns
         if(is_array($patterns)
-        && count($patterns) >= 1
+        && !empty($patterns)
         && array_key_exists(FilterPattern::TICKETMATCHSTR, $patterns['0']))
         {
             // Loop through the patterns
@@ -129,7 +126,6 @@ class Filter {
 
                             // Protect against risky patterns or SQL injections by validating the length
                             // of the matchstring against what we expect it to be.
-                            // todo: move to separate method for readability.
                             if(strlen($searchString) <= $Filterpattern[FilterPattern::TICKETMATCHSTRLEN]) {
                                 $handler = new TicketHandler();
                                 $r = $handler->searchTicketPool($searchString);
@@ -153,28 +149,28 @@ class Filter {
                         trigger_error("TicketFilter: PregMatch failed! please review the pattern $p and correct it", E_USER_WARNING);
                     }
                 } // Pattern is configured inactive.
-            } // Loop.           
+            } // Loop.
         } else {
             trigger_error("TicketFilter: No ticketfilter patterns found, please configure them or disable the plugin", E_USER_WARNING);
         }
 
         // Do we have at least 1 succesfull followup, prevent GLPI from creating a new ticket
-        if(is_array($itemIsMatched) && 
+        if(is_array($itemIsMatched) &&
            in_array("matched", $itemIsMatched)) {
             // Clear $item->input and fields to stop object from being created
             // https://glpi-developer-documentation.readthedocs.io/en/master/plugins/hooks.html
             self::emptyReferencedObject($item);
-        }   
+        }
         return true;
     }
 
     /**
      * openMailGate(int Id) : MailCollector|null -
      * Returns a connected mailCollector object or []
-     * 
-     * @param  int $Id               Mail Collector ID   
-     * @return MailCollector|null    Union return types might be problematic with older php versions.  
-     * @since                        1.0.0             
+     *
+     * @param  int $Id               Mail Collector ID
+     * @return MailCollector|null    Union return types might be problematic with older php versions.
+     * @since                        1.0.0
      */
     private static function openMailGate(int $Id) : MailCollector|null
     {
@@ -194,23 +190,19 @@ class Filter {
     /**
      * deleteEmail(Ticket item) : bool -
      * Delete original email from the mailbox to the accepted folder. This is not performed by the mailgate
-     * if the Ticket passed by reference is nullified as described in the hook documentation. 
+     * if the Ticket passed by reference is nullified as described in the hook documentation.
      * This actually causes an error where mailgate leaves the email untouched.
-     * 
+     *
      * @param  Ticket $item     Ticket object containing the mailgate uid
-     * @return bool             Returns true on success and false on failure 
-     * @since                   1.0.0            
+     * @return bool             Returns true on success and false on failure
+     * @since                   1.0.0
      */
     private static function deleteEmail(Ticket $item) : bool
     {
         // Check if ticket is fetched from the mailCollector if so open it;
         $mailCollector = (isset($item->input['_mailgate'])) ? self::openMailGate($item->input['_mailgate']) : false;
         if(is_object($mailCollector)){
-            if($mailCollector->deleteMails($item->input['_uid'], MailCollector::ACCEPTED_FOLDER)) {
-                return true;
-            } else {
-                return false;
-            }
+            return ($mailCollector->deleteMails($item->input['_uid'], MailCollector::ACCEPTED_FOLDER)) ? true : false;
         } // instantiation of mailCollector failed
         return false;
     }
