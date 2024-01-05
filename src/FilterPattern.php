@@ -252,7 +252,8 @@ class FilterPattern extends CommonDropdown
 
         return $tab;
     }
-    
+
+
     /**
      * getFilterPatterns() : array -
      * Get match patterns and config from dropdowns
@@ -362,4 +363,29 @@ class FilterPattern extends CommonDropdown
         $migration->displayMessage("Uninstalling $table");
         $migration->dropTable($table);
     }
+
+    /**
+     * Return dummy filterPattern for testing purposes
+     *
+     * @return array
+     */
+    public static function getDummyPattern() : array
+    {
+        return [self::NAME                => TestPattern,
+                self::ACTIVE              => true,
+                self::DATE_CREATION       => null,
+                self::DATE_MOD            => null,
+                self::TICKETMATCHSTR      => '/.*?(?<match>\(TESTMATCH-[0-9]{1,4}\)).*/',
+                self::TICKETMATCHSTRLEN   => 16,
+                self::ASSETMATCHSTR       => '/.*?(?<asset>\(TESTASSET-[0-9]{1,4}\)).*/',
+                self::ASSETMATCHSTRLEN    => 16,
+                self::SOLVEDMATCHSTR      => '/.*?(?<solved>\(TESTSOLVED-[0-9]{1,4}\)).*/',
+                self::SOLVEDMATCHSTRLEN   => 18,
+                self::AUTOMERGE           => true,
+                self::REOPENCLOSED        => true,
+                self::SEARCHBODY          => true,
+                self::MATCHSOURCE         => true,
+                self::SUPPRESNOTIF        => true];
+    }
+
 }

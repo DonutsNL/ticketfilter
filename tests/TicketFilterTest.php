@@ -45,7 +45,5 @@ class TicketFilterTest extends Testcase
         );
     }
 }
-// This plugin uses extensive database functions
-// therefor we need to modify the classes to allow for more
-// testing. This function is just preparations to allow 
-// phpunit testing. Simply run ./vendor/bin/phpunit ./tests
+
+// phpunit testing Run ./vendor/bin/phpunit ./tests

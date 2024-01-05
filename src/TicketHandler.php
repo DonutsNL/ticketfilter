@@ -48,25 +48,22 @@ class TicketHandler{
 
     private $ticket;             // The referenced ticket object
     private $pattern = false;    // The pattern configuration
-    private $status = '-1';      // Status of this object, 1 if reference ticket is loaded.
-
-    // Not used
-    public function __construct() {}
+    private $status = false;     // Status of this object
 
     /**
      * initHandler(int ticketId, array filterPattern) : bool -
      * Loads a ticket from the database with provided ticket ID
      * and populates used pattern config for various evals.
      *
-     * @param  int ticketId      identity of the ticket that needs to be loaded
+     * @param  int|Ticket ticket Either an testObject or ticket Id of the referenced ticket that needs to be loaded
      * @param  array pattern     array holding the pattern used for the match.
      * @return void              Object is passed by reference, no return values required
      * @since                    1.1.0
      */
-    public function initHandler(int $ticketId, array $filterPattern) : bool
+    public function initHandler(int|Ticket $ticket, array $filterPattern) : bool
     {
         // Load the ticket we need to modify.
-        if(is_int($ticketId)){
+        if(is_int($ticket)){
             if(is_array($filterPattern)){
                 $this->pattern = $filterPattern;
             } else {
@@ -74,13 +71,21 @@ class TicketHandler{
             }
 
             $this->ticket = new Ticket();
-            $this->ticket->getFromDB((integer) $ticketId);
+            $this->ticket->getFromDB((integer) $ticket);
             // Check if we where able to fetch the correct ticket.
-            if($this->ticket->fields['id'] == $ticketId){
-                $this->status = '1';
+            if($this->ticket->fields['id'] == $ticket){
+                $this->status = true;
                 return true;
             } else {
                 return false;
+            }
+        } else {
+            // Load ticket directly for testing purposes.
+            // Minimal validation to allow negative assertions
+            if(is_object($ticket)) {
+                $this->ticket = $ticket;
+                $this->pattern = $filterPattern;
+                $this->status = true;
             }
         }
     }
@@ -226,56 +231,14 @@ class TicketHandler{
      */
     public function processTicket(Ticket $item) : bool
     {
-        // Match mailsender with ticket requester.
-        if($this->pattern[FilterPattern::MATCHSOURCE]) {
-            // https://github.com/DonutsNL/ticketfilter/issues/4
-            $succesfullUserMatch = false;
-
-            // Get all the users from the ticket Object received from the pre_item_add hook.
-            foreach($item->input['_actors']["requester"] as $null => $mailUser){
-                $usersToBeMatched[] = [
-                    'userId'    => $mailUser['items_id'],
-                    'userEmail' => ($mailUser['default_email']) ? $mailUser['default_email'] : $mailUser['alternative_email']
-                ];
-            }
-
-            // Fetch and match the requesters of the currently processed ticket.
-            // With the requesters in the ticket object received from the pre_item_add hook.
-            $usrObj = new $this->ticket->userlinkclass();
-            $actors = $usrObj->getActors($this->getId());
-            foreach ( $actors as $null => $ticketUsers) {
-                // Verify there are users assigned to process
-                if(is_array($ticketUsers) && count($ticketUsers) > 0) {
-                    foreach($ticketUsers as $null => $userType) {
-                        // Only evaluate user type requesters ignore watchers and technicians
-                        if($userType['type'] == CommonITILActor::REQUESTER){
-                            // First search alternative email because we dont want
-                            // to match an users_id:int(0) that would match with all anonymous users
-                            // assigned to the ticket.
-                            if($userType['alternative_email']) {
-                                if(array_search(($userType['alternative_email']), array_column($usersToBeMatched, 'userEmail'))){
-                                    $succesfullUserMatch = true;
-                                }
-                            } else {
-                                // Try to match any non zero users_id in usersToBeMatched.
-                                if(array_search($userType['users_id'], array_column($usersToBeMatched, 'userId'))){
-                                    $succesfullUserMatch = true;
-                                }
-                            }
-                        } // Ignore the user that is either watcher or technician @see glpi/src/Ticket_User.php
-                    } // foreach
-                }// No requesters assigned to ticket
-            }// foreach
-
-            // We did not match any user from the email with the referenced ticket
-            // Per configuration do not merge the followup.
-            if(!$succesfullUserMatch){
-                return false;
-            }
-        }
-
         // Process the followup.
         if($this->status == '1') {
+
+            // Evaluate the requesters of both tickets
+            if (!$this->verifyRequesters($item)) {
+                return false;
+            }
+
             // Do we need to reopen the closed ticket?
             if($this->getStatus() == CommonITILObject::CLOSED) {
                 if($this->pattern[FilterPattern::REOPENCLOSED]) {
@@ -331,15 +294,23 @@ class TicketHandler{
                                 $this->addSolvedMessage($this->pattern[FilterPattern::NAME]);
                                 // Set status to solved.
                                 $this->setStatusToSolved();
+                                print "Ticket updated to solved!<br>";
                                 Session::addMessageAfterRedirect(__("<a href='".$this->getTicketURL()."'>New ticket was solved by the plugin!</a>"), true, INFO);
                             } else {
+                                print "Solved Patern length issue <br>";
                                 trigger_error('TicketFilter: Length of'.$matchArray['solved']['0'].' is longer then allowed by configured Ticket Match String Length', E_USER_WARNING);
                             }
-                        } // Solved pattern not found
+                        } else {// Solved pattern not found
+                            print "Patern not found <br>";
+                        }
                     } else {
+                        print "Pregmatch failed <br>";
                         trigger_error("TicketFilter: PregMatch failed! please review the Solved pattern $p and correct it", E_USER_WARNING);
                     }
+            } else{
+               print "No solved string found!";
             }
+            die();
             return true;
         } else {
             return false;
@@ -391,5 +362,72 @@ class TicketHandler{
             $r[]=$id;
         }
         return $r;
+    }
+
+     /**
+     * verifyRequesters(Ticket $item) : bool -
+     * verify if the requesters in the 'to be created' ticket are present
+     * in the 'to be merged' ticket. Returns false if a match could not be made.
+     *
+     * @param  Ticket $item     Ticket object containing the mailgate uid
+     * @return bool             Returns true on success and false on failure
+     * @since                   1.0.0
+     */
+    public function verifyRequesters(Ticket $item) : bool
+    {
+        // Match mailsender with ticket requester.
+        if(!$this->pattern[FilterPattern::MATCHSOURCE]) {
+            // Config does not require us to verify the users so we eval true.
+            return true;
+        } else {
+            // https://github.com/DonutsNL/ticketfilter/issues/4
+            $succesfullUserMatch = false;
+
+            // Get all the users from the ticket Object received from the pre_item_add hook.
+            foreach($item->input['_actors']["requester"] as $null => $mailUser){
+                $usersToBeMatched[] = [
+                    'userId'    => $mailUser['items_id'],
+                    'userEmail' => ($mailUser['default_email']) ? $mailUser['default_email'] : $mailUser['alternative_email']
+                ];
+            }
+
+            // Fetch and match the requesters of the currently processed ticket.
+            // With the requesters in the ticket object received from the pre_item_add hook.
+            $usrObj = new $this->ticket->userlinkclass();
+            $actors = $usrObj->getActors($this->getId());
+            foreach ( $actors as $null => $ticketUsers) {
+                // Verify there are users assigned to process
+                if(is_array($ticketUsers) && count($ticketUsers) > 0) {
+                    foreach($ticketUsers as $null => $userType) {
+                        // Only evaluate user type requesters ignore watchers and technicians
+                        if($userType['type'] == CommonITILActor::REQUESTER){
+                            // First search alternative email because we dont want
+                            // to match an users_id:int(0) that would match with all anonymous users
+                            // assigned to the ticket.
+                            if(!empty($userType['alternative_email'])) {
+                                if(array_search(($userType['alternative_email']), array_column($usersToBeMatched, 'userEmail')) === false){
+                                    echo "no match on email: {$userType['alternative_email']}<br>";
+                                }else{
+                                    echo "match on email in: {$userType['users_id']}<br>";
+                                    $succesfullUserMatch = true;
+                                }
+                            } else {
+                                // Try to match any non zero users_id in usersToBeMatched.
+                                if(array_search($userType['users_id'], array_column($usersToBeMatched, 'userId')) === false){
+                                    echo "no match on userId: {$userType['users_id']}<br>";
+                                }else{
+                                    echo "match on userId in: {$userType['users_id']}<br>";
+                                    $succesfullUserMatch = true;
+                                }
+                            }
+                        } // Ignore the user that is either watcher or technician @see glpi/src/Ticket_User.php
+                    } // foreach
+                }// No requesters assigned to ticket
+            }// foreach
+
+            // We did not match any user from the email with the referenced ticket
+            // Per configuration do not merge the followup.
+            return ($succesfullUserMatch) ? true : false;
+        }
     }
 }
