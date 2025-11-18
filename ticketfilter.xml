@@ -2,20 +2,19 @@
 <name>Ticket Filter</name>
 <key>ticketfilter</key>
 <state>stable</state>
-<logo>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/donut.png</logo>
+<logo>https://raw.githubusercontent.com/DonutsNL/samlsso/refs/heads/main/templates/images/quinquies.jpeg</logo>
 <description>
     <short>
-        <en>Matches foreign (ticket, monitoring, crm) identifiers in the mailsubject of mailgate processed tickets or manually created tickets 
-            and adds successfully matched tickets as followups in existing tickets with the same identifier and more.</en>
+        <en>The TicketFilter plugin will allow you to match incomming emails to existing tickets using custom regular expressions. This
+            allows you to also match tickets using external ticket system identifiers, for instance issues logged in JIRA, Codeberg or Github.</en>
     </short>
     <long>
-        <en>The TicketFilter plugin will allow you to add additional regular expressions that 
-            TicketFilter will use locate unique identifiers in received tickets. If a match is found, 
-            TicketFilter will use the found identifier to locate existing tickets with the same identifier and 
-            add the received email as followup in all tickets that contain that identifier. If configured ticketfilter 
-            will try to prevent notifications to be send to prevent email runaway issues, reopen closed tickets with status
-            new, or update the ticket to a solved state if specific keywords where found in the received email subject.
-        </en>
+        <en>The TicketFilter plugin will allow you to match incomming emails to existing tickets using custom regular expressions. This
+            allows you to also match tickets using external ticket system identifiers, for instance issues logged in JIRA, Codeberg or Github.
+            If a match is found ticketfilter will try to match the senders (are they requester in the allready logged ticket) and add the new
+            ticket as a new followup. Ticketfilter will also add a message showing the ticket was matched using ticketfilter. Optionally ticketfilter
+            can be instructed to prevent notifications to be send once a match has been added as followup. Ticketfilter can also reopen closed tickets with
+            the status new if a match was made on a allready closed ticket or close a ticket is a specific pattern was found in the message.
     </long>
 </description>
 <homepage>https://github.com/DonutsNL/ticketfilter</homepage>
@@ -26,6 +25,11 @@
     <author>Chris Gralike</author>
 </authors>
 <versions>
+<version>
+        <num>1.3.0</num>
+        <compatibility>~11.0.0</compatibility>
+        <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.3.0/ticketfilter_1.3.0.zip</download_url>
+    </version>
     <version>
         <num>1.2.0</num>
         <compatibility>~10.0.0</compatibility>

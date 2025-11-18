@@ -1,5 +1,4 @@
 <?php
-
 /**
  *  ------------------------------------------------------------------------
  *  Chris Gralike Ticket Filter
@@ -25,14 +24,14 @@
  *
  * ------------------------------------------------------------------------
  *
- *  @package  	    TicketFilter
- *  @version	    1.2.0
+ *  @package        TicketFilter
+ *  @version        1.3.0
  *  @author         Chris Gralike
- *  @copyright 	    Copyright (c) 2023 by Chris Gralike
- *  @license    	GPLv2+
- *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
- *  @link		    https://github.com/DonutsNL/ticketfilter
- *  @since     	    1.0.1
+ *  @copyright      Copyright (c) 2023 by Chris Gralike
+ *  @license        GPLv2+
+ *  @see            https://github.com/DonutsNL/ticketfilter/readme.md
+ *  @link           https://github.com/DonutsNL/ticketfilter
+ *  @since          1.1.0
  * ------------------------------------------------------------------------
  **/
 
@@ -180,7 +179,7 @@ class Filter {
         try {
             $mailCollector->connect();
         }catch (Throwable $e) {
-            Toolbox::logError('Error opening mailCollector', $e->getMessage(), "\n", $e->getTraceAsString());
+            Toolbox::logInFile(PLUGIN_NAME, 'Error opening mailCollector', $e->getMessage(), "\n", $e->getTraceAsString(), false, true);
             Session::addMessageAfterRedirect(__('TicketFilter Could not connect to the mail receiver because of an error'), true, WARNING);
             return null;
         }

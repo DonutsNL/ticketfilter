@@ -25,7 +25,7 @@
  * ------------------------------------------------------------------------
  *
  *  @package  	   TicketFilter
- *  @version	   1.2.0
+ *  @version	   1.3.0
  *  @author    	Chris Gralike
  *  @copyright 	Copyright (c) 2023 by Chris Gralike
  *  @license   	GPLv2+
@@ -40,9 +40,9 @@ use GlpiPlugin\Ticketfilter\Filterpattern;
 
 // Maximum GLPI version, exclusive
 // Minimal GLPI version, inclusive
-define('PLUGIN_TICKETFILTER_VERSION', '1.3.2');
-define('PLUGIN_TICKETFILTER_MIN_GLPI', '10.0.0');
-define('PLUGIN_TICKETFILTER_MAX_GLPI', '10.0.99');
+define('PLUGIN_TICKETFILTER_VERSION', '1.3.0');
+define('PLUGIN_TICKETFILTER_MIN_GLPI', '11.0.0');
+define('PLUGIN_TICKETFILTER_MAX_GLPI', '11.99.99');
 
 /**
  * Init hooks of the plugin.
