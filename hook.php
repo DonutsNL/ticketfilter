@@ -58,14 +58,12 @@ function plugin_ticketfilter_getDropdown() : array
 //phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_install() : bool
 {
-
    if (method_exists(FilterPattern::class, 'install')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
       FilterPattern::install($migration);
    }
    return true;
-   
 }
 
 
@@ -76,12 +74,10 @@ function plugin_ticketfilter_install() : bool
 //phpcs:ignore PSR1.Function.CamelCapsMethodName
 function plugin_ticketfilter_uninstall() : bool
 {
-   
    if (method_exists(FilterPattern::class, 'uninstall')) {
       $version   = plugin_version_ticketfilter();
       $migration = new Migration($version['version']);
       FilterPattern::uninstall($migration);
    }
    return true;
-
 }

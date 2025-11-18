@@ -24,14 +24,14 @@
  *
  * ------------------------------------------------------------------------
  *
- *  @package  	    TicketFilter
- *  @version	    1.2.0
+ *  @package        TicketFilter
+ *  @version        1.3.0
  *  @author         Chris Gralike
- *  @copyright 	    Copyright (c) 2023 by Chris Gralike
- *  @license    	GPLv2+
- *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
- *  @link		    https://github.com/DonutsNL/ticketfilter
- *  @since     	    1.1.0
+ *  @copyright      Copyright (c) 2023 by Chris Gralike
+ *  @license        GPLv2+
+ *  @see            https://github.com/DonutsNL/ticketfilter/readme.md
+ *  @link           https://github.com/DonutsNL/ticketfilter
+ *  @since          1.1.0
  * ------------------------------------------------------------------------
  **/
 
@@ -333,14 +333,14 @@ class FilterPattern extends CommonDropdown
             KEY `date_mod` (`date_mod`)
             ) ENGINE=InnoDB DEFAULT CHARSET={$default_charset} COLLATE={$default_collation} ROW_FORMAT=DYNAMIC;
             SQL;
-            $DB->query($query) or die($DB->error());
+            $DB->doQuery($query) or die($DB->error());
 
             // insert example rule;
             $query = <<<SQL
             INSERT INTO `$table`(name, comment, is_active, TicketMatchString, TicketMatchStringLength, SolvedMatchString, SolvedMatchStringLength)
             VALUES('example', 'this is an example expression', '1', '/.*?(?<match>\(JIRA-[0-9]{1,4}\)).*/', '11', '/.*?(?<solved>Closed).*/', '6');
             SQL;
-            $DB->query($query) or die($DB->error());
+            $DB->doQuery($query) or die($DB->error());
         }
         
         // version 1.3.0 changes;
@@ -363,29 +363,4 @@ class FilterPattern extends CommonDropdown
         $migration->displayMessage("Uninstalling $table");
         $migration->dropTable($table);
     }
-
-    /**
-     * Return dummy filterPattern for testing purposes
-     *
-     * @return array
-     */
-    public static function getDummyPattern() : array
-    {
-        return [self::NAME                => TestPattern,
-                self::ACTIVE              => true,
-                self::DATE_CREATION       => null,
-                self::DATE_MOD            => null,
-                self::TICKETMATCHSTR      => '/.*?(?<match>\(TESTMATCH-[0-9]{1,4}\)).*/',
-                self::TICKETMATCHSTRLEN   => 16,
-                self::ASSETMATCHSTR       => '/.*?(?<asset>\(TESTASSET-[0-9]{1,4}\)).*/',
-                self::ASSETMATCHSTRLEN    => 16,
-                self::SOLVEDMATCHSTR      => '/.*?(?<solved>\(TESTSOLVED-[0-9]{1,4}\)).*/',
-                self::SOLVEDMATCHSTRLEN   => 18,
-                self::AUTOMERGE           => true,
-                self::REOPENCLOSED        => true,
-                self::SEARCHBODY          => true,
-                self::MATCHSOURCE         => true,
-                self::SUPPRESNOTIF        => true];
-    }
-
 }

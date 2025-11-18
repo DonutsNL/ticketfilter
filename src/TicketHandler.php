@@ -24,14 +24,14 @@
  *
  * ------------------------------------------------------------------------
  *
- *  @package  	    TicketFilter
- *  @version	    1.2.0
+ *  @package        TicketFilter
+ *  @version        1.3.0
  *  @author         Chris Gralike
- *  @copyright 	    Copyright (c) 2023 by Chris Gralike
- *  @license    	GPLv2+
- *  @see       	    https://github.com/DonutsNL/ticketfilter/readme.md
- *  @link		    https://github.com/DonutsNL/ticketfilter
- *  @since     	    1.2.0
+ *  @copyright      Copyright (c) 2023 by Chris Gralike
+ *  @license        GPLv2+
+ *  @see            https://github.com/DonutsNL/ticketfilter/readme.md
+ *  @link           https://github.com/DonutsNL/ticketfilter
+ *  @since          1.2.0
  * ------------------------------------------------------------------------
  **/
 
@@ -76,18 +76,9 @@ class TicketHandler{
             if($this->ticket->fields['id'] == $ticket){
                 $this->status = true;
                 return true;
-            } else {
-                return false;
-            }
-        } else {
-            // Load ticket directly for testing purposes.
-            // Minimal validation to allow negative assertions
-            if(is_object($ticket)) {
-                $this->ticket = $ticket;
-                $this->pattern = $filterPattern;
-                $this->status = true;
             }
         }
+        return false;
     }
 
      /**
@@ -192,6 +183,7 @@ class TicketHandler{
             $input['itemtype']      = Ticket::class;
             return ($itilFollowup->add($input) === false) ? false : true;
         }
+        return false;
     }
 
     /**
@@ -215,9 +207,9 @@ class TicketHandler{
             $input['users_id']      = false;
             $input['add_reopen']    = 1;
             $input['itemtype']      = Ticket::class;
-
             return ($itilFollowup->add($input) === false) ? false : true;
         }
+        return false;
     }
     /**
      * processTicket(Ticket ticket) : bool -
@@ -312,9 +304,8 @@ class TicketHandler{
             }
             die();
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
