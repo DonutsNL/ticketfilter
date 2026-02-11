@@ -105,6 +105,17 @@ class Filter {
         // Fetch patterns
         $patterns = FilterPattern::getFilterPatterns();
 
+        // Sanitization of the input to avoid Array vs String errors
+        $subject = '';
+        if (isset($item->input['name'])) {
+            if (is_string($item->input['name'])) {
+                $subject = $item->input['name'];
+            } elseif (is_array($item->input['name'])) {
+                // If an array arrives, we try to convert it to a string or take the first value
+                $subject = implode(' ', $item->input['name']);
+            }
+        }
+
         // Evaluate patterns
         if(is_array($patterns)
         && !empty($patterns)
@@ -117,7 +128,12 @@ class Filter {
                 if($Filterpattern['is_active']) {
                     // decode html_entities_encoded string from database.
                     $p = html_entity_decode($Filterpattern[FilterPattern::TICKETMATCHSTR]);
-                    if(preg_match_all("$p", $item->input['name'], $matchArray)) {
+                    
+                    // Save into a var to check it without warnings
+                    $matchResult = @preg_match_all("$p", $subject, $matchArray);
+
+                    // Enter only if there are RESULTS (> 0) and it is not FALSE
+                    if($matchResult !== false && $matchResult > 0) {
 
                         // If we found a match, use it to compose a searchstring for our sql query.
                         $searchString = (is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('match', $matchArray)) ? '%'.$matchArray['match']['0'].'%' : false;
@@ -137,6 +153,7 @@ class Filter {
                                         // Keep track what tickets where matched
                                         if ( $handler->processTicket($item) ) {
                                             $itemIsMatched[$key] = 'matched';
+                                            Toolbox::logInFile(PLUGIN_NAME, "Email linked to ticket ID: " . $key . " using the pattern: " . $Filterpattern['name'] . "\n");
                                         }
                                     } // Loop.
                                 } // No matching tickets found.
@@ -144,7 +161,8 @@ class Filter {
                                 trigger_error('TicketFilter: Length of'.$searchString.' is longer then allowed by configured Ticket Match String Length', E_USER_WARNING);
                             }
                         } // No searchstring found with provided patterns.
-                    } else {
+                    } elseif ($matchResult === false) {
+                        // Only throw an error if the Regex failed (False), not if it is 0
                         trigger_error("TicketFilter: PregMatch failed! please review the pattern $p and correct it", E_USER_WARNING);
                     }
                 } // Pattern is configured inactive.

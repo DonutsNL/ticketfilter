@@ -211,6 +211,7 @@ class TicketHandler{
         }
         return false;
     }
+
     /**
      * processTicket(Ticket ticket) : bool -
      * Adds a followup based on the passed ticket to the loaded ticket residing in ticketHandler->ticket,
@@ -251,8 +252,7 @@ class TicketHandler{
                 // Populate Followup fields
                 $input                  = $item->input;
                 $input['items_id']      = $this->getId();
-                $input['users_id']      = false;
-                $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : $input['users_id'];
+                $input['users_id']      = (isset($item->input['_users_id_requester'])) ? $item->input['_users_id_requester'] : ($input['users_id'] ?? 0);
                 $input['add_reopen']    = 1;
                 $input['itemtype']      = Ticket::class;
 
@@ -277,32 +277,42 @@ class TicketHandler{
             // Assess the title and solve the ticket if matched with the solved match string.
             if($this->pattern[FilterPattern::SOLVEDMATCHSTR] &&
                !empty($this->pattern[FilterPattern::SOLVEDMATCHSTR])) {
+
+                    // Sanitize name in case GLPI sends it as an array
+                    $subject = '';
+                    if (isset($item->input['name'])) {
+                        if (is_string($item->input['name'])) {
+                            $subject = $item->input['name'];
+                        } elseif (is_array($item->input['name'])) {
+                            $subject = implode(' ', $item->input['name']);
+                        }
+                    }
+
                     $p = html_entity_decode($this->pattern[FilterPattern::SOLVEDMATCHSTR]);
+
                     // Perform the search
-                    if(preg_match_all("$p", $item->input['name'], $matchArray)) {
+                    $matchResult = @preg_match_all("$p", $subject, $matchArray);
+
+                    // Only process if there is a match (> 0) and it is not an error (false)
+                    if($matchResult !== false && $matchResult > 0) {
                         // Do we have a match
                         if(is_array($matchArray) && count($matchArray) <> 0 && array_key_exists('solved', $matchArray)) {
                             if(strlen($matchArray['solved']['0']) <= $this->pattern[FilterPattern::SOLVEDMATCHSTRLEN]) {
                                 $this->addSolvedMessage($this->pattern[FilterPattern::NAME]);
                                 // Set status to solved.
                                 $this->setStatusToSolved();
-                                print "Ticket updated to solved!<br>";
+                                Toolbox::logInFile(PLUGIN_NAME, "Ticket updated to solved!\n");
+
                                 Session::addMessageAfterRedirect(__("<a href='".$this->getTicketURL()."'>New ticket was solved by the plugin!</a>"), true, INFO);
                             } else {
-                                print "Solved Patern length issue <br>";
-                                trigger_error('TicketFilter: Length of'.$matchArray['solved']['0'].' is longer then allowed by configured Ticket Match String Length', E_USER_WARNING);
+                                trigger_error('TicketFilter: Length of'.$matchArray['solved']['0'].' is longer than allowed by configured Ticket Match String Length', E_USER_WARNING);
                             }
-                        } else {// Solved pattern not found
-                            print "Patern not found <br>";
                         }
-                    } else {
-                        print "Pregmatch failed <br>";
+                    } elseif ($matchResult === false) {
+                        // Only throw an error if the Regex is malformed (Syntax Error)
                         trigger_error("TicketFilter: PregMatch failed! please review the Solved pattern $p and correct it", E_USER_WARNING);
                     }
-            } else{
-               print "No solved string found!";
             }
-            die();
             return true;
         }
         return false;
