@@ -13,79 +13,64 @@ use const DIRECTORY_SEPARATOR;
 use function copy;
 use function date;
 use function dirname;
-use function substr;
-use SebastianBergmann\CodeCoverage\CodeCoverage;
-use SebastianBergmann\CodeCoverage\InvalidArgumentException;
+use function str_ends_with;
+use SebastianBergmann\CodeCoverage\FileCouldNotBeWrittenException;
 use SebastianBergmann\CodeCoverage\Node\Directory as DirectoryNode;
+use SebastianBergmann\CodeCoverage\Report\Thresholds;
 use SebastianBergmann\CodeCoverage\Util\Filesystem;
+use SebastianBergmann\Template\Exception;
+use SebastianBergmann\Template\Template;
 
-final class Facade
+/**
+ * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
+ *
+ * @no-named-arguments Parameter names are not covered by the backward compatibility promise for phpunit/php-code-coverage
+ */
+final readonly class Facade
 {
-    /**
-     * @var string
-     */
-    private $templatePath;
+    private string $templatePath;
+    private string $generator;
+    private Colors $colors;
+    private Thresholds $thresholds;
+    private CustomCssFile $customCssFile;
 
-    /**
-     * @var string
-     */
-    private $generator;
-
-    /**
-     * @var int
-     */
-    private $lowUpperBound;
-
-    /**
-     * @var int
-     */
-    private $highLowerBound;
-
-    public function __construct(int $lowUpperBound = 50, int $highLowerBound = 90, string $generator = '')
+    public function __construct(string $generator = '', ?Colors $colors = null, ?Thresholds $thresholds = null, ?CustomCssFile $customCssFile = null)
     {
-        if ($lowUpperBound > $highLowerBound) {
-            throw new InvalidArgumentException(
-                '$lowUpperBound must not be larger than $highLowerBound'
-            );
-        }
-
-        $this->generator      = $generator;
-        $this->highLowerBound = $highLowerBound;
-        $this->lowUpperBound  = $lowUpperBound;
-        $this->templatePath   = __DIR__ . '/Renderer/Template/';
+        $this->generator     = $generator;
+        $this->colors        = $colors ?? Colors::default();
+        $this->thresholds    = $thresholds ?? Thresholds::default();
+        $this->customCssFile = $customCssFile ?? CustomCssFile::default();
+        $this->templatePath  = __DIR__ . '/Renderer/Template/';
     }
 
-    public function process(CodeCoverage $coverage, string $target): void
+    public function process(DirectoryNode $report, string $target): void
     {
-        $target = $this->directory($target);
-        $report = $coverage->getReport();
-        $date   = date('D M j G:i:s T Y');
+        $target            = $this->directory($target);
+        $date              = date('D M j G:i:s T Y');
+        $hasBranchCoverage = $report->numberOfExecutableBranches() > 0;
 
         $dashboard = new Dashboard(
             $this->templatePath,
             $this->generator,
             $date,
-            $this->lowUpperBound,
-            $this->highLowerBound,
-            $coverage->collectsBranchAndPathCoverage()
+            $this->thresholds,
+            $hasBranchCoverage,
         );
 
         $directory = new Directory(
             $this->templatePath,
             $this->generator,
             $date,
-            $this->lowUpperBound,
-            $this->highLowerBound,
-            $coverage->collectsBranchAndPathCoverage()
+            $this->thresholds,
+            $hasBranchCoverage,
         );
 
         $file = new File(
             $this->templatePath,
             $this->generator,
             $date,
-            $this->lowUpperBound,
-            $this->highLowerBound,
-            $coverage->collectsBranchAndPathCoverage()
+            $this->thresholds,
+            $hasBranchCoverage,
         );
 
         $directory->render($report, $target . 'index.html');
@@ -109,6 +94,7 @@ final class Facade
         }
 
         $this->copyFiles($target);
+        $this->renderCss($target);
     }
 
     private function copyFiles(string $target): void
@@ -116,9 +102,7 @@ final class Facade
         $dir = $this->directory($target . '_css');
 
         copy($this->templatePath . 'css/bootstrap.min.css', $dir . 'bootstrap.min.css');
-        copy($this->templatePath . 'css/nv.d3.min.css', $dir . 'nv.d3.min.css');
-        copy($this->templatePath . 'css/style.css', $dir . 'style.css');
-        copy($this->templatePath . 'css/custom.css', $dir . 'custom.css');
+        copy($this->customCssFile->path(), $dir . 'custom.css');
         copy($this->templatePath . 'css/octicons.css', $dir . 'octicons.css');
 
         $dir = $this->directory($target . '_icons');
@@ -126,17 +110,54 @@ final class Facade
         copy($this->templatePath . 'icons/file-directory.svg', $dir . 'file-directory.svg');
 
         $dir = $this->directory($target . '_js');
-        copy($this->templatePath . 'js/bootstrap.min.js', $dir . 'bootstrap.min.js');
-        copy($this->templatePath . 'js/popper.min.js', $dir . 'popper.min.js');
-        copy($this->templatePath . 'js/d3.min.js', $dir . 'd3.min.js');
+        copy($this->templatePath . 'js/bootstrap.bundle.min.js', $dir . 'bootstrap.bundle.min.js');
         copy($this->templatePath . 'js/jquery.min.js', $dir . 'jquery.min.js');
-        copy($this->templatePath . 'js/nv.d3.min.js', $dir . 'nv.d3.min.js');
         copy($this->templatePath . 'js/file.js', $dir . 'file.js');
+    }
+
+    private function renderCss(string $target): void
+    {
+        $template = new Template($this->templatePath . 'css/style.css', '{{', '}}');
+
+        $template->setVar(
+            [
+                'breadcrumbs'         => $this->colors->breadcrumbs(),
+                'breadcrumbs-dark'    => $this->colors->breadcrumbsDark(),
+                'success-bar'         => $this->colors->successBar(),
+                'success-bar-dark'    => $this->colors->successBarDark(),
+                'success-high'        => $this->colors->successHigh(),
+                'success-high-dark'   => $this->colors->successHighDark(),
+                'success-medium'      => $this->colors->successMedium(),
+                'success-medium-dark' => $this->colors->successMediumDark(),
+                'success-low'         => $this->colors->successLow(),
+                'success-low-dark'    => $this->colors->successLowDark(),
+                'warning'             => $this->colors->warning(),
+                'warning-dark'        => $this->colors->warningDark(),
+                'warning-bar'         => $this->colors->warningBar(),
+                'warning-bar-dark'    => $this->colors->warningBarDark(),
+                'danger'              => $this->colors->danger(),
+                'danger-dark'         => $this->colors->dangerDark(),
+                'danger-bar'          => $this->colors->dangerBar(),
+                'danger-bar-dark'     => $this->colors->dangerBarDark(),
+            ],
+        );
+
+        try {
+            $template->renderTo($this->directory($target . '_css') . 'style.css');
+            // @codeCoverageIgnoreStart
+        } catch (Exception $e) {
+            throw new FileCouldNotBeWrittenException(
+                $e->getMessage(),
+                $e->getCode(),
+                $e,
+            );
+            // @codeCoverageIgnoreEnd
+        }
     }
 
     private function directory(string $directory): string
     {
-        if (substr($directory, -1, 1) != DIRECTORY_SEPARATOR) {
+        if (!str_ends_with($directory, DIRECTORY_SEPARATOR)) {
             $directory .= DIRECTORY_SEPARATOR;
         }
 

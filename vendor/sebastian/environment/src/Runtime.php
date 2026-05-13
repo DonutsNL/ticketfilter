@@ -10,43 +10,65 @@
 namespace SebastianBergmann\Environment;
 
 use const PHP_BINARY;
-use const PHP_BINDIR;
-use const PHP_MAJOR_VERSION;
 use const PHP_SAPI;
 use const PHP_VERSION;
 use function array_map;
 use function array_merge;
-use function defined;
+use function assert;
 use function escapeshellarg;
 use function explode;
 use function extension_loaded;
-use function getenv;
+use function in_array;
 use function ini_get;
-use function is_readable;
+use function ini_get_all;
+use function is_array;
+use function is_int;
 use function parse_ini_file;
 use function php_ini_loaded_file;
 use function php_ini_scanned_files;
 use function phpversion;
 use function sprintf;
-use function strpos;
+use function strrpos;
+use function version_compare;
+use function xdebug_info;
 
-/**
- * Utility class for HHVM/PHP environment handling.
- */
 final class Runtime
 {
-    /**
-     * @var string
-     */
-    private static $binary;
-
     /**
      * Returns true when Xdebug or PCOV is available or
      * the runtime used is PHPDBG.
      */
     public function canCollectCodeCoverage(): bool
     {
-        return $this->hasXdebug() || $this->hasPCOV() || $this->hasPHPDBGCodeCoverage();
+        if ($this->hasPHPDBGCodeCoverage()) {
+            return true;
+        }
+
+        if ($this->hasPCOV()) {
+            return true;
+        }
+
+        if (!$this->hasXdebug()) {
+            return false;
+        }
+
+        $xdebugVersion = phpversion('xdebug');
+
+        assert($xdebugVersion !== false);
+
+        if (version_compare($xdebugVersion, '3', '<')) {
+            return true;
+        }
+
+        $xdebugMode = xdebug_info('mode');
+
+        assert(is_array($xdebugMode));
+
+        if (in_array('coverage', $xdebugMode, true)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -72,15 +94,21 @@ final class Runtime
      */
     public function performsJustInTimeCompilation(): bool
     {
-        if (PHP_MAJOR_VERSION < 8) {
-            return false;
-        }
-
         if (!$this->isOpcacheActive()) {
             return false;
         }
 
-        if (strpos(ini_get('opcache.jit'), '0') === 0) {
+        if (ini_get('opcache.jit_buffer_size') === '0') {
+            return false;
+        }
+
+        $jit = (string) ini_get('opcache.jit');
+
+        if (($jit === 'disable') || ($jit === 'off')) {
+            return false;
+        }
+
+        if (strrpos($jit, '0') === 3) {
             return false;
         }
 
@@ -88,52 +116,23 @@ final class Runtime
     }
 
     /**
-     * Returns the path to the binary of the current runtime.
-     * Appends ' --php' to the path when the runtime is HHVM.
+     * Returns the raw path to the binary of the current runtime.
+     *
+     * @deprecated
+     */
+    public function getRawBinary(): string
+    {
+        return PHP_BINARY;
+    }
+
+    /**
+     * Returns the escaped path to the binary of the current runtime.
+     *
+     * @deprecated
      */
     public function getBinary(): string
     {
-        // HHVM
-        if (self::$binary === null && $this->isHHVM()) {
-            // @codeCoverageIgnoreStart
-            if ((self::$binary = getenv('PHP_BINARY')) === false) {
-                self::$binary = PHP_BINARY;
-            }
-
-            self::$binary = escapeshellarg(self::$binary) . ' --php' .
-                ' -d hhvm.php7.all=1';
-            // @codeCoverageIgnoreEnd
-        }
-
-        if (self::$binary === null && PHP_BINARY !== '') {
-            self::$binary = escapeshellarg(PHP_BINARY);
-        }
-
-        if (self::$binary === null) {
-            // @codeCoverageIgnoreStart
-            $possibleBinaryLocations = [
-                PHP_BINDIR . '/php',
-                PHP_BINDIR . '/php-cli.exe',
-                PHP_BINDIR . '/php.exe',
-            ];
-
-            foreach ($possibleBinaryLocations as $binary) {
-                if (is_readable($binary)) {
-                    self::$binary = escapeshellarg($binary);
-
-                    break;
-                }
-            }
-            // @codeCoverageIgnoreEnd
-        }
-
-        if (self::$binary === null) {
-            // @codeCoverageIgnoreStart
-            self::$binary = 'php';
-            // @codeCoverageIgnoreEnd
-        }
-
-        return self::$binary;
+        return escapeshellarg(PHP_BINARY);
     }
 
     public function getNameWithVersion(): string
@@ -143,35 +142,35 @@ final class Runtime
 
     public function getNameWithVersionAndCodeCoverageDriver(): string
     {
-        if (!$this->canCollectCodeCoverage() || $this->hasPHPDBGCodeCoverage()) {
-            return $this->getNameWithVersion();
-        }
-
         if ($this->hasPCOV()) {
+            $version = phpversion('pcov');
+
+            assert($version !== false);
+
             return sprintf(
                 '%s with PCOV %s',
                 $this->getNameWithVersion(),
-                phpversion('pcov')
+                $version,
             );
         }
 
         if ($this->hasXdebug()) {
+            $version = phpversion('xdebug');
+
+            assert($version !== false);
+
             return sprintf(
                 '%s with Xdebug %s',
                 $this->getNameWithVersion(),
-                phpversion('xdebug')
+                $version,
             );
         }
+
+        return $this->getNameWithVersion();
     }
 
     public function getName(): string
     {
-        if ($this->isHHVM()) {
-            // @codeCoverageIgnoreStart
-            return 'HHVM';
-            // @codeCoverageIgnoreEnd
-        }
-
         if ($this->isPHPDBG()) {
             // @codeCoverageIgnoreStart
             return 'PHPDBG';
@@ -183,23 +182,11 @@ final class Runtime
 
     public function getVendorUrl(): string
     {
-        if ($this->isHHVM()) {
-            // @codeCoverageIgnoreStart
-            return 'http://hhvm.com/';
-            // @codeCoverageIgnoreEnd
-        }
-
-        return 'https://secure.php.net/';
+        return 'https://www.php.net/';
     }
 
     public function getVersion(): string
     {
-        if ($this->isHHVM()) {
-            // @codeCoverageIgnoreStart
-            return HHVM_VERSION;
-            // @codeCoverageIgnoreEnd
-        }
-
         return PHP_VERSION;
     }
 
@@ -208,15 +195,7 @@ final class Runtime
      */
     public function hasXdebug(): bool
     {
-        return ($this->isPHP() || $this->isHHVM()) && extension_loaded('xdebug');
-    }
-
-    /**
-     * Returns true when the runtime used is HHVM.
-     */
-    public function isHHVM(): bool
-    {
-        return defined('HHVM_VERSION');
+        return $this->isPHP() && extension_loaded('xdebug');
     }
 
     /**
@@ -224,7 +203,7 @@ final class Runtime
      */
     public function isPHP(): bool
     {
-        return !$this->isHHVM() && !$this->isPHPDBG();
+        return !$this->isPHPDBG();
     }
 
     /**
@@ -232,7 +211,7 @@ final class Runtime
      */
     public function isPHPDBG(): bool
     {
-        return PHP_SAPI === 'phpdbg' && !$this->isHHVM();
+        return PHP_SAPI === 'phpdbg';
     }
 
     /**
@@ -249,7 +228,7 @@ final class Runtime
      */
     public function hasPCOV(): bool
     {
-        return $this->isPHP() && extension_loaded('pcov') && ini_get('pcov.enabled');
+        return $this->isPHP() && extension_loaded('pcov') && ini_get('pcov.enabled') === '1';
     }
 
     /**
@@ -262,24 +241,30 @@ final class Runtime
      * where each string has the format `key=value` denoting
      * the name of a changed php.ini setting with its new value.
      *
-     * @return string[]
+     * @param list<string> $values
+     *
+     * @return array<string, string>
      */
     public function getCurrentSettings(array $values): array
     {
         $diff  = [];
         $files = [];
 
-        if ($file = php_ini_loaded_file()) {
+        $file = php_ini_loaded_file();
+
+        if ($file !== false) {
             $files[] = $file;
         }
 
-        if ($scanned = php_ini_scanned_files()) {
+        $scanned = php_ini_scanned_files();
+
+        if ($scanned !== false) {
             $files = array_merge(
                 $files,
                 array_map(
-                    'trim',
-                    explode(",\n", $scanned)
-                )
+                    trim(...),
+                    explode(",\n", $scanned),
+                ),
             );
         }
 
@@ -289,7 +274,7 @@ final class Runtime
             foreach ($values as $value) {
                 $set = ini_get($value);
 
-                if (empty($set)) {
+                if ($set === false || $set === '') {
                     continue;
                 }
 
@@ -302,7 +287,49 @@ final class Runtime
         return $diff;
     }
 
-    private function isOpcacheActive(): bool
+    /**
+     * Returns INI settings that cannot be changed via ini_set()
+     * (PHP_INI_SYSTEM and PHP_INI_PERDIR) and whose current value
+     * differs from the value configured in INI files.
+     *
+     * These settings can only have been changed via CLI -d flags
+     * and must be forwarded as -d flags to child processes because
+     * ini_set() cannot change them at runtime.
+     *
+     * @return array<string, string>
+     */
+    public function getSettingsNotChangeableAtRuntime(): array
+    {
+        $allSettings = ini_get_all(null, true);
+
+        assert($allSettings !== false);
+
+        $nonRuntimeSettable = [];
+
+        foreach ($allSettings as $key => $info) {
+            assert(is_array($info));
+            assert(isset($info['access']));
+            assert(is_int($info['access']));
+
+            /**
+             * Only consider settings that cannot be changed via ini_set().
+             *
+             * PHP_INI_USER = 1
+             * PHP_INI_PERDIR = 2
+             * PHP_INI_SYSTEM = 4
+             * PHP_INI_ALL = 7
+             */
+            if (($info['access'] & 1) !== 0) {
+                continue;
+            }
+
+            $nonRuntimeSettable[] = $key;
+        }
+
+        return $this->getCurrentSettings($nonRuntimeSettable);
+    }
+
+    public function isOpcacheActive(): bool
     {
         if (!extension_loaded('Zend OPcache')) {
             return false;

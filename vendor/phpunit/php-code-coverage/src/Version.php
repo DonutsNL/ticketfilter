@@ -12,17 +12,17 @@ namespace SebastianBergmann\CodeCoverage;
 use function dirname;
 use SebastianBergmann\Version as VersionId;
 
+/**
+ * @no-named-arguments Parameter names are not covered by the backward compatibility promise for phpunit/php-code-coverage
+ */
 final class Version
 {
-    /**
-     * @var string
-     */
-    private static $version;
+    private static string $version = '';
 
     public static function id(): string
     {
-        if (self::$version === null) {
-            self::$version = (new VersionId('9.2.29', dirname(__DIR__)))->getVersion();
+        if (self::$version === '') {
+            self::$version = new VersionId('14.1.8', dirname(__DIR__))->asString();
         }
 
         return self::$version;

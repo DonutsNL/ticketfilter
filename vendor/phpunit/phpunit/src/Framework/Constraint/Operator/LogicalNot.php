@@ -10,16 +10,23 @@
 namespace PHPUnit\Framework\Constraint;
 
 use function array_map;
+use function assert;
 use function count;
 use function preg_match;
 use function preg_quote;
 use function preg_replace;
+use PHPUnit\Framework\ExpectationFailedException;
 
 /**
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
 final class LogicalNot extends UnaryOperator
 {
+    /**
+     * @param non-empty-string $string
+     *
+     * @return non-empty-string
+     */
     public static function negate(string $string): string
     {
         $positives = [
@@ -50,12 +57,16 @@ final class LogicalNot extends UnaryOperator
 
         preg_match('/(\'[\w\W]*\')([\w\W]*)("[\w\W]*")/i', $string, $matches);
 
-        $positives = array_map(static function (string $s)
-        {
-            return '/\\b' . preg_quote($s, '/') . '/';
-        }, $positives);
+        if (count($matches) === 0) {
+            preg_match('/(\'[\w\W]*\')([\w\W]*)(\'[\w\W]*\')/i', $string, $matches);
+        }
 
-        if (count($matches) > 0) {
+        $positives = array_map(
+            static fn (string $s) => '/\\b' . preg_quote($s, '/') . '/',
+            $positives,
+        );
+
+        if (count($matches) >= 3) {
             $nonInput = $matches[2];
 
             $negatedString = preg_replace(
@@ -74,6 +85,9 @@ final class LogicalNot extends UnaryOperator
                 $string,
             );
         }
+
+        assert($negatedString !== null);
+        assert($negatedString !== '');
 
         return $negatedString;
     }
@@ -100,9 +114,9 @@ final class LogicalNot extends UnaryOperator
      * Evaluates the constraint for parameter $other. Returns true if the
      * constraint is met, false otherwise.
      *
-     * @param mixed $other value or object to evaluate
+     * @throws ExpectationFailedException
      */
-    protected function matches($other): bool
+    protected function matches(mixed $other): bool
     {
         return !$this->constraint()->evaluate($other, '', true);
     }
