@@ -14,7 +14,7 @@
             If a match is found ticketfilter will try to match the senders (are they requester in the allready logged ticket) and add the new
             ticket as a new followup. Ticketfilter will also add a message showing the ticket was matched using ticketfilter. Optionally ticketfilter
             can be instructed to prevent notifications to be send once a match has been added as followup. Ticketfilter can also reopen closed tickets with
-            the status new if a match was made on a allready closed ticket or close a ticket is a specific pattern was found in the message.
+            the status new if a match was made on a allready closed ticket or close a ticket is a specific pattern was found in the message.</en>
     </long>
 </description>
 <homepage>https://github.com/DonutsNL/ticketfilter</homepage>
