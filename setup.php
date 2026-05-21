@@ -1,4 +1,5 @@
 <?php
+
 /**
  *  ------------------------------------------------------------------------
  *  Chris Gralike Ticket Filter
@@ -34,6 +35,7 @@
  *  @since     	1.0.0
  * ------------------------------------------------------------------------
  **/
+
 use Glpi\Plugin\Hooks;
 use GlpiPlugin\Ticketfilter\Filter;
 use GlpiPlugin\Ticketfilter\Filterpattern;
@@ -49,7 +51,7 @@ define('PLUGIN_TICKETFILTER_MAX_GLPI', '11.99.99');
  *
  * @return void
  */
-function plugin_init_ticketfilter() : void
+function plugin_init_ticketfilter(): void
 {
    global $PLUGIN_HOOKS;
 
@@ -75,7 +77,7 @@ function plugin_init_ticketfilter() : void
  *
  * @return array
  */
-function plugin_version_ticketfilter() : array
+function plugin_version_ticketfilter(): array
 {
    return [
       'name'           => 'Ticketfilter',
@@ -100,7 +102,7 @@ function plugin_version_ticketfilter() : array
  * Check pre-requisites before install
  * @return boolean
  */
-function plugin_ticketfilter_check_prerequisites() : bool
+function plugin_ticketfilter_check_prerequisites(): bool
 {
    return true;
 }
@@ -111,7 +113,7 @@ function plugin_ticketfilter_check_prerequisites() : bool
  * @param boolean $verbose Whether to display message on failure. Defaults to false
  * @return boolean
  */
-function plugin_ticketfilter_check_config($verbose = false) : bool
+function plugin_ticketfilter_check_config($verbose = false): bool
 {
    if ($verbose) {
       echo __('Installed / not configured', 'TICKETFILTER');

@@ -13,18 +13,13 @@ use function sprintf;
 
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
+ *
+ * @no-named-arguments Parameter names are not covered by the backward compatibility promise for phpunit/php-code-coverage
  */
-final class Percentage
+final readonly class Percentage
 {
-    /**
-     * @var float
-     */
-    private $fraction;
-
-    /**
-     * @var float
-     */
-    private $total;
+    private float $fraction;
+    private float $total;
 
     public static function fromFractionAndTotal(float $fraction, float $total): self
     {

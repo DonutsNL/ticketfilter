@@ -13,18 +13,13 @@ use function sprintf;
 
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
+ *
+ * @no-named-arguments Parameter names are not covered by the backward compatibility promise for phpunit/php-code-coverage
  */
-final class CrapIndex
+final readonly class CrapIndex
 {
-    /**
-     * @var int
-     */
-    private $cyclomaticComplexity;
-
-    /**
-     * @var float
-     */
-    private $codeCoverage;
+    private int $cyclomaticComplexity;
+    private float $codeCoverage;
 
     public function __construct(int $cyclomaticComplexity, float $codeCoverage)
     {
@@ -44,7 +39,7 @@ final class CrapIndex
 
         return sprintf(
             '%01.2F',
-            $this->cyclomaticComplexity ** 2 * (1 - $this->codeCoverage / 100) ** 3 + $this->cyclomaticComplexity
+            $this->cyclomaticComplexity ** 2 * (1 - $this->codeCoverage / 100) ** 3 + $this->cyclomaticComplexity,
         );
     }
 }
