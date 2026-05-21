@@ -94,7 +94,7 @@ class FilterPattern extends CommonDropdown
         $menu = [];
         if (Config::canUpdate()) {
             $menu['title'] = self::getMenuName();
-            $menu['page']  = '/' . Plugin::getWebDir('ticketfilter', false) . '/front/filterpattern.php';
+            $menu['page']  = self::getSearchURL(false);
             $menu['icon']  = self::getIcon();
         }
         if (count($menu)) {
