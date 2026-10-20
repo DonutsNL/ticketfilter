@@ -30,15 +30,16 @@ if [ -d "$GLPIPATH" ]; then
 	echo "✅ Automated test suite passed successfully."
 
 	# Remove old zipfiles
-	if [ -f "$GLPIPATH/ticketfilter/release/ticketfilter.zip" ]; then
-		rm -f "$GLPIPATH/ticketfilter/release/ticketfilter.zip"
-	fi
+	rm -f "$GLPIPATH/ticketfilter/release/ticketfilter"*.zip
 	
 	cd "$GLPIPATH" || exit 1
 	if [ -d './ticketfilter' ]; then 
 		mkdir -p ./ticketfilter/release
 		zip -r ./ticketfilter/release/ticketfilter.zip ./ticketfilter -x "/ticketfilter/tools/*" "/ticketfilter/ticketfilter.xml" "/ticketfilter/.vscode/*" "/ticketfilter/.gitignore" "/ticketfilter/.github/*" "/ticketfilter/.git/*" "/ticketfilter/release/*" "/ticketfilter/composer.lock" "/ticketfilter/composer.json" "/ticketfilter/vendor/*" "/ticketfilter/tests/*"
-		echo "✅ Release package created at $GLPIPATH/ticketfilter/release/ticketfilter.zip"
+		cp ./ticketfilter/release/ticketfilter.zip ./ticketfilter/release/ticketfilter_${NEWVERSION}.zip
+		echo "✅ Release packages created:"
+		echo "   - $GLPIPATH/ticketfilter/release/ticketfilter.zip"
+		echo "   - $GLPIPATH/ticketfilter/release/ticketfilter_${NEWVERSION}.zip"
 	else
 		echo "/ticketfilter not found at $(pwd)"
 	fi

@@ -17,6 +17,12 @@
 - Fixed unbuffered echo and print statements interfering with CLI cron and JSON responses.
 - Fixed HTTP 403 Forbidden on AJAX operations in GLPI 11 by dynamically propagating CSRF tokens and headers across modal and simulator requests.
 - Fixed UI locking and button unresponsiveness after errors by adding automatic tab validation focus, resilient button state recovery, and modal backdrop cleanup.
+- Fixed mailgate multi-email batch interruption by eliminating mid-batch IMAP mutations and implementing reliable post-batch mailbox moving with explicit IMAP session expunge/logout at shutdown for Office 365 Exchange Online.
+- Prioritized original tickets (lowest ID first) during candidate ticket resolution to prevent collision DoS from unauthorized senders.
+- Isolated technical merge audit trail into independent private followups (`ITILFollowup` with `is_private=1`, `users_id=0`, `_disablenotif=true`), preventing internal filter metadata from leaking into customer-facing notifications.
+- Resolved anonymous and alternative email requester identification in mailgate collections.
+- Suppressed bogus `glpi_notimportedemails` error records and synchronized mailgate redirect session counters on successfully merged tickets.
+- Added comprehensive architectural mailgate processing flow documentation (`docs/mailgate_flow.md`).
 - Full compatibility with GLPI 11 and GLPI 12 with PHP 8.0+.
 
 ## 1.4.0

@@ -1,67 +1,80 @@
 <root>
-<name>Ticket Filter</name>
-<key>ticketfilter</key>
-<state>stable</state>
-<logo>https://raw.githubusercontent.com/DonutsNL/samlsso/refs/heads/main/templates/images/quinquies.jpeg</logo>
-<description>
-    <short>
-        <en>The TicketFilter plugin will allow you to match incomming emails to existing tickets using custom regular expressions. This
-            allows you to also match tickets using external ticket system identifiers, for instance issues logged in JIRA, Codeberg or Github.</en>
-    </short>
-    <long>
-        <en>The TicketFilter plugin will allow you to match incomming emails to existing tickets using custom regular expressions. This
-            allows you to also match tickets using external ticket system identifiers, for instance issues logged in JIRA, Codeberg or Github.
-            If a match is found ticketfilter will try to match the senders (are they requester in the allready logged ticket) and add the new
-            ticket as a new followup. Ticketfilter will also add a message showing the ticket was matched using ticketfilter. Optionally ticketfilter
-            can be instructed to prevent notifications to be send once a match has been added as followup. Ticketfilter can also reopen closed tickets with
-            the status new if a match was made on a allready closed ticket or close a ticket is a specific pattern was found in the message.</en>
-    </long>
-</description>
-<homepage>https://github.com/DonutsNL/ticketfilter</homepage>
-<download>https://github.com/DonutsNL/ticketfilter/releases/</download>
-<issues>https://github.com/DonutsNL/ticketfilter/issues</issues>
-<readme>https://github.com/DonutsNL/ticketfilter/blob/Stable/README.md</readme>
-<authors>
-    <author>Chris Gralike</author>
-</authors>
-<versions>
-    <version>
-        <num>2.0.0</num>
-        <compatibility>>=11.0.0 &lt;13.0.0</compatibility>
-        <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v2.0.0/ticketfilter_2.0.0.zip</download_url>
-    </version>
-    <version>
-        <num>1.4.0</num>
-        <compatibility>~11.0.0</compatibility>
-        <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.4.0/ticketfilter_1.4.0.zip</download_url>
-    </version>
-    <version>
-        <num>1.3.0</num>
-        <compatibility>~11.0.0</compatibility>
-        <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.3.0/ticketfilter_1.3.0.zip</download_url>
-    </version>
-    <version>
-        <num>1.2.0</num>
-        <compatibility>~10.0.0</compatibility>
-        <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.2.0/ticketfilter_1.2.0.zip</download_url>
-    </version>
-</versions>
-<langs>
-    <lang>en_GB</lang>
-</langs>
-<license>GPLv2+</license>
-<tags>
-     <fr>
-         <tag>Ticket</tag>
-         <tag>Helpdesk</tag>
-      </fr>
-      <en>
-         <tag>Ticket</tag>
-         <tag>Helpdesk</tag>
-      </en>
-</tags>
-<screenshots>
-      <screenshot>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/TicketFilter_scr1.png</screenshot>
-      <screenshot>https://raw.githubusercontent.com/DonutsNL/ticketfilter/main/TicketFilter_scr2.png</screenshot>
-   </screenshots>
+    <name>Ticket Filter</name>
+    <key>ticketfilter</key>
+    <state>stable</state>
+    <logo>https://raw.githubusercontent.com/DonutsNL/samlsso/refs/heads/main/templates/images/quinquies.jpeg</logo>
+    <description>
+        <short>
+            <en>Match incoming emails to existing tickets using custom regular expressions, with support for external identifiers (Jira, GitHub), sender authorization policies, auto-reopening, and auto-solving.</en>
+        </short>
+        <long>
+            <en>The TicketFilter plugin allows you to match incoming emails to existing tickets using custom regular expressions. This allows you to match tickets using external ticket system identifiers, for instance issues logged in JIRA, Codeberg, or GitHub.
+
+Key Features:
+- Regular Expression Matching: Extract custom tokens from email subjects to correlate with existing tickets.
+- Sender Authorization Policies: Restrict merging by requester, all ticket actors, domain matching, or open policy.
+- Candidate Prioritization: Automatically prioritizes original tickets (lowest ID) when multiple tickets share a token.
+- Automatic Reopening &amp; Auto-Solving: Automatically reopen closed tickets within configurable age thresholds or solve tickets based on resolution keywords.
+- Private Audit Followups: Log non-intrusive private audit followups visible to technicians without leaking internal filter details to requesters.
+- Mailgate Fault Isolation: Seamless multi-email batch processing without IMAP desynchronization, compatible with Microsoft 365 Exchange Online and standard IMAP servers.
+- Interactive Simulator &amp; Audit Trail: Test regex patterns against sample subjects and audit match history with automatic retention cleanup.
+
+Compatible with GLPI 11 and GLPI 12.</en>
+        </long>
+    </description>
+    <homepage>https://github.com/DonutsNL/ticketfilter</homepage>
+    <download>https://github.com/DonutsNL/ticketfilter/releases</download>
+    <issues>https://github.com/DonutsNL/ticketfilter/issues</issues>
+    <readme>https://github.com/DonutsNL/ticketfilter/blob/master/README.md</readme>
+    <authors>
+        <author>Chris Gralike</author>
+    </authors>
+    <versions>
+        <version>
+            <num>2.0.0</num>
+            <compatibility>&gt;=11.0.0 &lt;13.0.0</compatibility>
+            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v2.0.0/ticketfilter_2.0.0.zip</download_url>
+        </version>
+        <version>
+            <num>1.4.0</num>
+            <compatibility>~11.0.0</compatibility>
+            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.4.0/ticketfilter_1.4.0.zip</download_url>
+        </version>
+        <version>
+            <num>1.3.0</num>
+            <compatibility>~11.0.0</compatibility>
+            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.3.0/ticketfilter_1.3.0.zip</download_url>
+        </version>
+        <version>
+            <num>1.2.0</num>
+            <compatibility>~10.0.0</compatibility>
+            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.2.0/ticketfilter_1.2.0.zip</download_url>
+        </version>
+    </versions>
+    <langs>
+        <lang>en_GB</lang>
+        <lang>nl_NL</lang>
+    </langs>
+    <license>GPLv3+</license>
+    <tags>
+        <fr>
+            <tag>Ticket</tag>
+            <tag>Helpdesk</tag>
+            <tag>Email</tag>
+        </fr>
+        <en>
+            <tag>Ticket</tag>
+            <tag>Helpdesk</tag>
+            <tag>Email</tag>
+        </en>
+        <nl>
+            <tag>Ticket</tag>
+            <tag>Helpdesk</tag>
+            <tag>E-mail</tag>
+        </nl>
+    </tags>
+    <screenshots>
+        <screenshot>https://raw.githubusercontent.com/DonutsNL/ticketfilter/master/TicketFilter_scr1.png</screenshot>
+        <screenshot>https://raw.githubusercontent.com/DonutsNL/ticketfilter/master/TicketFilter_scr2.png</screenshot>
+    </screenshots>
 </root>
