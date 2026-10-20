@@ -1,0 +1,97 @@
+<div class="audit-tab-content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="card-title mb-0">{{ __('Audit log', 'ticketfilter') }}</h4>
+            <div class="text-muted small">{{ __('Historical record of tickets merged, reopened, solved, or skipped by TicketFilter.', 'ticketfilter') }}</div>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="text" id="auditLogSearch" class="form-control form-control-sm" placeholder="{{ __('Search logs...', 'ticketfilter') }}" style="width: 250px;">
+        </div>
+    </div>
+
+    {% if logs|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="auditLogTable">
+            <thead>
+                <tr>
+                    <th style="width: 150px;">{{ __('Date', 'ticketfilter') }}</th>
+                    <th style="width: 150px;">{{ __('Action', 'ticketfilter') }}</th>
+                    <th style="width: 90px;">{{ __('Ticket', 'ticketfilter') }}</th>
+                    <th>{{ __('Pattern and token', 'ticketfilter') }}</th>
+                    <th>{{ __('Sender', 'ticketfilter') }}</th>
+                    <th>{{ __('Subject', 'ticketfilter') }}</th>
+                    <th>{{ __('Details', 'ticketfilter') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="small text-muted text-nowrap">
+                        {{ log.date_creation }}
+                    </td>
+                    <td>
+                        {% if log.action_taken == 'MERGED_FOLLOWUP' %}
+                            <span class="badge bg-blue-lt">{{ __('Merged followup', 'ticketfilter') }}</span>
+                        {% elseif log.action_taken == 'TICKET_REOPENED' %}
+                            <span class="badge bg-azure-lt">{{ __('Reopened', 'ticketfilter') }}</span>
+                        {% elseif log.action_taken == 'TICKET_SOLVED' %}
+                            <span class="badge bg-green-lt">{{ __('Solved', 'ticketfilter') }}</span>
+                        {% elseif log.action_taken == 'SKIPPED_SENDER_POLICY' %}
+                            <span class="badge bg-secondary-lt">{{ __('Policy skipped', 'ticketfilter') }}</span>
+                        {% elseif log.action_taken == 'SKIPPED_AMBIGUOUS_COLLISION' %}
+                            <span class="badge bg-warning-lt">{{ __('Collision aborted', 'ticketfilter') }}</span>
+                        {% elseif log.action_taken == 'ERROR' %}
+                            <span class="badge bg-danger-lt">{{ __('Error', 'ticketfilter') }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary-lt">{{ log.action_taken }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.tickets_id > 0 %}
+                            <a href="{{ glpi_url }}/front/ticket.form.php?id={{ log.tickets_id }}" target="_blank" class="fw-semibold text-decoration-none">
+                                #{{ log.tickets_id }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div>{{ log.pattern_name|default('—') }}</div>
+                        {% if log.matched_token %}
+                            <code>{{ log.matched_token }}</code>
+                        {% endif %}
+                    </td>
+                    <td class="small text-truncate" style="max-width: 180px;" title="{{ log.incoming_sender }}">
+                        {{ log.incoming_sender|default('—') }}
+                    </td>
+                    <td class="small text-truncate" style="max-width: 220px;" title="{{ log.incoming_subject }}">
+                        {{ log.incoming_subject|default('—') }}
+                    </td>
+                    <td class="small text-muted">
+                        {{ log.message }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.getElementById('auditLogSearch').addEventListener('keyup', function() {
+            const query = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#auditLogTable tbody tr');
+            rows.forEach(function(row) {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    </script>
+    {% else %}
+    <div class="alert alert-secondary d-flex align-items-center mb-0" role="alert">
+        <div>
+            <div class="fw-semibold">{{ __('Audit log is currently empty', 'ticketfilter') }}</div>
+            <div class="small">{{ __('Events will appear here automatically as incoming emails and tickets are evaluated.', 'ticketfilter') }}</div>
+        </div>
+    </div>
+    {% endif %}
+</div>

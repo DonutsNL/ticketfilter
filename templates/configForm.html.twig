@@ -1,0 +1,327 @@
+<div class="ticketfilter-container card m-3">
+    <div class="card-header">
+        <h3 class="card-title mb-0">{{ __('TicketFilter administration', 'ticketfilter') }}</h3>
+    </div>
+
+    <div class="card-body p-0">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs px-3 pt-2 border-bottom" id="ticketfilterTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="patterns-tab" data-bs-toggle="tab" data-bs-target="#patterns" type="button" role="tab" aria-controls="patterns" aria-selected="true">
+                    <i class="fas fa-filter text-muted me-1"></i> {{ __('Filter patterns', 'ticketfilter') }}
+                    <span class="badge bg-secondary-lt ms-1">{{ patterns|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="simulator-tab" data-bs-toggle="tab" data-bs-target="#simulator" type="button" role="tab" aria-controls="simulator" aria-selected="false">
+                    <i class="fas fa-vial text-muted me-1"></i> {{ __('Pattern simulator', 'ticketfilter') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="diagnostics-tab" data-bs-toggle="tab" data-bs-target="#diagnostics" type="button" role="tab" aria-controls="diagnostics" aria-selected="false">
+                    <i class="fas fa-stethoscope text-muted me-1"></i> {{ __('System diagnostics', 'ticketfilter') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab" aria-controls="audit" aria-selected="false">
+                    <i class="fas fa-history text-muted me-1"></i> {{ __('Audit log', 'ticketfilter') }}
+                    <span class="badge bg-secondary-lt ms-1">{{ logs|length }}</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content p-3" id="ticketfilterTabsContent">
+            <!-- Patterns Tab -->
+            <div class="tab-pane fade show active" id="patterns" role="tabpanel" aria-labelledby="patterns-tab">
+                {% include '@ticketfilter/config/patterns_tab.html.twig' %}
+            </div>
+
+            <!-- Simulator Tab -->
+            <div class="tab-pane fade" id="simulator" role="tabpanel" aria-labelledby="simulator-tab">
+                {% include '@ticketfilter/config/simulator_tab.html.twig' %}
+            </div>
+
+            <!-- Diagnostics Tab -->
+            <div class="tab-pane fade" id="diagnostics" role="tabpanel" aria-labelledby="diagnostics-tab">
+                {% include '@ticketfilter/config/diagnostics_tab.html.twig' %}
+            </div>
+
+            <!-- Audit Log Tab -->
+            <div class="tab-pane fade" id="audit" role="tabpanel" aria-labelledby="audit-tab">
+                {% include '@ticketfilter/config/audit_tab.html.twig' %}
+            </div>
+        </div>
+    </div>
+
+    {% include '@ticketfilter/config/pattern_modal.html.twig' %}
+</div>
+
+<style>
+/* Clean, Minimalist Tabler Help Icon */
+.ticketfilter-container .form-help,
+#patternModal .form-help {
+    display: inline-flex;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 0.7rem;
+    color: var(--tb-secondary, #6c757d) !important;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    background: var(--tb-gray-100, #f8f9fa);
+    border: 1px solid var(--tb-border-color, #dee2e6);
+    border-radius: 50%;
+    margin-left: 0.35rem;
+    line-height: 1;
+    transition: all 0.2s ease-in-out;
+    vertical-align: middle;
+}
+
+.ticketfilter-container .form-help:hover,
+.ticketfilter-container .form-help:focus,
+.ticketfilter-container .form-help[aria-describedby],
+#patternModal .form-help:hover,
+#patternModal .form-help:focus,
+#patternModal .form-help[aria-describedby] {
+    background: var(--tb-primary, #206bc4);
+    border-color: var(--tb-primary, #206bc4);
+    color: #ffffff !important;
+    transform: scale(1.08);
+}
+
+/* Modal Focus Area Tabs */
+#modalPatternTabs .nav-link {
+    color: var(--tb-secondary, #6c757d);
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+#modalPatternTabs .nav-link.active {
+    color: var(--tb-primary, #206bc4);
+    background: transparent;
+    border-bottom: 2px solid var(--tb-primary, #206bc4);
+}
+
+/* Popover card styling with cyan accent matching samlSSO */
+.popover.ticketfilter-popover-info {
+    border-left: 4px solid #9eeaf9 !important;
+    z-index: 1090 !important;
+    max-width: 350px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.popover.ticketfilter-popover-info .popover-header {
+    font-weight: 600;
+    font-size: 0.85rem;
+    background-color: var(--tb-light, #f8f9fa);
+    border-bottom: 1px solid var(--tb-border-color, #dee2e6);
+    padding: 0.5rem 0.75rem;
+    color: var(--tb-secondary, #5c626a);
+}
+
+.popover.ticketfilter-popover-info .popover-body {
+    font-size: 0.825rem;
+    line-height: 1.45;
+    padding: 0.65rem 0.75rem;
+    color: var(--tb-body-color, #333333);
+}
+</style>
+
+<script>
+window.TicketFilterPopoverManager = {
+    activePopoverInstance: null,
+    activePopoverEl: null,
+    closeTimeout: null,
+
+    init: function(el, options) {
+        options = options || {};
+        const self = this;
+        const $el = $(el);
+
+        try {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
+                const p = bootstrap.Popover.getInstance(el);
+                if (p) p.dispose();
+                const t = bootstrap.Tooltip && bootstrap.Tooltip.getInstance(el);
+                if (t) t.dispose();
+            }
+        } catch (e) {}
+
+        const customClass = $el.attr('data-bs-custom-class') || 'ticketfilter-popover-info';
+        const placement = $el.attr('data-bs-placement') || 'top';
+        const html = $el.attr('data-bs-html') !== 'false';
+        const title = $el.attr('data-bs-title') || $el.attr('title') || 'Help';
+        const content = $el.attr('data-bs-content') || '';
+
+        $el.removeAttr('title').removeAttr('data-bs-original-title');
+
+        if (!content) return null;
+
+        const popoverInstance = new bootstrap.Popover(el, Object.assign({
+            sanitize: false,
+            trigger: 'manual',
+            customClass: customClass,
+            html: html,
+            placement: placement,
+            container: 'body',
+            title: title,
+            content: content
+        }, options));
+
+        function show() {
+            if (self.closeTimeout) {
+                clearTimeout(self.closeTimeout);
+            }
+            if (self.activePopoverInstance && self.activePopoverInstance !== popoverInstance) {
+                self.activePopoverInstance.hide();
+            }
+            popoverInstance.show();
+            self.activePopoverInstance = popoverInstance;
+            self.activePopoverEl = el;
+        }
+
+        function delayHide() {
+            if (self.closeTimeout) {
+                clearTimeout(self.closeTimeout);
+            }
+            self.closeTimeout = setTimeout(function() {
+                const activePopover = document.querySelector('.popover');
+                const isTriggerHovered = self.activePopoverEl && self.activePopoverEl.matches(':hover');
+                const isPopoverHovered = activePopover && activePopover.matches(':hover');
+
+                if (isTriggerHovered || isPopoverHovered) {
+                    return;
+                }
+
+                popoverInstance.hide();
+                if (self.activePopoverInstance === popoverInstance) {
+                    self.activePopoverInstance = null;
+                    self.activePopoverEl = null;
+                }
+            }, 750);
+        }
+
+        $el.off('mouseenter', show).on('mouseenter', show);
+        $el.off('mouseleave', delayHide).on('mouseleave', delayHide);
+        $el.off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (self.activePopoverInstance === popoverInstance) {
+                popoverInstance.hide();
+                self.activePopoverInstance = null;
+                self.activePopoverEl = null;
+            } else {
+                show();
+            }
+        });
+
+        return popoverInstance;
+    },
+
+    setupGlobalListeners: function() {
+        const self = this;
+
+        document.addEventListener('mouseover', function(e) {
+            const targetPopover = e.target.closest('.popover');
+            if (targetPopover && self.activePopoverInstance) {
+                if (self.closeTimeout) {
+                    clearTimeout(self.closeTimeout);
+                }
+            }
+        });
+
+        document.addEventListener('mouseout', function(e) {
+            const targetPopover = e.target.closest('.popover');
+            if (targetPopover && self.activePopoverInstance) {
+                if (e.relatedTarget && e.relatedTarget.closest('.popover') === targetPopover) {
+                    return;
+                }
+                if (self.closeTimeout) {
+                    clearTimeout(self.closeTimeout);
+                }
+                self.closeTimeout = setTimeout(function() {
+                    const activePopover = document.querySelector('.popover');
+                    const isTriggerHovered = self.activePopoverEl && self.activePopoverEl.matches(':hover');
+                    const isPopoverHovered = activePopover && activePopover.matches(':hover');
+
+                    if (isTriggerHovered || isPopoverHovered) {
+                        return;
+                    }
+
+                    if (self.activePopoverInstance) {
+                        self.activePopoverInstance.hide();
+                        self.activePopoverInstance = null;
+                        self.activePopoverEl = null;
+                    }
+                }, 750);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (self.activePopoverInstance && self.activePopoverEl && !self.activePopoverEl.contains(e.target) && !e.target.closest('.popover')) {
+                self.activePopoverInstance.hide();
+                self.activePopoverInstance = null;
+                self.activePopoverEl = null;
+            }
+        });
+
+        document.querySelectorAll('.nav-link, [data-bs-toggle="tab"]').forEach(function(tabEl) {
+            tabEl.addEventListener('click', function() {
+                if (self.activePopoverInstance) {
+                    self.activePopoverInstance.hide();
+                    self.activePopoverInstance = null;
+                    self.activePopoverEl = null;
+                }
+            });
+        });
+
+        const modalEl = document.getElementById('patternModal');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', function() {
+                if (self.activePopoverInstance) {
+                    self.activePopoverInstance.hide();
+                    self.activePopoverInstance = null;
+                    self.activePopoverEl = null;
+                }
+            });
+        }
+    },
+
+    initAll: function(container) {
+        container = container || document;
+        const self = this;
+        $(container).find('.form-help[data-bs-toggle="popover"]').each(function() {
+            self.init(this);
+        });
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash) {
+        var triggerEl = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
+        if (triggerEl && window.bootstrap && window.bootstrap.Tab) {
+            bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+        }
+    }
+
+    var tabButtons = document.querySelectorAll('#ticketfilterTabs button[data-bs-toggle="tab"]');
+    tabButtons.forEach(function(btn) {
+        btn.addEventListener('shown.bs.tab', function(e) {
+            var target = e.target.getAttribute('data-bs-target');
+            if (target && history.replaceState) {
+                history.replaceState(null, null, target);
+            }
+        });
+    });
+
+    TicketFilterPopoverManager.setupGlobalListeners();
+    TicketFilterPopoverManager.initAll();
+});
+</script>

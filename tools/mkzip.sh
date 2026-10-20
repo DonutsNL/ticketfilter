@@ -1,29 +1,47 @@
 #!/bin/bash
-OLDVERSION='1.2.0'
-NEWVERSION='1.3.0'
+#
+#  ------------------------------------------------------------------------
+#  TicketFilter Plugin for GLPI
+#  Copyright (C) 2023-2026 by Chris Gralike
+#  ------------------------------------------------------------------------
+#
+#  This script is part of the TicketFilter package for GLPI.
+
+OLDVERSION='1.5.0'
+NEWVERSION='2.0.0'
 
 # Figure out what the GLPIpath is.
 FULLPATH=$(readlink -f "$0")
 KNOWN_SUFFIX="/ticketfilter/tools/mkzip.sh"
 GLPIPATH="${FULLPATH%$KNOWN_SUFFIX}"
 
-# Verify GLPIPATH points to an directory.
+# Verify GLPIPATH points to a directory.
 if [ -d "$GLPIPATH" ]; then
-	# Update the versions in headers and files
-	sed -i 's/'$OLDVERSION'/'$NEWVERSION'/g' $GLPIPATH/ticketfilter/*.php
-	sed -i 's/*  @version    '$OLDVERSION'/*  @version    '$NEWVERSION'/g' $GLPIPATH/ticketfilter/src/*.php
+	find "$GLPIPATH/ticketfilter" -type f -name "*.php" -not -path "*/vendor/*" -exec sed -i "s/$OLDVERSION/$NEWVERSION/g" {} +
+
+	# Run automated tests and verify success before release
+	echo "Running automated test suite..."
+	php "$GLPIPATH/ticketfilter/tests/RunAllTests.php"
+	TEST_RESULT=$?
+	if [ $TEST_RESULT -ne 0 ]; then
+		echo "❌ Automated test suite failed! Release package will not be created."
+		exit $TEST_RESULT
+	fi
+	echo "✅ Automated test suite passed successfully."
 
 	# Remove old zipfiles
-	if [ -f "$GLPIPATH/plugins/ticketfilter.zip" ]; then
-		rm -y $GLPIPATH/plugins/ticketfilter/release/ticketfilter.zip
+	if [ -f "$GLPIPATH/ticketfilter/release/ticketfilter.zip" ]; then
+		rm -f "$GLPIPATH/ticketfilter/release/ticketfilter.zip"
 	fi
 	
-	cd $GLPIPATH;
+	cd "$GLPIPATH" || exit 1
 	if [ -d './ticketfilter' ]; then 
+		mkdir -p ./ticketfilter/release
 		zip -r ./ticketfilter/release/ticketfilter.zip ./ticketfilter -x "/ticketfilter/tools/*" "/ticketfilter/ticketfilter.xml" "/ticketfilter/.vscode/*" "/ticketfilter/.gitignore" "/ticketfilter/.github/*" "/ticketfilter/.git/*" "/ticketfilter/release/*" "/ticketfilter/composer.lock" "/ticketfilter/composer.json" "/ticketfilter/vendor/*" "/ticketfilter/tests/*"
+		echo "✅ Release package created at $GLPIPATH/ticketfilter/release/ticketfilter.zip"
 	else
-		echo "/ticketfilter not found at `pwd`";
+		echo "/ticketfilter not found at $(pwd)"
 	fi
 else
-	echo "Directory $GLPIPATH doesnt exist!";
+	echo "Directory $GLPIPATH doesn't exist!"
 fi

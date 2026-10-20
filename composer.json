@@ -1,6 +1,7 @@
 {
     "name": "donutsnl/ticketfilter",
-    "description": "Searches for foreign identifiers and merge tickets using these identifiers",
+    "description": "Searches for foreign identifiers and merges tickets safely using regular expressions with audit logging and simulator.",
+    "type": "glpi-plugin",
     "license": "GPL-3.0-or-later",
     "authors": [
         {
@@ -10,13 +11,15 @@
             "role": "Developer"
         }
     ],
+    "require": {
+        "php": ">=8.0.0"
+    },
     "require-dev": {
-        "symfony/test-pack": "^1.1"
+        "phpunit/phpunit": "^9.5 || ^10.0"
     },
     "autoload": {
-        "psr-4": {"GlpiPlugin\\": "src/"},
-        "classmap": [
-            "src/"
-        ]
+        "psr-4": {
+            "GlpiPlugin\\Ticketfilter\\": "src/"
+        }
     }
 }

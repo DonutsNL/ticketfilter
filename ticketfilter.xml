@@ -26,6 +26,11 @@
 </authors>
 <versions>
     <version>
+        <num>2.0.0</num>
+        <compatibility>>=11.0.0 &lt;13.0.0</compatibility>
+        <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v2.0.0/ticketfilter_2.0.0.zip</download_url>
+    </version>
+    <version>
         <num>1.4.0</num>
         <compatibility>~11.0.0</compatibility>
         <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.4.0/ticketfilter_1.4.0.zip</download_url>

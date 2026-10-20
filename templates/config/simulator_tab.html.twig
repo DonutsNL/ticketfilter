@@ -1,0 +1,295 @@
+<div class="simulator-tab-content">
+    <div class="row">
+        <!-- Ad-Hoc Sample Tester Card -->
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-vial text-muted me-2"></i>{{ __('Single email tester', 'ticketfilter') }}
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="regexPresetsBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-magic me-1"></i>{{ __('Regex presets', 'ticketfilter') }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="regexPresetsBtn">
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('jira')">Jira: <code>(?&lt;match&gt;[A-Z]+-[0-9]+)</code></a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('github')">GitHub / GitLab: <code>(?&lt;match&gt;#[0-9]+)</code></a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('servicenow')">ServiceNow: <code>(?&lt;match&gt;INC[0-9]{7})</code></a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('bracket')">Bracketed: <code>\[(?&lt;match&gt;[^\]]+)\]</code></a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form id="sampleSimulatorForm">
+                        <div class="mb-3">
+                            <label class="form-label d-flex align-items-center" for="simPattern">
+                                <span>{{ __('Ticket identifier pattern (regex)', 'ticketfilter') }} <span class="text-danger">*</span></span>
+                                <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Expression used to extract the ticket ID from incoming email subjects or bodies. The regex must include the named capture group (?&lt;match&gt;...).', 'ticketfilter') }}">?</span>
+                            </label>
+                            <input type="text" class="form-control font-monospace" id="simPattern" placeholder="/.*?(?<match>\(JIRA-[0-9]+\)).*/i" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="simSubject">{{ __('Sample email subject', 'ticketfilter') }} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="simSubject" placeholder="Re: (JIRA-1042) Database cluster outage update" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" for="simSender">{{ __('Sample sender email', 'ticketfilter') }}</label>
+                                <input type="email" class="form-control" id="simSender" placeholder="engineer@domain.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label d-flex align-items-center" for="simSolvedPattern">
+                                    <span>{{ __('Auto-solve keyword pattern (optional)', 'ticketfilter') }}</span>
+                                    <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Optional regular expression to test automatic ticket resolution when a matching keyword is found in the email subject. Must include (?&lt;solved&gt;...).', 'ticketfilter') }}">?</span>
+                                </label>
+                                <input type="text" class="form-control font-monospace" id="simSolvedPattern" placeholder="/.*?(?<solved>Closed|Resolved).*/i">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm" id="btnRunSampleTest">
+                            <i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}
+                        </button>
+                    </form>
+
+                    <!-- Ad-Hoc Output -->
+                    <div id="sampleSimResult" class="mt-4" style="display: none;">
+                        <h6 class="border-bottom pb-2 mb-3">{{ __('Test results', 'ticketfilter') }}</h6>
+                        <div id="sampleSimBadge" class="mb-3"></div>
+                        <div class="border rounded p-3">
+                            <dl class="row mb-0 small">
+                                <dt class="col-sm-4 text-muted">{{ __('Pattern valid:', 'ticketfilter') }}</dt>
+                                <dd class="col-sm-8" id="resPatternValid">-</dd>
+                                <dt class="col-sm-4 text-muted">{{ __('Extracted ticket ID:', 'ticketfilter') }}</dt>
+                                <dd class="col-sm-8" id="resMatchedToken">-</dd>
+                                <dt class="col-sm-4 text-muted">{{ __('Matching ticket in GLPI:', 'ticketfilter') }}</dt>
+                                <dd class="col-sm-8" id="resTargetTickets">-</dd>
+                                <dt class="col-sm-4 text-muted">{{ __('Resulting action:', 'ticketfilter') }}</dt>
+                                <dd class="col-sm-8 fw-semibold" id="resSimulatedAction">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Batch Simulator Card -->
+        <div class="col-lg-6 mb-3">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history text-muted me-2"></i>{{ __('Existing tickets tester', 'ticketfilter') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">
+                        {{ __('Test how a pattern matches existing tickets in your database to verify matches and check for duplicates or collisions.', 'ticketfilter') }}
+                    </p>
+
+                    <form id="historicalSimulatorForm">
+                        <div class="mb-3">
+                            <label class="form-label d-flex align-items-center" for="histPattern">
+                                <span>{{ __('Ticket identifier pattern (regex)', 'ticketfilter') }} <span class="text-danger">*</span></span>
+                                <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Expression used to scan existing ticket titles in GLPI to find matches and check for collisions.', 'ticketfilter') }}">?</span>
+                            </label>
+                            <input type="text" class="form-control font-monospace" id="histPattern" placeholder="/.*?(?<match>\(JIRA-[0-9]+\)).*/i" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label d-flex align-items-center" for="histLimit">
+                                <span>{{ __('Recent tickets to scan', 'ticketfilter') }}</span>
+                                <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Select how many recent tickets from the database to evaluate in the dry-run scan.', 'ticketfilter') }}">?</span>
+                            </label>
+                            <select class="form-select form-select-sm" id="histLimit">
+                                <option value="25">25 {{ __('tickets', 'ticketfilter') }}</option>
+                                <option value="50" selected>50 {{ __('tickets', 'ticketfilter') }}</option>
+                                <option value="100">100 {{ __('tickets', 'ticketfilter') }}</option>
+                                <option value="200">200 {{ __('tickets', 'ticketfilter') }}</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm" id="btnRunHistTest">
+                            <i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}
+                        </button>
+                    </form>
+
+                    <!-- Historical Output -->
+                    <div id="historicalSimResult" class="mt-4" style="display: none;">
+                        <h6 class="border-bottom pb-2 mb-3">{{ __('Scan summary', 'ticketfilter') }}</h6>
+                        <div class="row g-2 mb-3 text-center">
+                            <div class="col-4">
+                                <div class="p-2 border rounded">
+                                    <div class="text-muted small">{{ __('Scanned', 'ticketfilter') }}</div>
+                                    <h4 class="mb-0 fw-semibold" id="histScannedCount">0</h4>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded">
+                                    <div class="text-muted small">{{ __('Matched', 'ticketfilter') }}</div>
+                                    <h4 class="mb-0 fw-semibold" id="histMatchedCount">0</h4>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded">
+                                    <div class="text-muted small">{{ __('Collisions', 'ticketfilter') }}</div>
+                                    <h4 class="mb-0 fw-semibold" id="histCollisionCount">0</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <table class="table table-sm table-hover align-middle mb-0" id="histMatchesTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">{{ __('Ticket', 'ticketfilter') }}</th>
+                                        <th>{{ __('Ticket title', 'ticketfilter') }}</th>
+                                        <th>{{ __('Extracted ID', 'ticketfilter') }}</th>
+                                        <th style="width: 90px;">{{ __('Status', 'ticketfilter') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyPreset(type) {
+    let p = '';
+    let s = '';
+    if (type === 'jira') {
+        p = '/.*?(?<match>\\([A-Z]{2,10}-[0-9]{1,6}\\)).*/i';
+        s = '/.*?(?<solved>Closed|Resolved).*/i';
+    } else if (type === 'github') {
+        p = '/.*?(?<match>#[0-9]{1,6}).*/';
+        s = '/.*?(?<solved>Closed|Fixed).*/i';
+    } else if (type === 'servicenow') {
+        p = '/.*?(?<match>(?:INC|REQ|TASK)[0-9]{7}).*/i';
+        s = '/.*?(?<solved>Resolved|Closed).*/i';
+    } else if (type === 'bracket') {
+        p = '/.*?\\[(?<match>[A-Za-z0-9_\\-#]+)\\].*/';
+        s = '';
+    }
+    document.getElementById('simPattern').value = p;
+    document.getElementById('histPattern').value = p;
+    document.getElementById('simSolvedPattern').value = s;
+}
+
+// Handle Sample Simulation Form Submission
+document.getElementById('sampleSimulatorForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnRunSampleTest');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Testing...';
+
+    const payload = new FormData();
+    payload.append('action', 'simulate_sample');
+    payload.append('pattern', document.getElementById('simPattern').value);
+    payload.append('subject', document.getElementById('simSubject').value);
+    payload.append('sender', document.getElementById('simSender').value);
+    payload.append('solved_pattern', document.getElementById('simSolvedPattern').value);
+
+    fetch('{{ plugin_url }}front/simulator', {
+        method: 'POST',
+        body: payload
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}';
+        document.getElementById('sampleSimResult').style.display = 'block';
+
+        if (!data.success) {
+            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-times-circle me-1"></i> ' + (data.error || 'Syntax error') + '</div>';
+            document.getElementById('resPatternValid').innerText = 'No';
+            document.getElementById('resMatchedToken').innerText = '—';
+            document.getElementById('resTargetTickets').innerText = '—';
+            document.getElementById('resSimulatedAction').innerText = 'ERROR';
+            return;
+        }
+
+        document.getElementById('resPatternValid').innerText = 'Yes (Valid)';
+        document.getElementById('resMatchedToken').innerHTML = data.token ? '<code>' + data.token + '</code>' : 'None';
+
+        if (data.target_tickets && data.target_tickets.length > 0) {
+            document.getElementById('resTargetTickets').innerHTML = data.target_tickets.map(id => '<a href="{{ glpi_url }}/front/ticket.form.php?id=' + id + '" target="_blank" class="badge bg-secondary-lt text-decoration-none me-1">#' + id + '</a>').join('');
+        } else {
+            document.getElementById('resTargetTickets').innerText = 'None found in pool';
+        }
+
+        document.getElementById('resSimulatedAction').innerText = data.simulated_action;
+
+        if (data.collision) {
+            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i> Collision: multiple tickets matched. Action would be aborted.</div>';
+        } else if (data.matched) {
+            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-1"></i> Pattern matched successfully. Simulated action: ' + data.simulated_action + '</div>';
+        } else {
+            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-secondary py-2 mb-0"><i class="fas fa-info-circle me-1"></i> Pattern did not match this subject (normal non-match).</div>';
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}';
+        alert('Simulation request failed.');
+    });
+});
+
+// Handle Historical Simulation Form Submission
+document.getElementById('historicalSimulatorForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnRunHistTest');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Scanning...';
+
+    const payload = new FormData();
+    payload.append('action', 'simulate_historical');
+    payload.append('pattern', document.getElementById('histPattern').value);
+    payload.append('limit', document.getElementById('histLimit').value);
+
+    fetch('{{ plugin_url }}front/simulator', {
+        method: 'POST',
+        body: payload
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}';
+        document.getElementById('historicalSimResult').style.display = 'block';
+
+        if (!data.success) {
+            alert('Simulation error: ' + (data.error || 'Unknown error'));
+            return;
+        }
+
+        document.getElementById('histScannedCount').innerText = data.total_scanned;
+        document.getElementById('histMatchedCount').innerText = data.total_matched;
+        document.getElementById('histCollisionCount').innerText = data.collisions;
+
+        const tbody = document.querySelector('#histMatchesTable tbody');
+        tbody.innerHTML = '';
+
+        if (data.matches && data.matches.length > 0) {
+            data.matches.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td><a href="{{ glpi_url }}/front/ticket.form.php?id=' + m.ticket_id + '" target="_blank" class="fw-semibold text-decoration-none">#' + m.ticket_id + '</a></td>' +
+                    '<td class="small text-truncate" style="max-width: 200px;" title="' + m.ticket_name + '">' + m.ticket_name + '</td>' +
+                    '<td><code>' + m.token + '</code></td>' +
+                    '<td>' + (m.is_collision ? '<span class="badge bg-danger-lt">Collision</span>' : '<span class="badge bg-green-lt">Unique</span>') + '</td>';
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No matching tickets found in the scanned range.</td></tr>';
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}';
+        alert('Batch simulation failed.');
+    });
+});
+</script>

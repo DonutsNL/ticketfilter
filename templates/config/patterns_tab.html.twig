@@ -1,0 +1,138 @@
+<div class="patterns-tab-content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="card-title mb-0">{{ __('Filter patterns', 'ticketfilter') }}</h4>
+            <div class="text-muted small">{{ __('Rules used to match incoming emails to existing tickets and merge them automatically.', 'ticketfilter') }}</div>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="openPatternModal(0)">
+                <i class="fas fa-plus me-1"></i> {{ __('Add new pattern', 'ticketfilter') }}
+            </button>
+        </div>
+    </div>
+
+    {% if patterns|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>{{ __('Name', 'ticketfilter') }}</th>
+                    <th>
+                        <span>{{ __('Match pattern', 'ticketfilter') }}</span>
+                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Regular expression with named capture group (?&lt;match&gt;...) used to extract ticket IDs from incoming emails.', 'ticketfilter') }}">?</span>
+                    </th>
+                    <th>
+                        <span>{{ __('Auto-solve pattern', 'ticketfilter') }}</span>
+                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Optional regular expression with named group (?&lt;solved&gt;...) to automatically mark target tickets as solved.', 'ticketfilter') }}">?</span>
+                    </th>
+                    <th>
+                        <span>{{ __('Merge when', 'ticketfilter') }}</span>
+                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Sender authorization policy determining when an incoming email is allowed to merge into an existing ticket.', 'ticketfilter') }}">?</span>
+                    </th>
+                    <th>{{ __('Options', 'ticketfilter') }}</th>
+                    <th class="text-center" style="width: 90px;">{{ __('Status', 'ticketfilter') }}</th>
+                    <th class="text-end" style="width: 80px;">{{ __('Actions', 'ticketfilter') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in patterns %}
+                <tr>
+                    <td class="text-muted">{{ p.id }}</td>
+                    <td>
+                        <a href="javascript:void(0)" onclick="openPatternModal({{ p.id }})" class="fw-semibold text-decoration-none">
+                            {{ p.name }}
+                        </a>
+                        {% if p.comment %}
+                            <div class="text-muted small">{{ p.comment }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <code>{{ p.TicketMatchString }}</code>
+                        {% if p.TicketMatchStringLength %}
+                            <div class="text-muted small">{{ __('Max length:', 'ticketfilter') }} {{ p.TicketMatchStringLength }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.SolvedMatchString %}
+                            <code>{{ p.SolvedMatchString }}</code>
+                            {% if p.SolvedMatchStringLength %}
+                                <div class="text-muted small">{{ __('Max length:', 'ticketfilter') }} {{ p.SolvedMatchStringLength }}</div>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="fw-medium">
+                            {% if p.sender_policy == 'strict_requester' %}
+                                {{ __('Requesters match', 'ticketfilter') }}
+                            {% elseif p.sender_policy == 'any_actor' %}
+                                {{ __('An actor matches', 'ticketfilter') }}
+                            {% elseif p.sender_policy == 'same_domain' %}
+                                {{ __('Sender domain matches', 'ticketfilter') }}
+                            {% elseif p.sender_policy == 'open' %}
+                                {{ __('Always', 'ticketfilter') }}
+                            {% else %}
+                                {{ p.sender_policy|default(__('Requesters match', 'ticketfilter')) }}
+                            {% endif %}
+                        </div>
+                        <div class="text-muted small">
+                            {% if p.unmatched_sender_action == 'private_followup' %}
+                                {{ __('Fallback: private followup', 'ticketfilter') }}
+                            {% elseif p.unmatched_sender_action == 'reject' %}
+                                {{ __('Fallback: discard email', 'ticketfilter') }}
+                            {% else %}
+                                {{ __('Fallback: new ticket', 'ticketfilter') }}
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% set has_options = false %}
+                            {% if p.ReopenClosedTickets %}
+                                {% set has_options = true %}
+                                <span class="badge bg-secondary-lt">{{ __('Reopen (<%dd)', 'ticketfilter')|replace({'%d': p.max_reopen_age_days|default(30)}) }}</span>
+                            {% endif %}
+                            {% if p.SuppressNotification %}
+                                {% set has_options = true %}
+                                <span class="badge bg-secondary-lt">{{ __('Mute notifications', 'ticketfilter') }}</span>
+                            {% endif %}
+                            {% if p.SearchTicketBody %}
+                                {% set has_options = true %}
+                                <span class="badge bg-secondary-lt">{{ __('Check email body', 'ticketfilter') }}</span>
+                            {% endif %}
+                            {% if not has_options %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        {% if p.is_active %}
+                            <span class="badge bg-green-lt">{{ __('Active', 'ticketfilter') }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary-lt">{{ __('Disabled', 'ticketfilter') }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openPatternModal({{ p.id }})" title="{{ __('Edit pattern', 'ticketfilter') }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-secondary d-flex align-items-center justify-content-between mb-0" role="alert">
+        <div>
+            <div class="fw-semibold">{{ __('No patterns configured', 'ticketfilter') }}</div>
+            <div class="small">{{ __('Please add at least one active filter pattern to enable automated ticket matching.', 'ticketfilter') }}</div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm ms-3" onclick="openPatternModal(0)">
+            <i class="fas fa-plus me-1"></i> {{ __('Add new pattern', 'ticketfilter') }}
+        </button>
+    </div>
+    {% endif %}
+</div>

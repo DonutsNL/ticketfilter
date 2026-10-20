@@ -1,0 +1,457 @@
+<!-- In-page pattern editor modal -->
+<div class="modal fade" id="patternModal" tabindex="-1" aria-labelledby="patternModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="patternModalForm">
+                <input type="hidden" name="id" id="modalPatternId" value="0">
+                <input type="hidden" name="action" value="save_pattern">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="patternModalTitle">{{ __('Add filter pattern', 'ticketfilter') }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('Close', 'ticketfilter') }}"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <div id="modalAlertError" class="alert alert-danger py-2 m-3 mb-0" style="display: none;"></div>
+
+                    <!-- Focus area tabs -->
+                    <ul class="nav nav-tabs nav-fill px-3 pt-2 border-bottom bg-light-subtle" id="modalPatternTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-2 px-3 fw-medium" id="modal-tab-pattern" data-bs-toggle="tab" data-bs-target="#modal-pane-pattern" type="button" role="tab" aria-controls="modal-pane-pattern" aria-selected="true">
+                                <i class="fas fa-filter text-muted me-1"></i> {{ __('Pattern rules', 'ticketfilter') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2 px-3 fw-medium" id="modal-tab-permissions" data-bs-toggle="tab" data-bs-target="#modal-pane-permissions" type="button" role="tab" aria-controls="modal-pane-permissions" aria-selected="false">
+                                <i class="fas fa-shield-alt text-muted me-1"></i> {{ __('Permissions', 'ticketfilter') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2 px-3 fw-medium" id="modal-tab-notifications" data-bs-toggle="tab" data-bs-target="#modal-pane-notifications" type="button" role="tab" aria-controls="modal-pane-notifications" aria-selected="false">
+                                <i class="fas fa-bell text-muted me-1"></i> {{ __('Notifications & notes', 'ticketfilter') }}
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content p-3" id="modalPatternTabsContent">
+                        <!-- Tab 1: Pattern rules -->
+                        <div class="tab-pane fade show active" id="modal-pane-pattern" role="tabpanel" aria-labelledby="modal-tab-pattern">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-9">
+                                    <label class="form-label" for="modalPatternName">{{ __('Pattern name', 'ticketfilter') }} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="name" id="modalPatternName" required placeholder="e.g. Jira issue tracking, GitHub PR, ServiceNow">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-center justify-content-md-end pt-md-4">
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input me-2" type="checkbox" name="is_active" id="modalPatternActive" value="1" checked>
+                                        <label class="form-check-label fw-semibold" for="modalPatternActive">{{ __('Active', 'ticketfilter') }}</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="modalPatternComment">{{ __('Description / notes', 'ticketfilter') }}</label>
+                                    <input type="text" class="form-control" name="comment" id="modalPatternComment" placeholder="{{ __('Optional note explaining when this pattern is used', 'ticketfilter') }}">
+                                </div>
+                            </div>
+
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3 mt-4">{{ __('Identifier matching', 'ticketfilter') }}</div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label d-flex align-items-center" for="modalPatternMatchStr">
+                                        <span>{{ __('Ticket identifier pattern (regex)', 'ticketfilter') }} <span class="text-danger">*</span></span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Expression used to extract the ticket ID from incoming email subjects or bodies. The regex must include the named capture group (?&lt;match&gt;...).', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <input type="text" class="form-control font-monospace" name="TicketMatchString" id="modalPatternMatchStr" required placeholder="/.*?(?<match>\(JIRA-[0-9]+\)).*/i">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label d-flex align-items-center" for="modalPatternMatchLen">
+                                        <span>{{ __('Max ID length', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Maximum allowed length for the extracted ticket identifier (in characters). Identifiers exceeding this length will be ignored to prevent false matches.', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <input type="number" class="form-control" name="TicketMatchStringLength" id="modalPatternMatchLen" value="255" min="1">
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="SearchTicketBody" id="modalPatternSearchBody" value="1">
+                                        <label class="form-check-label d-inline-flex align-items-center" for="modalPatternSearchBody">
+                                            <span>{{ __('Also search email body (if ID not found in subject)', 'ticketfilter') }}</span>
+                                            <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('When enabled, scans the email body if no ticket identifier is found in the email subject line.', 'ticketfilter') }}">?</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3 mt-4">{{ __('Auto-solve keyword (optional)', 'ticketfilter') }}</div>
+                            <div class="row g-3 mb-2">
+                                <div class="col-md-8">
+                                    <label class="form-label d-flex align-items-center" for="modalPatternSolvedStr">
+                                        <span>{{ __('Auto-solve keyword pattern (optional)', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Optional regular expression to automatically mark the target ticket as solved (e.g. when an email contains [Closed] or [Resolved]). Must include named group (?&lt;solved&gt;...).', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <input type="text" class="form-control font-monospace" name="SolvedMatchString" id="modalPatternSolvedStr" placeholder="/.*?(?<solved>Closed|Resolved).*/i">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label d-flex align-items-center" for="modalPatternSolvedLen">
+                                        <span>{{ __('Max keyword length', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Maximum character length for the auto-solve keyword to prevent oversized matches from triggering ticket resolution.', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <input type="number" class="form-control" name="SolvedMatchStringLength" id="modalPatternSolvedLen" value="255" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Permissions -->
+                        <div class="tab-pane fade" id="modal-pane-permissions" role="tabpanel" aria-labelledby="modal-tab-permissions">
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3">{{ __('Sender authorization', 'ticketfilter') }}</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex align-items-center" for="modalPatternPolicy">
+                                        <span>{{ __('Merge when', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Security policy governing when an incoming email is authorized to merge into an existing ticket:<br><br><b>Requesters match</b>: Only the original ticket creator can merge.<br><b>An actor matches</b>: Any requester, technician, or observer on the ticket can merge.<br><b>Sender domain matches</b>: Anyone with the same corporate domain (@company.com) as the requester can merge.<br><b>Always</b>: Any incoming email with a matching ticket ID will be merged.', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <select class="form-select" name="sender_policy" id="modalPatternPolicy">
+                                        <option value="strict_requester">{{ __('Requesters match (ticket creator only)', 'ticketfilter') }}</option>
+                                        <option value="any_actor">{{ __('An actor matches (requester, technician, or observer)', 'ticketfilter') }}</option>
+                                        <option value="same_domain">{{ __('Sender domain matches (@company.com)', 'ticketfilter') }}</option>
+                                        <option value="open">{{ __('Always (allow any sender)', 'ticketfilter') }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label d-flex align-items-center" for="modalPatternFallback">
+                                        <span>{{ __('If sender does not match', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Specifies what happens if the sender is not authorized under the merge policy:<br><br><b>Create a standard new ticket</b>: Safely creates an independent new ticket.<br><b>Add as private followup</b>: Adds the message as a private note visible only to technicians.<br><b>Discard email</b>: Drops the email without creating or updating any ticket.', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <select class="form-select" name="unmatched_sender_action" id="modalPatternFallback">
+                                        <option value="new_ticket">{{ __('Create a standard new ticket', 'ticketfilter') }}</option>
+                                        <option value="private_followup">{{ __('Add as private followup to existing ticket', 'ticketfilter') }}</option>
+                                        <option value="reject">{{ __('Discard email (do not create ticket)', 'ticketfilter') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3">{{ __('Closed ticket lifecycle', 'ticketfilter') }}</div>
+                            <div class="card bg-light-subtle border p-3">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="ReopenClosedTickets" id="modalPatternReopen" value="1">
+                                    <label class="form-check-label fw-semibold d-inline-flex align-items-center" for="modalPatternReopen">
+                                        <span>{{ __('Reopen ticket if closed', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Automatically reopens a closed ticket when a matching follow-up email arrives within the specified age limit.', 'ticketfilter') }}">?</span>
+                                    </label>
+                                </div>
+                                <div id="modalReopenAgeWrap" class="ps-4 mt-2" style="display: none;">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <label class="form-label small text-muted mb-0" for="modalPatternMaxAge">{{ __('Maximum age for reopening:', 'ticketfilter') }}</label>
+                                        <div class="input-group input-group-sm" style="width: 140px;">
+                                            <input type="number" class="form-control text-center" name="max_reopen_age_days" id="modalPatternMaxAge" value="30" min="1">
+                                            <span class="input-group-text">{{ __('days', 'ticketfilter') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-text small text-muted mt-1">{{ __('Emails arriving after this threshold will trigger the unmatched action instead of reopening.', 'ticketfilter') }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Notifications & notes -->
+                        <div class="tab-pane fade" id="modal-pane-notifications" role="tabpanel" aria-labelledby="modal-tab-notifications">
+                            <div class="card bg-light-subtle border p-3 mb-4">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="SuppressNotification" id="modalPatternSuppress" value="1">
+                                    <label class="form-check-label fw-semibold d-inline-flex align-items-center" for="modalPatternSuppress">
+                                        <span>{{ __('Do not send email notification when merging', 'ticketfilter') }}</span>
+                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Suppresses standard GLPI followup email notifications when this pattern merges an email into a ticket to prevent email notification loops.', 'ticketfilter') }}">?</span>
+                                    </label>
+                                    <div class="form-text small text-muted mt-1">{{ __('Mutes outgoing email notifications to requesters and observers when followups are added by this filter.', 'ticketfilter') }}</div>
+                                </div>
+                            </div>
+
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3 d-flex align-items-center">
+                                <span>{{ __('Intervention notes (ticket audit trail)', 'ticketfilter') }}</span>
+                                <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Private notes added to the ticket timeline when this rule intervenes. Visible to technicians and auditors for non-repudiation compliance without notifying external users. Leave blank to use system defaults.', 'ticketfilter') }}">?</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-medium mb-1 d-flex align-items-center" for="modalPatternReopenMsg">
+                                    <span>{{ __('Reopen private note', 'ticketfilter') }}</span>
+                                    <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Private note template added when a closed ticket is reopened by this pattern. Supports dynamic non-repudiation placeholders.', 'ticketfilter') }}">?</span>
+                                </label>
+                                <textarea class="form-control form-control-sm font-monospace" name="reopen_message_template" id="modalPatternReopenMsg" rows="2" placeholder="This ticket was reopened by automated rule &quot;{pattern_name}&quot; (match: {match_token}, sender: {sender_email})."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-medium mb-1 d-flex align-items-center" for="modalPatternSolvedMsg">
+                                    <span>{{ __('Auto-solve / close private note', 'ticketfilter') }}</span>
+                                    <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Private note template added when a ticket is automatically solved by this pattern. Supports dynamic non-repudiation placeholders.', 'ticketfilter') }}">?</span>
+                                </label>
+                                <textarea class="form-control form-control-sm font-monospace" name="solved_message_template" id="modalPatternSolvedMsg" rows="2" placeholder="This ticket was marked as solved by automated rule &quot;{pattern_name}&quot; (keyword: {solved_token}, sender: {sender_email})."></textarea>
+                            </div>
+
+                            <div class="p-2 border rounded small bg-light-subtle">
+                                <div class="text-muted small mb-1">{{ __('Available placeholders (click to insert into active note field):', 'ticketfilter') }}</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{pattern_name}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{pattern_name}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{pattern_id}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{pattern_id}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{match_token}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{match_token}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{solved_token}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{solved_token}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{sender_email}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{sender_email}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{subject}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{subject}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{ticket_id}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{ticket_id}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{datetime}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{datetime}</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="btnDeletePatternModal" style="display: none;">
+                            <i class="fas fa-trash me-1"></i> {{ __('Delete pattern', 'ticketfilter') }}
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('Cancel', 'ticketfilter') }}</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="btnSavePatternModal">
+                            <i class="fas fa-check me-1"></i> {{ __('Save pattern', 'ticketfilter') }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+var lastFocusedNoteInput = null;
+window.insertPlaceholder = function(tag) {
+    var target = lastFocusedNoteInput || document.getElementById('modalPatternReopenMsg');
+    if (!target) return;
+    var start = target.selectionStart || target.value.length;
+    var end = target.selectionEnd || target.value.length;
+    target.value = target.value.substring(0, start) + tag + target.value.substring(end);
+    target.focus();
+    target.setSelectionRange(start + tag.length, start + tag.length);
+};
+
+window.openPatternModal = function(id) {
+    var errBox = document.getElementById('modalAlertError');
+    if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+    }
+
+    var modalEl = document.getElementById('patternModal');
+    if (!modalEl || !window.bootstrap) {
+        return;
+    }
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    var form = document.getElementById('patternModalForm');
+    var deleteBtn = document.getElementById('btnDeletePatternModal');
+    var titleEl = document.getElementById('patternModalTitle');
+
+    // Always reset tab navigation to the first tab (Pattern rules)
+    var firstTabEl = document.getElementById('modal-tab-pattern');
+    if (firstTabEl && window.bootstrap.Tab) {
+        bootstrap.Tab.getOrCreateInstance(firstTabEl).show();
+    }
+
+    if (!id || id <= 0) {
+        if (titleEl) {
+            titleEl.textContent = "{{ __('Add filter pattern', 'ticketfilter') }}";
+        }
+        if (form) {
+            form.reset();
+        }
+        document.getElementById('modalPatternId').value = '0';
+        document.getElementById('modalPatternActive').checked = true;
+        document.getElementById('modalPatternMatchLen').value = '255';
+        document.getElementById('modalPatternSolvedLen').value = '255';
+        document.getElementById('modalPatternPolicy').value = 'strict_requester';
+        document.getElementById('modalPatternFallback').value = 'new_ticket';
+        document.getElementById('modalPatternReopen').checked = false;
+        document.getElementById('modalReopenAgeWrap').style.display = 'none';
+        document.getElementById('modalPatternMaxAge').value = '30';
+        document.getElementById('modalPatternSuppress').checked = false;
+        document.getElementById('modalPatternSearchBody').checked = false;
+        document.getElementById('modalPatternReopenMsg').value = '';
+        document.getElementById('modalPatternSolvedMsg').value = '';
+        if (deleteBtn) {
+            deleteBtn.style.display = 'none';
+        }
+        modal.show();
+        if (window.TicketFilterPopoverManager) {
+            window.TicketFilterPopoverManager.initAll(modalEl);
+        }
+        return;
+    }
+
+    if (titleEl) {
+        titleEl.textContent = "{{ __('Edit filter pattern', 'ticketfilter') }} (#" + id + ")";
+    }
+    if (form) {
+        form.reset();
+    }
+    document.getElementById('modalPatternId').value = id;
+    if (deleteBtn) {
+        deleteBtn.style.display = 'inline-block';
+    }
+
+    fetch('{{ plugin_url }}front/config?action=get_pattern&id=' + encodeURIComponent(id))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) {
+                alert(data.error || 'Failed to load pattern');
+                return;
+            }
+            var p = data.pattern;
+            document.getElementById('modalPatternName').value = p.name || '';
+            document.getElementById('modalPatternActive').checked = (parseInt(p.is_active, 10) === 1);
+            document.getElementById('modalPatternComment').value = p.comment || '';
+            document.getElementById('modalPatternMatchStr').value = p.TicketMatchString || '';
+            document.getElementById('modalPatternMatchLen').value = p.TicketMatchStringLength || 255;
+            document.getElementById('modalPatternSolvedStr').value = p.SolvedMatchString || '';
+            document.getElementById('modalPatternSolvedLen').value = p.SolvedMatchStringLength || 255;
+            document.getElementById('modalPatternPolicy').value = p.sender_policy || 'strict_requester';
+            document.getElementById('modalPatternFallback').value = p.unmatched_sender_action || 'new_ticket';
+
+            var isReopen = (parseInt(p.ReopenClosedTickets, 10) === 1);
+            document.getElementById('modalPatternReopen').checked = isReopen;
+            document.getElementById('modalReopenAgeWrap').style.display = isReopen ? 'block' : 'none';
+            document.getElementById('modalPatternMaxAge').value = p.max_reopen_age_days || 30;
+
+            document.getElementById('modalPatternSuppress').checked = (parseInt(p.SuppressNotification, 10) === 1);
+            document.getElementById('modalPatternSearchBody').checked = (parseInt(p.SearchTicketBody, 10) === 1);
+            document.getElementById('modalPatternReopenMsg').value = p.reopen_message_template || '';
+            document.getElementById('modalPatternSolvedMsg').value = p.solved_message_template || '';
+
+            modal.show();
+            if (window.TicketFilterPopoverManager) {
+                window.TicketFilterPopoverManager.initAll(modalEl);
+            }
+        })
+        .catch(function(err) {
+            alert('Error loading pattern: ' + err.message);
+        });
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    var reopenInput = document.getElementById('modalPatternReopenMsg');
+    var solvedInput = document.getElementById('modalPatternSolvedMsg');
+    if (reopenInput) {
+        reopenInput.addEventListener('focus', function() { lastFocusedNoteInput = this; });
+    }
+    if (solvedInput) {
+        solvedInput.addEventListener('focus', function() { lastFocusedNoteInput = this; });
+    }
+
+    var reopenCheck = document.getElementById('modalPatternReopen');
+    if (reopenCheck) {
+        reopenCheck.addEventListener('change', function() {
+            var wrap = document.getElementById('modalReopenAgeWrap');
+            if (wrap) {
+                wrap.style.display = this.checked ? 'block' : 'none';
+            }
+        });
+    }
+
+    var form = document.getElementById('patternModalForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var errBox = document.getElementById('modalAlertError');
+            if (errBox) {
+                errBox.style.display = 'none';
+                errBox.textContent = '';
+            }
+
+            var btn = document.getElementById('btnSavePatternModal');
+            var originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Saving...', 'ticketfilter') }}';
+            }
+
+            var payload = new FormData(form);
+            var checkFields = [
+                { name: 'is_active', id: 'modalPatternActive' },
+                { name: 'ReopenClosedTickets', id: 'modalPatternReopen' },
+                { name: 'SuppressNotification', id: 'modalPatternSuppress' },
+                { name: 'SearchTicketBody', id: 'modalPatternSearchBody' }
+            ];
+            checkFields.forEach(function(item) {
+                var el = document.getElementById(item.id);
+                if (el) {
+                    payload.set(item.name, el.checked ? '1' : '0');
+                }
+            });
+
+            fetch('{{ plugin_url }}front/config', {
+                method: 'POST',
+                body: payload
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+                if (!data.success) {
+                    if (errBox) {
+                        errBox.textContent = data.error || 'Failed to save pattern';
+                        errBox.style.display = 'block';
+                    } else {
+                        alert(data.error || 'Failed to save pattern');
+                    }
+                    return;
+                }
+                window.location.hash = 'patterns';
+                window.location.reload();
+            })
+            .catch(function(err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+                if (errBox) {
+                    errBox.textContent = 'Server error: ' + err.message;
+                    errBox.style.display = 'block';
+                } else {
+                    alert('Server error: ' + err.message);
+                }
+            });
+        });
+    }
+
+    var deleteBtn = document.getElementById('btnDeletePatternModal');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            var id = document.getElementById('modalPatternId').value;
+            if (!id || id <= 0) return;
+            if (!confirm("{{ __('Are you sure you want to delete this filter pattern?', 'ticketfilter') }}")) {
+                return;
+            }
+            deleteBtn.disabled = true;
+            var payload = new FormData();
+            payload.append('action', 'delete_pattern');
+            payload.append('id', id);
+
+            fetch('{{ plugin_url }}front/config', {
+                method: 'POST',
+                body: payload
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                deleteBtn.disabled = false;
+                if (!data.success) {
+                    alert(data.error || 'Failed to delete pattern');
+                    return;
+                }
+                window.location.hash = 'patterns';
+                window.location.reload();
+            })
+            .catch(function(err) {
+                deleteBtn.disabled = false;
+                alert('Server error: ' + err.message);
+            });
+        });
+    }
+});
+</script>

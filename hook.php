@@ -2,82 +2,111 @@
 
 /**
  *  ------------------------------------------------------------------------
- *  Chris Gralike Ticket Filter
- *  Copyright (C) 2023 by Chris Gralike
+ *  TicketFilter Plugin for GLPI
+ *  Copyright (C) 2023-2026 by Chris Gralike
  *  ------------------------------------------------------------------------
  *
- * LICENSE
+ *  LICENSE
  *
- * This file is part of Ticket Filter project.
+ *  This file is part of TicketFilter plugin for GLPI.
  *
- * Ticket Filter plugin is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  TicketFilter is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
- * Ticket Filter is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
+ *  TicketFilter is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU Affero General Public License
- * along with ticket filter. If not, see <http://www.gnu.org/licenses/>.
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with TicketFilter. If not, see <http://www.gnu.org/licenses/>.
  *
- * ------------------------------------------------------------------------
+ *  ------------------------------------------------------------------------
  *
- *  @package  	   TicketFilter
- *  @version	   1.3.0
- *  @author    	Chris Gralike
- *  @copyright 	Copyright (c) 2023 by Chris Gralike
- *  @license   	GPLv2+
- *  @see       	https://github.com/DonutsNL/ticketfilter/readme.md
- *  @link		   https://github.com/DonutsNL/ticketfilter
- *  @since     	0.1.0
- * ------------------------------------------------------------------------
- **/
+ *  @package    TicketFilter
+ *  @version    2.0.0
+ *  @author     Chris Gralike
+ *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
+ *  @license    GPLv3+
+ *  @link       https://github.com/DonutsNL/ticketfilter
+ *  ------------------------------------------------------------------------
+ */
+
+declare(strict_types=1);
 
 use GlpiPlugin\Ticketfilter\FilterPattern;
 
-/**
- * Make plugin dropdown visible in the dropdowns menu.
- * @return boolean
- * test
- */
-// phpcs:ignore PSR1.Function.CamelCapsMethodName
-function plugin_ticketfilter_getDropdown() : array
-{
-   return [FilterPattern::class => __("Filterpatterns", 'ticketfilter')];
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    include_once __DIR__ . '/vendor/autoload.php';
 }
 
-
 /**
- * Summary of plugin_ticketFilter install
- * @return booleansyste
- * test
+ * Registers plugin dropdown in Setup > Dropdowns.
+ *
+ * @return array
  */
-//phpcs:ignore PSR1.Function.CamelCapsMethodName
-function plugin_ticketfilter_install() : bool
+function plugin_ticketfilter_getDropdown(): array
 {
-   if (method_exists(FilterPattern::class, 'install')) {
-      $version   = plugin_version_ticketfilter();
-      $migration = new Migration($version['version']);
-      FilterPattern::install($migration);
-   }
-   return true;
+    return [FilterPattern::class => __('Ticket filter', 'ticketfilter')];
 }
 
+/**
+ * Installs plugin tables and registers scheduled tasks.
+ *
+ * @return bool
+ */
+function plugin_ticketfilter_install(): bool
+{
+    $version   = plugin_version_ticketfilter();
+    $migration = new Migration($version['version']);
+
+    Session::addMessageAfterRedirect(
+        sprintf(__('Installing TicketFilter version %s', 'ticketfilter'), PLUGIN_TICKETFILTER_VERSION),
+        false,
+        INFO
+    );
+
+    foreach (PLUGIN_TICKETFILTER_CLASSES as $class) {
+        if (class_exists($class) && method_exists($class, 'install')) {
+            $class::install($migration);
+        }
+    }
+
+    if (function_exists('ticketfilter_reset_cache')) {
+        ticketfilter_reset_cache();
+    }
+
+    return true;
+}
 
 /**
- * Summary of plugin_ticketFilter uninstall
- * @return boolean
+ * Uninstalls plugin tables and unregisters scheduled tasks.
+ *
+ * @return bool
  */
-//phpcs:ignore PSR1.Function.CamelCapsMethodName
-function plugin_ticketfilter_uninstall() : bool
+function plugin_ticketfilter_uninstall(): bool
 {
-   if (method_exists(FilterPattern::class, 'uninstall')) {
-      $version   = plugin_version_ticketfilter();
-      $migration = new Migration($version['version']);
-      FilterPattern::uninstall($migration);
-   }
-   return true;
+    $version   = plugin_version_ticketfilter();
+    $migration = new Migration($version['version']);
+
+    Session::addMessageAfterRedirect(
+        __('Uninstalling TicketFilter plugin', 'ticketfilter'),
+        false,
+        INFO
+    );
+
+    $reversed = array_reverse(PLUGIN_TICKETFILTER_CLASSES);
+    foreach ($reversed as $class) {
+        if (class_exists($class) && method_exists($class, 'uninstall')) {
+            $class::uninstall($migration);
+        }
+    }
+
+    if (function_exists('ticketfilter_reset_cache')) {
+        ticketfilter_reset_cache();
+    }
+
+    return true;
 }
