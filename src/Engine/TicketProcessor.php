@@ -512,36 +512,10 @@ class TicketProcessor
 
         $originalContent = (string)($incomingItem->input['content'] ?? ($incomingItem->input['name'] ?? ''));
 
-        $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
-        $privateSuffix = $isPrivate ? ($isDutch ? ' (privé)' : ' (private)') : '';
-
-        if ($isDutch) {
-            $attributionText = sprintf(
-                'Samengevoegd via filterregel <strong>%s</strong> (match: <code>%s</code>)%s',
-                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
-                $privateSuffix
-            );
-        } else {
-            $attributionText = sprintf(
-                'Merged via filter rule <strong>%s</strong> (match: <code>%s</code>)%s',
-                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
-                $privateSuffix
-            );
-        }
-
-        $attributionBlock = sprintf(
-            '<div class="ticketfilter-attribution text-muted small mb-2 pb-1 border-bottom d-flex align-items-center gap-1"><i class="ti ti-filter text-muted"></i> <span><strong>TicketFilter:</strong> %s</span></div>',
-            $attributionText
-        );
-
-        $mergedContent = $attributionBlock . "\n" . $originalContent;
-
         $followupInput = [
             'items_id'      => $targetTicketId,
             'itemtype'      => Ticket::class,
-            'content'       => $mergedContent,
+            'content'       => $originalContent,
             'users_id'      => $sender['userId'],
             'is_private'    => ($isPrivate) ? 1 : (int)($pattern[FilterPattern::FIELD_IS_PRIVATE_FOLLOWUP] ?? 0),
             '_disablenotif' => $suppressNotif,
@@ -563,6 +537,45 @@ class TicketProcessor
                 'solved'      => false,
                 'status'      => 'followup_failed'
             ];
+        }
+
+        // Create an independent private informational task with TicketFilter details
+        // so technicians can see the rule match without exposing technical details to requesters.
+        if (class_exists(\TicketTask::class)) {
+            $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
+            $privateSuffix = $isPrivate ? ($isDutch ? ' (privé reactie)' : ' (private followup)') : '';
+
+            if ($isDutch) {
+                $taskContent = sprintf(
+                    'E-mail samengevoegd via filterregel <strong>%s</strong> (match: <code>%s</code>, afzender: <code>%s</code>)%s',
+                    htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
+                    $privateSuffix
+                );
+            } else {
+                $taskContent = sprintf(
+                    'Email merged via filter rule <strong>%s</strong> (match: <code>%s</code>, sender: <code>%s</code>)%s',
+                    htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
+                    htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
+                    $privateSuffix
+                );
+            }
+
+            try {
+                $task = new \TicketTask();
+                $task->add([
+                    'tickets_id'    => $targetTicketId,
+                    'content'       => $taskContent,
+                    'is_private'    => 1,
+                    'state'         => class_exists(\Planning::class) ? \Planning::INFO : 0,
+                    'users_id'      => 0,
+                    '_disablenotif' => true,
+                ]);
+            } catch (\Throwable $e) {
+                // Ignore task creation error to avoid disrupting merge flow
+            }
         }
 
         if (class_exists(\Log::class) && defined(\Log::class . '::HISTORY_LOG_SIMPLE_MESSAGE')) {

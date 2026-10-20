@@ -312,4 +312,27 @@ if (!class_exists('MailCollector', false)) {
     }
 }
 
+if (!class_exists('Planning', false)) {
+    class Planning
+    {
+        public const INFO = 0;
+        public const TODO = 1;
+        public const DONE = 2;
+    }
+}
+
+if (!class_exists('TicketTask', false)) {
+    class TicketTask extends CommonDBTM
+    {
+        public static array $createdTasks = [];
+
+        public function add(array $input): int|bool
+        {
+            self::$createdTasks[] = $input;
+            return count(self::$createdTasks);
+        }
+    }
+}
+
+
 

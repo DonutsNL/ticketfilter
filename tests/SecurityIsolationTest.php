@@ -206,11 +206,18 @@ assertCondition($processRes['success'] === true, 'TicketProcessor::processTicket
 assertCondition(count(ITILFollowup::$createdFollowups) > $initialFollowupCount, 'Followup is added to target ticket');
 
 $lastFollowup = end(ITILFollowup::$createdFollowups);
-assertCondition(str_contains($lastFollowup['content'], 'ticketfilter-attribution'), 'Followup contains ticketfilter-attribution CSS block');
-assertCondition(str_contains($lastFollowup['content'], 'Samengevoegd via filterregel'), 'Followup displays Dutch attribution text when language is nl_NL');
-assertCondition(str_contains($lastFollowup['content'], 'Nieuwe aanvraag werkplek (CRU-5001)'), 'Followup attribution includes pattern name');
-assertCondition(str_contains($lastFollowup['content'], 'CRU-5001'), 'Followup attribution includes matched token');
-assertCondition(str_contains($lastFollowup['content'], 'Dit is een testreactie vanaf een niet-geregistreerd e-mailadres.'), 'Original email content is preserved below attribution header');
+assertCondition($lastFollowup['content'] === 'Dit is een testreactie vanaf een niet-geregistreerd e-mailadres.', 'Followup contains pure email content without technical metadata');
+assertCondition(!str_contains($lastFollowup['content'], 'ticketfilter-attribution'), 'Followup does NOT contain ticketfilter-attribution CSS block');
+assertCondition(!str_contains($lastFollowup['content'], 'Nieuwe aanvraag werkplek'), 'Followup does NOT leak internal filter rule name into customer notifications');
+
+assertCondition(count(TicketTask::$createdTasks) > 0, 'An independent private informational task was created for technicians');
+$lastTask = end(TicketTask::$createdTasks);
+assertCondition($lastTask['tickets_id'] === 100, 'TicketTask targets the correct ticket ID');
+assertCondition($lastTask['is_private'] === 1, 'TicketTask is marked as private');
+assertCondition($lastTask['state'] === Planning::INFO, 'TicketTask state is set to Planning::INFO');
+assertCondition($lastTask['_disablenotif'] === true, 'TicketTask disables notifications to prevent alerting requesters');
+assertCondition(str_contains($lastTask['content'], 'Nieuwe aanvraag werkplek (CRU-5001)'), 'TicketTask content includes pattern name');
+assertCondition(str_contains($lastTask['content'], 'CRU-5001'), 'TicketTask content includes matched token');
 
 // 8. Test Mailgate Fault Isolation: preNotImportedEmailAdd prevents bogus FAILED_OPERATION records
 $mailgateTicket = new Ticket();
