@@ -57,6 +57,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class TicketFilterController extends AbstractController
 {
     public const CONFIG_ROUTE     = 'front/config';
+    public const CONFIG_FILE      = 'front/config.php';
     public const CONFIG_FORM_FILE = 'front/config.form.php';
     public const CONFIG_NAME      = 'ticketfilter_config';
 
@@ -71,6 +72,7 @@ final class TicketFilterController extends AbstractController
      * @return Response
      */
     #[Route(self::CONFIG_ROUTE, name: self::CONFIG_NAME)]
+    #[Route(self::CONFIG_FILE, name: self::CONFIG_NAME . '_file')]
     #[Route(self::CONFIG_FORM_FILE, name: self::CONFIG_NAME . '_form_file')]
     public function config(Request $request): Response
     {

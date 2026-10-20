@@ -73,9 +73,7 @@ function ticketfilter_plugin_web_dir(): string
  */
 function ticketfilter_webdir(): string
 {
-    global $CFG_GLPI;
-    $urlBase = (isset($CFG_GLPI['url_base'])) ? rtrim((string)$CFG_GLPI['url_base'], '/') : '';
-    return $urlBase . ticketfilter_plugin_web_dir() . '/';
+    return rtrim(ticketfilter_plugin_web_dir(), '/') . '/';
 }
 
 /**

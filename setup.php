@@ -93,8 +93,8 @@ function plugin_init_ticketfilter(): void
         Plugin::registerClass(CleanLogsTask::class);
         Plugin::registerClass(FilterEngine::class);
 
-        // Configuration page route handled by TicketFilterController
-        $PLUGIN_HOOKS['config_page'][PLUGIN_TICKETFILTER_NAME] = TicketFilterController::CONFIG_ROUTE;
+        // Configuration page route handled by TicketFilterController (physical script for dual GLPI 11 & 12 support)
+        $PLUGIN_HOOKS['config_page'][PLUGIN_TICKETFILTER_NAME] = TicketFilterController::CONFIG_FILE;
 
         // Add to config menu
         $PLUGIN_HOOKS['menu_toadd'][PLUGIN_TICKETFILTER_NAME]['config'] = [FilterPattern::class];

@@ -158,7 +158,8 @@ class FilterPattern extends CommonDropdown
     {
         $links = [];
         $title = __('TicketFilter dashboard', 'ticketfilter');
-        $links[$title] = '/plugins/ticketfilter/front/config';
+        $path  = function_exists('ticketfilter_plugin_web_dir') ? ticketfilter_plugin_web_dir() : '/plugins/ticketfilter';
+        $links[$title] = $path . '/front/config.php';
         return $links;
     }
 
@@ -173,7 +174,7 @@ class FilterPattern extends CommonDropdown
         global $CFG_GLPI;
         $base = ($full && isset($CFG_GLPI['url_base'])) ? rtrim((string)$CFG_GLPI['url_base'], '/') : '';
         $path = function_exists('ticketfilter_plugin_web_dir') ? ticketfilter_plugin_web_dir() : '/plugins/ticketfilter';
-        return $base . $path . '/front/config';
+        return $base . $path . '/front/config.php';
     }
 
     /**
@@ -187,7 +188,7 @@ class FilterPattern extends CommonDropdown
         global $CFG_GLPI;
         $base = ($full && isset($CFG_GLPI['url_base'])) ? rtrim((string)$CFG_GLPI['url_base'], '/') : '';
         $path = function_exists('ticketfilter_plugin_web_dir') ? ticketfilter_plugin_web_dir() : '/plugins/ticketfilter';
-        return $base . $path . '/front/config';
+        return $base . $path . '/front/config.php';
     }
 
     /**
@@ -457,11 +458,29 @@ class FilterPattern extends CommonDropdown
             return;
         }
         if (method_exists($DB, 'fieldExists')) {
+            if (!$DB->fieldExists($table, self::FIELD_SENDER_POLICY)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_SENDER_POLICY . "` VARCHAR(30) NOT NULL DEFAULT '" . self::POLICY_STRICT_REQUESTER . "'");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_UNMATCHED_SENDER_ACTION)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_UNMATCHED_SENDER_ACTION . "` VARCHAR(30) NOT NULL DEFAULT '" . self::ACTION_NEW_TICKET . "'");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_MAX_REOPEN_AGE_DAYS)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_MAX_REOPEN_AGE_DAYS . "` INT NOT NULL DEFAULT 30");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_IS_PRIVATE_FOLLOWUP)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_IS_PRIVATE_FOLLOWUP . "` TINYINT NOT NULL DEFAULT 0");
+            }
             if (!$DB->fieldExists($table, self::FIELD_REOPEN_MESSAGE_TEMPLATE)) {
                 $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_REOPEN_MESSAGE_TEMPLATE . "` TEXT NULL");
             }
             if (!$DB->fieldExists($table, self::FIELD_SOLVED_MESSAGE_TEMPLATE)) {
                 $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_SOLVED_MESSAGE_TEMPLATE . "` TEXT NULL");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_ENTITIES_ID)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_ENTITIES_ID . "` INT NOT NULL DEFAULT 0");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_IS_RECURSIVE)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_IS_RECURSIVE . "` TINYINT NOT NULL DEFAULT 1");
             }
         }
     }
