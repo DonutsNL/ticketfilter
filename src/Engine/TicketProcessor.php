@@ -128,7 +128,37 @@ class TicketProcessor
     }
 
     /**
+     * Extracts and normalizes an email address from raw input string.
+     * Handles formats like:
+     * - "user@example.com"
+     * - "<user@example.com>"
+     * - "First Last <user@example.com>"
+     *
+     * @param string $raw
+     * @return string Normalized lowercase email, or empty string if invalid.
+     */
+    public static function cleanEmail(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        if (preg_match('/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/', $raw, $matches)) {
+            return strtolower(trim($matches[0]));
+        }
+
+        if (filter_var($raw, FILTER_VALIDATE_EMAIL)) {
+            return strtolower(trim($raw));
+        }
+
+        return '';
+    }
+
+    /**
      * Extracts sender identity information from incoming ticket input.
+     * Supports both web interface submissions and GLPI MailCollector incoming emails
+     * with registered users or anonymous/alternative email addresses.
      *
      * @param Ticket $item Incoming ticket hook object.
      * @return array [int 'userId', string 'userEmail']
@@ -138,10 +168,59 @@ class TicketProcessor
         $userId    = 0;
         $userEmail = '';
 
-        if (isset($item->input['_users_id_requester']) && is_numeric($item->input['_users_id_requester'])) {
-            $userId = (int)$item->input['_users_id_requester'];
+        if (!empty($item->input['_users_id_requester'])) {
+            if (is_numeric($item->input['_users_id_requester'])) {
+                $userId = (int)$item->input['_users_id_requester'];
+            } elseif (is_array($item->input['_users_id_requester'])) {
+                $first = reset($item->input['_users_id_requester']);
+                if (is_numeric($first)) {
+                    $userId = (int)$first;
+                }
+            }
         }
 
+        // 1. Mailgate anonymous/alternative email notification array (GLPI MailCollector)
+        if (isset($item->input['_users_id_requester_notif']['alternative_email'])) {
+            $alt = $item->input['_users_id_requester_notif']['alternative_email'];
+            if (is_array($alt)) {
+                foreach ($alt as $val) {
+                    if (!empty($val) && is_string($val)) {
+                        $cleaned = self::cleanEmail($val);
+                        if ($cleaned !== '') {
+                            $userEmail = $cleaned;
+                            break;
+                        }
+                    }
+                }
+            } elseif (is_string($alt) && !empty($alt)) {
+                $userEmail = self::cleanEmail($alt);
+            }
+        }
+
+        // 2. Mailgate headers: _head['from']
+        if ($userEmail === '' && !empty($item->input['_head']['from']) && is_string($item->input['_head']['from'])) {
+            $userEmail = self::cleanEmail($item->input['_head']['from']);
+        }
+
+        // 3. Alternative requester format: _itil_requester['alternative_email']
+        if ($userEmail === '' && isset($item->input['_itil_requester']['alternative_email'])) {
+            $alt = $item->input['_itil_requester']['alternative_email'];
+            if (is_array($alt)) {
+                foreach ($alt as $val) {
+                    if (!empty($val) && is_string($val)) {
+                        $cleaned = self::cleanEmail($val);
+                        if ($cleaned !== '') {
+                            $userEmail = $cleaned;
+                            break;
+                        }
+                    }
+                }
+            } elseif (is_string($alt) && !empty($alt)) {
+                $userEmail = self::cleanEmail($alt);
+            }
+        }
+
+        // 4. Web UI actors format: _actors['requester']
         if (isset($item->input['_actors']['requester']) && is_array($item->input['_actors']['requester'])) {
             foreach ($item->input['_actors']['requester'] as $actor) {
                 if ($userId === 0 && isset($actor['items_id']) && is_numeric($actor['items_id'])) {
@@ -149,17 +228,49 @@ class TicketProcessor
                 }
                 if ($userEmail === '') {
                     if (!empty($actor['default_email'])) {
-                        $userEmail = (string)$actor['default_email'];
+                        $userEmail = self::cleanEmail((string)$actor['default_email']);
                     } elseif (!empty($actor['alternative_email'])) {
-                        $userEmail = (string)$actor['alternative_email'];
+                        $userEmail = self::cleanEmail((string)$actor['alternative_email']);
                     }
                 }
             }
         }
 
+        // 5. Fallback common email fields: 'from', '_from', 'alternative_email'
+        if ($userEmail === '') {
+            foreach (['from', '_from', 'alternative_email'] as $field) {
+                if (!empty($item->input[$field]) && is_string($item->input[$field])) {
+                    $cleaned = self::cleanEmail($item->input[$field]);
+                    if ($cleaned !== '') {
+                        $userEmail = $cleaned;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 6. If userId is known but email is still empty, look up registered user's email in GLPI
+        if ($userId > 0 && $userEmail === '' && class_exists(\User::class)) {
+            $u = new \User();
+            if ($u->getFromDB($userId)) {
+                $uEmail = method_exists($u, 'getDefaultEmail') ? $u->getDefaultEmail() : '';
+                if (!empty($uEmail)) {
+                    $userEmail = self::cleanEmail($uEmail);
+                }
+            }
+        }
+
+        // 7. If userId is 0 and userEmail is known, check if a GLPI user exists for this email
+        if ($userId === 0 && $userEmail !== '' && class_exists(\User::class) && method_exists(\User::class, 'getOrImportByEmail')) {
+            $foundId = \User::getOrImportByEmail($userEmail, false);
+            if ($foundId && is_numeric($foundId) && (int)$foundId > 0) {
+                $userId = (int)$foundId;
+            }
+        }
+
         return [
             'userId'    => $userId,
-            'userEmail' => strtolower(trim($userEmail)),
+            'userEmail' => $userEmail,
         ];
     }
 
@@ -222,19 +333,53 @@ class TicketProcessor
 
                 if ($evaluate) {
                     if (!empty($actor['users_id'])) {
-                        $allowedUserIds[] = (int)$actor['users_id'];
+                        $uId = (int)$actor['users_id'];
+                        $allowedUserIds[] = $uId;
+
+                        // Resolve registered user's email addresses
+                        if (class_exists(\User::class)) {
+                            $userObj = new \User();
+                            if ($userObj->getFromDB($uId)) {
+                                $emails = [];
+                                if (method_exists($userObj, 'getAllEmails')) {
+                                    $emails = (array)$userObj->getAllEmails();
+                                }
+                                if (method_exists($userObj, 'getDefaultEmail')) {
+                                    $def = (string)$userObj->getDefaultEmail();
+                                    if ($def !== '' && !in_array($def, $emails, true)) {
+                                        $emails[] = $def;
+                                    }
+                                }
+                                foreach ($emails as $em) {
+                                    $cleanedEm = self::cleanEmail((string)$em);
+                                    if ($cleanedEm !== '') {
+                                        $allowedEmails[] = $cleanedEm;
+                                        $dom = substr(strrchr($cleanedEm, '@') ?: '', 1);
+                                        if ($dom !== '') {
+                                            $allowedDomains[] = $dom;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     if (!empty($actor['alternative_email'])) {
-                        $email = strtolower(trim((string)$actor['alternative_email']));
-                        $allowedEmails[] = $email;
-                        $domain = substr(strrchr($email, '@') ?: '', 1);
-                        if ($domain !== '') {
-                            $allowedDomains[] = $domain;
+                        $email = self::cleanEmail((string)$actor['alternative_email']);
+                        if ($email !== '') {
+                            $allowedEmails[] = $email;
+                            $domain = substr(strrchr($email, '@') ?: '', 1);
+                            if ($domain !== '') {
+                                $allowedDomains[] = $domain;
+                            }
                         }
                     }
                 }
             }
         }
+
+        $allowedEmails  = array_values(array_unique($allowedEmails));
+        $allowedDomains = array_values(array_unique($allowedDomains));
+        $allowedUserIds = array_values(array_unique($allowedUserIds));
 
         if ($senderId > 0 && in_array($senderId, $allowedUserIds, true)) {
             return [

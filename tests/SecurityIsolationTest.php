@@ -103,6 +103,21 @@ $itemRequester->input = [
 $resStrictPass = TicketProcessor::verifySender($itemRequester, $targetTicket, FilterPattern::POLICY_STRICT_REQUESTER);
 assertCondition($resStrictPass['authorized'] === true, 'Strict requester policy allows matching requester user ID/email');
 
+// 2b. Test mailgate anonymous requester (no _actors, email in _users_id_requester_notif and _head)
+$itemMailgateAnonymous = new Ticket();
+$itemMailgateAnonymous->input = [
+    'name'                      => 'Re: Update from mailgate',
+    '_users_id_requester'       => 0,
+    '_users_id_requester_notif' => [
+        'alternative_email' => ['client@customer.com'],
+    ],
+    '_head' => [
+        'from' => 'client@customer.com',
+    ],
+];
+$resMailgatePass = TicketProcessor::verifySender($itemMailgateAnonymous, $targetTicket, FilterPattern::POLICY_STRICT_REQUESTER);
+assertCondition($resMailgatePass['authorized'] === true, 'Mailgate anonymous requester without _actors is authorized via alternative_email');
+
 // 3. Test strict requester policy: unauthorized attacker is BLOCKED
 $itemAttacker = new Ticket();
 $itemAttacker->input = [

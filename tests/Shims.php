@@ -184,6 +184,28 @@ if (!class_exists('ITILFollowup', false)) {
     }
 }
 
+if (!class_exists('User', false)) {
+    class User extends CommonDBTM
+    {
+        public static array $mockEmails = [];
+
+        public static function getOrImportByEmail(string $email, bool $create = false)
+        {
+            return self::$mockEmails[$email] ?? 0;
+        }
+
+        public function getDefaultEmail(): string
+        {
+            return (string)($this->fields['email'] ?? '');
+        }
+
+        public function getAllEmails(): array
+        {
+            return !empty($this->fields['email']) ? [(string)$this->fields['email']] : [];
+        }
+    }
+}
+
 if (!class_exists('Toolbox', false)) {
     class Toolbox
     {
