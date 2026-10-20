@@ -658,24 +658,19 @@ class TicketProcessor
             ? \MailCollector::ACCEPTED_FOLDER
             : 'accepted';
 
-        // 1. First attempt: Use active MailCollector instance from call stack if available
-        if (class_exists(FilterEngine::class)) {
-            $activeCollector = FilterEngine::getActiveMailCollector();
-            if ($activeCollector !== null && (int)($activeCollector->fields['id'] ?? 0) === $collectorId) {
-                try {
-                    return (bool)$activeCollector->deleteMails($uid, $targetFolder);
-                } catch (\Throwable $e) {
-                    // Fall back to dedicated collector connection
-                }
-            }
-        }
-
-        // 2. Fallback: Open dedicated connection to mail receiver (original TicketFilter implementation)
         try {
             $mailCollector = new \MailCollector();
             if ($mailCollector->getFromDB($collectorId)) {
                 $mailCollector->connect();
-                return (bool)$mailCollector->deleteMails($uid, $targetFolder);
+                $result = (bool)$mailCollector->deleteMails($uid, $targetFolder);
+                if (isset($mailCollector->storage) && is_object($mailCollector->storage) && method_exists($mailCollector->storage, 'close')) {
+                    try {
+                        $mailCollector->storage->close();
+                    } catch (\Throwable $e) {
+                        // Suppress close exception
+                    }
+                }
+                return $result;
             }
         } catch (\Throwable $e) {
             AuditLogger::logError(

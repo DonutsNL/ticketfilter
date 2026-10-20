@@ -345,9 +345,10 @@ class FilterEngine
             'uid'          => $uid,
             'message_id'   => $messageId,
             'subject'      => $subject,
+            'ticket_item'  => clone $item,
         ];
 
-        // Direct active MailCollector instance to route to ACCEPTED folder
+        // Direct active MailCollector instance to route to ACCEPTED folder if configured
         $activeCollector = self::getActiveMailCollector();
         if ($activeCollector !== null) {
             $acceptedFolderKey = defined(\MailCollector::class . '::ACCEPTED_FOLDER')
@@ -431,7 +432,44 @@ class FilterEngine
             return;
         }
 
-        // 1. Remove any stray record from glpi_notimportedemails
+        // 1. Move/delete each merged email from mailgate mailbox after the entire batch has finished.
+        // Grouping by collector ensures we connect once per mailbox, process in reverse UID order,
+        // and cleanly expunge/close the IMAP session so servers like Office 365 commit the move immediately.
+        $byCollector = [];
+        foreach (self::$mergedMailgateMessages as $merged) {
+            $cId = (int)($merged['collector_id'] ?? 0);
+            $uId = (string)($merged['uid'] ?? '');
+            if ($cId > 0 && $uId !== '') {
+                $byCollector[$cId][] = $uId;
+            }
+        }
+
+        foreach ($byCollector as $collectorId => $uids) {
+            try {
+                $mailCollector = new \MailCollector();
+                if ($mailCollector->getFromDB($collectorId)) {
+                    $mailCollector->connect();
+                    $targetFolder = defined(\MailCollector::class . '::ACCEPTED_FOLDER')
+                        ? \MailCollector::ACCEPTED_FOLDER
+                        : 'accepted';
+                    rsort($uids);
+                    foreach ($uids as $uid) {
+                        $mailCollector->deleteMails($uid, $targetFolder);
+                    }
+                    if (isset($mailCollector->storage) && is_object($mailCollector->storage) && method_exists($mailCollector->storage, 'close')) {
+                        try {
+                            $mailCollector->storage->close();
+                        } catch (\Throwable $e) {
+                            // Suppress close exception
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Suppress mailbox cleanup error on shutdown
+            }
+        }
+
+        // 2. Remove any stray record from glpi_notimportedemails
         if ($DB !== null && method_exists($DB, 'delete')) {
             try {
                 foreach (self::$mergedMailgateMessages as $merged) {
@@ -442,12 +480,12 @@ class FilterEngine
                         ]);
                     }
                 }
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 // Ignore DB cleanup errors on shutdown
             }
         }
 
-        // 2. Adjust GLPI session message if present
+        // 3. Adjust GLPI session message if present
         if (isset($_SESSION['MESSAGE_AFTER_REDIRECT'])) {
             $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
 

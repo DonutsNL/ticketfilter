@@ -303,7 +303,13 @@ $_SESSION['MESSAGE_AFTER_REDIRECT'] = [
         'Number of messages: available=2, already imported=0, retrieved=2, refused=0, errors=2, blacklisted=0'
     ]
 ];
+MailCollector::$deletedMails = [];
 FilterEngine::handleMailgateShutdown();
+
+assertCondition(count(MailCollector::$deletedMails) === 2, 'handleMailgateShutdown moved both batch emails to accepted folder');
+assertCondition(MailCollector::$deletedMails[0]['uid'] === '1002', 'First moved message has UID 1002 (descending order)');
+assertCondition(MailCollector::$deletedMails[1]['uid'] === '1001', 'Second moved message has UID 1001 (descending order)');
+assertCondition(MailCollector::$deletedMails[0]['folder'] === MailCollector::ACCEPTED_FOLDER, 'Message moved to ACCEPTED_FOLDER');
 
 assertCondition(empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$errorKey]), 'handleMailgateShutdown clears ERROR banner for multi-mail batch');
 assertCondition(!empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]), 'handleMailgateShutdown populates INFO banner for multi-mail batch');
