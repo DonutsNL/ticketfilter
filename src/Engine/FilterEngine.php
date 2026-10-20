@@ -192,6 +192,7 @@ class FilterEngine
                         $policy,
                         $entitiesId
                     );
+                    TicketProcessor::deleteMailgateEmail($item);
                     $item->input = false;
                     $item->fields = false;
                     return true;
@@ -212,6 +213,7 @@ class FilterEngine
                                 $entitiesId,
                                 ['private_followup' => true, 'policy_bypass' => 'unmatched_sender_action']
                             );
+                            TicketProcessor::deleteMailgateEmail($item);
                             self::recordMailgateInterception($item);
                             $item->input = false;
                             $item->fields = false;
@@ -276,6 +278,7 @@ class FilterEngine
                     );
                 }
 
+                TicketProcessor::deleteMailgateEmail($item);
                 self::recordMailgateInterception($item);
                 $item->input = false;
                 $item->fields = false;
@@ -372,7 +375,7 @@ class FilterEngine
      */
     public static function getActiveMailCollector(): ?\MailCollector
     {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 8);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 30);
         foreach ($trace as $frame) {
             if (isset($frame['object']) && $frame['object'] instanceof \MailCollector) {
                 return $frame['object'];

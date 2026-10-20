@@ -240,6 +240,15 @@ $patternRecord = [
 
 FilterEngine::recordMailgateInterception($mailgateTicket);
 
+// Verify deleteMailgateEmail moves email to ACCEPTED_FOLDER
+MailCollector::$deletedMails = [];
+$deleteRes = TicketProcessor::deleteMailgateEmail($mailgateTicket);
+assertCondition($deleteRes === true, 'deleteMailgateEmail executes successfully');
+assertCondition(count(MailCollector::$deletedMails) > 0, 'deleteMailgateEmail invoked MailCollector::deleteMails');
+$lastDeleted = end(MailCollector::$deletedMails);
+assertCondition($lastDeleted['uid'] === '12345', 'deleteMailgateEmail passed matching message UID');
+assertCondition($lastDeleted['folder'] === MailCollector::ACCEPTED_FOLDER, 'deleteMailgateEmail directs message to ACCEPTED_FOLDER');
+
 // Now simulate GLPI MailCollector attempting to log FAILED_OPERATION to NotImportedEmail
 $notImported = new NotImportedEmail();
 $notImported->input = [

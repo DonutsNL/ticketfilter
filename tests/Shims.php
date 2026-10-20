@@ -304,9 +304,16 @@ if (!class_exists('MailCollector', false)) {
     {
         public const ACCEPTED_FOLDER = 'accepted';
         public const REFUSED_FOLDER  = 'refused';
+        public static array $deletedMails = [];
+
+        public function connect(): bool
+        {
+            return true;
+        }
 
         public function deleteMails($uid, $folder = ''): bool
         {
+            self::$deletedMails[] = ['uid' => $uid, 'folder' => $folder];
             return true;
         }
     }

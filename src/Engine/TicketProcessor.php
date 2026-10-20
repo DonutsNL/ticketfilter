@@ -643,16 +643,10 @@ class TicketProcessor
     }
 
     /**
-     * Safely deletes processed email from mailgate mailbox after successful merge.
-     *
-     * In GLPI, MailCollector::collect() manages mailbox message deletion and folder routing
-     * natively at the conclusion of each batch. Opening a concurrent second IMAP connection
-     * during pre_item_add causes protocol race conditions and errors.
-     * This method is retained for compatibility and performs safe deletion only when called
-     * outside an active MailCollector session.
+     * Safely moves processed email from mailgate inbox to accepted archive folder.
      *
      * @param Ticket $item Incoming ticket hook object.
-     * @return bool True if deleted or deferred to collector, false on failure.
+     * @return bool True if moved/deleted or not mailgate, false on failure.
      */
     public static function deleteMailgateEmail(Ticket $item): bool
     {
@@ -660,26 +654,34 @@ class TicketProcessor
             return true;
         }
 
-        // If called while MailCollector::collect() is active, let MailCollector handle it natively
-        if (class_exists(FilterEngine::class) && FilterEngine::getActiveMailCollector() !== null) {
-            return true;
+        $collectorId  = (int)$item->input['_mailgate'];
+        $uid          = (string)$item->input['_uid'];
+        $targetFolder = defined(\MailCollector::class . '::ACCEPTED_FOLDER')
+            ? \MailCollector::ACCEPTED_FOLDER
+            : 'accepted';
+
+        // 1. First attempt: Use active MailCollector instance from call stack if available
+        if (class_exists(FilterEngine::class)) {
+            $activeCollector = FilterEngine::getActiveMailCollector();
+            if ($activeCollector !== null && (int)($activeCollector->fields['id'] ?? 0) === $collectorId) {
+                try {
+                    return (bool)$activeCollector->deleteMails($uid, $targetFolder);
+                } catch (\Throwable $e) {
+                    // Fall back to dedicated collector connection
+                }
+            }
         }
 
+        // 2. Fallback: Open dedicated connection to mail receiver (original TicketFilter implementation)
         try {
-            $collectorId = (int)$item->input['_mailgate'];
-            $uid         = (string)$item->input['_uid'];
-
-            $mailCollector = new MailCollector();
+            $mailCollector = new \MailCollector();
             if ($mailCollector->getFromDB($collectorId)) {
                 $mailCollector->connect();
-                $targetFolder = defined(MailCollector::class . '::ACCEPTED_FOLDER')
-                    ? MailCollector::ACCEPTED_FOLDER
-                    : '/accepted';
                 return (bool)$mailCollector->deleteMails($uid, $targetFolder);
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             AuditLogger::logError(
-                sprintf('Failed to delete email from mailgate: %s', $e->getMessage()),
+                sprintf('Failed to move email to accepted folder in mailgate: %s', $e->getMessage()),
                 $item->input['name'] ?? ''
             );
         }
