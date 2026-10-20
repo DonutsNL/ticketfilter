@@ -539,43 +539,41 @@ class TicketProcessor
             ];
         }
 
-        // Create an independent private informational task with TicketFilter details
+        // Create an independent private followup with TicketFilter details
         // so technicians can see the rule match without exposing technical details to requesters.
-        if (class_exists(\TicketTask::class)) {
-            $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
-            $privateSuffix = $isPrivate ? ($isDutch ? ' (privé reactie)' : ' (private followup)') : '';
+        $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
+        $privateSuffix = $isPrivate ? ($isDutch ? ' (privé reactie)' : ' (private followup)') : '';
 
-            if ($isDutch) {
-                $taskContent = sprintf(
-                    'E-mail samengevoegd via filterregel <strong>%s</strong> (match: <code>%s</code>, afzender: <code>%s</code>)%s',
-                    htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
-                    $privateSuffix
-                );
-            } else {
-                $taskContent = sprintf(
-                    'Email merged via filter rule <strong>%s</strong> (match: <code>%s</code>, sender: <code>%s</code>)%s',
-                    htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
-                    htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
-                    $privateSuffix
-                );
-            }
+        if ($isDutch) {
+            $auditContent = sprintf(
+                'E-mail samengevoegd via filterregel <strong>%s</strong> (match: <code>%s</code>, afzender: <code>%s</code>)%s',
+                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
+                $privateSuffix
+            );
+        } else {
+            $auditContent = sprintf(
+                'Email merged via filter rule <strong>%s</strong> (match: <code>%s</code>, sender: <code>%s</code>)%s',
+                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
+                $privateSuffix
+            );
+        }
 
-            try {
-                $task = new \TicketTask();
-                $task->add([
-                    'tickets_id'    => $targetTicketId,
-                    'content'       => $taskContent,
-                    'is_private'    => 1,
-                    'state'         => class_exists(\Planning::class) ? \Planning::INFO : 0,
-                    'users_id'      => 0,
-                    '_disablenotif' => true,
-                ]);
-            } catch (\Throwable $e) {
-                // Ignore task creation error to avoid disrupting merge flow
-            }
+        try {
+            $auditFollowup = new ITILFollowup();
+            $auditFollowup->add([
+                'items_id'      => $targetTicketId,
+                'itemtype'      => Ticket::class,
+                'content'       => $auditContent,
+                'users_id'      => 0,
+                'is_private'    => 1,
+                '_disablenotif' => true,
+            ]);
+        } catch (\Throwable $e) {
+            // Ignore audit followup creation error to avoid disrupting merge flow
         }
 
         if (class_exists(\Log::class) && defined(\Log::class . '::HISTORY_LOG_SIMPLE_MESSAGE')) {

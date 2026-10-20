@@ -192,7 +192,6 @@ class FilterEngine
                         $policy,
                         $entitiesId
                     );
-                    TicketProcessor::deleteMailgateEmail($item);
                     $item->input = false;
                     $item->fields = false;
                     return true;
@@ -213,7 +212,6 @@ class FilterEngine
                                 $entitiesId,
                                 ['private_followup' => true, 'policy_bypass' => 'unmatched_sender_action']
                             );
-                            TicketProcessor::deleteMailgateEmail($item);
                             self::recordMailgateInterception($item);
                             $item->input = false;
                             $item->fields = false;
@@ -278,7 +276,6 @@ class FilterEngine
                     );
                 }
 
-                TicketProcessor::deleteMailgateEmail($item);
                 self::recordMailgateInterception($item);
                 $item->input = false;
                 $item->fields = false;
@@ -366,6 +363,27 @@ class FilterEngine
         }
 
         self::registerMailgateCleanup();
+    }
+
+    /**
+     * Returns recorded merged mailgate messages (for diagnostics and testing).
+     *
+     * @return array<int, array{collector_id: int, uid: string, message_id: string, subject: string}>
+     */
+    public static function getMergedMailgateMessages(): array
+    {
+        return self::$mergedMailgateMessages;
+    }
+
+    /**
+     * Resets the in-memory mailgate state (for testing).
+     *
+     * @return void
+     */
+    public static function resetMailgateState(): void
+    {
+        self::$mergedMailgateMessages = [];
+        self::$cleanupRegistered      = false;
     }
 
     /**

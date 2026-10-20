@@ -203,21 +203,19 @@ $incomingItemToMerge->input = [
 $initialFollowupCount = count(ITILFollowup::$createdFollowups);
 $processRes = TicketProcessor::processTicket($incomingItemToMerge, $targetTicketOriginal, $patternMock, 'CRU-5001', false);
 assertCondition($processRes['success'] === true, 'TicketProcessor::processTicket executes successfully');
-assertCondition(count(ITILFollowup::$createdFollowups) > $initialFollowupCount, 'Followup is added to target ticket');
+assertCondition(count(ITILFollowup::$createdFollowups) === $initialFollowupCount + 2, 'Two followups added: email content and private audit followup');
 
-$lastFollowup = end(ITILFollowup::$createdFollowups);
-assertCondition($lastFollowup['content'] === 'Dit is een testreactie vanaf een niet-geregistreerd e-mailadres.', 'Followup contains pure email content without technical metadata');
-assertCondition(!str_contains($lastFollowup['content'], 'ticketfilter-attribution'), 'Followup does NOT contain ticketfilter-attribution CSS block');
-assertCondition(!str_contains($lastFollowup['content'], 'Nieuwe aanvraag werkplek'), 'Followup does NOT leak internal filter rule name into customer notifications');
+$contentFollowup = ITILFollowup::$createdFollowups[$initialFollowupCount];
+assertCondition($contentFollowup['content'] === 'Dit is een testreactie vanaf een niet-geregistreerd e-mailadres.', 'Content followup contains pure email content without technical metadata');
+assertCondition(!str_contains($contentFollowup['content'], 'ticketfilter-attribution'), 'Content followup does NOT contain ticketfilter-attribution CSS block');
+assertCondition(!str_contains($contentFollowup['content'], 'Nieuwe aanvraag werkplek'), 'Content followup does NOT leak internal filter rule name into customer notifications');
 
-assertCondition(count(TicketTask::$createdTasks) > 0, 'An independent private informational task was created for technicians');
-$lastTask = end(TicketTask::$createdTasks);
-assertCondition($lastTask['tickets_id'] === 100, 'TicketTask targets the correct ticket ID');
-assertCondition($lastTask['is_private'] === 1, 'TicketTask is marked as private');
-assertCondition($lastTask['state'] === Planning::INFO, 'TicketTask state is set to Planning::INFO');
-assertCondition($lastTask['_disablenotif'] === true, 'TicketTask disables notifications to prevent alerting requesters');
-assertCondition(str_contains($lastTask['content'], 'Nieuwe aanvraag werkplek (CRU-5001)'), 'TicketTask content includes pattern name');
-assertCondition(str_contains($lastTask['content'], 'CRU-5001'), 'TicketTask content includes matched token');
+$auditFollowup = ITILFollowup::$createdFollowups[$initialFollowupCount + 1];
+assertCondition($auditFollowup['items_id'] === 100, 'Audit followup targets the correct ticket ID');
+assertCondition($auditFollowup['is_private'] === 1, 'Audit followup is marked as private');
+assertCondition($auditFollowup['_disablenotif'] === true, 'Audit followup disables notifications to prevent alerting requesters');
+assertCondition(str_contains($auditFollowup['content'], 'Nieuwe aanvraag werkplek (CRU-5001)'), 'Audit followup content includes pattern name');
+assertCondition(str_contains($auditFollowup['content'], 'CRU-5001'), 'Audit followup content includes matched token');
 
 // 8. Test Mailgate Fault Isolation: preNotImportedEmailAdd prevents bogus FAILED_OPERATION records
 $mailgateTicket = new Ticket();
@@ -275,6 +273,43 @@ assertCondition(!empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]), 'handleMa
 $infoMessages = implode(' ', $_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]);
 assertCondition(str_contains($infoMessages, 'errors=0'), 'handleMailgateShutdown corrects errors=1 to errors=0');
 assertCondition(str_contains($infoMessages, 'TicketFilter:'), 'handleMailgateShutdown appends positive TicketFilter merge confirmation');
+
+// 10. Test Multi-Email Batch Mailgate Processing
+FilterEngine::resetMailgateState();
+$batchTicket1 = new Ticket();
+$batchTicket1->input = [
+    'name'      => 'First Batch Email (CRU-5001)',
+    'content'   => 'Batch mail 1',
+    '_mailgate' => 42,
+    '_uid'      => '1001',
+    '_head'     => ['message_id' => '<batch-001@example.com>'],
+];
+FilterEngine::recordMailgateInterception($batchTicket1);
+
+$batchTicket2 = new Ticket();
+$batchTicket2->input = [
+    'name'      => 'Second Batch Email (CRU-5001)',
+    'content'   => 'Batch mail 2',
+    '_mailgate' => 42,
+    '_uid'      => '1002',
+    '_head'     => ['message_id' => '<batch-002@example.com>'],
+];
+FilterEngine::recordMailgateInterception($batchTicket2);
+
+assertCondition(count(FilterEngine::getMergedMailgateMessages()) === 2, 'Batch mailgate captures both merged emails in single batch');
+
+$_SESSION['MESSAGE_AFTER_REDIRECT'] = [
+    $errorKey => [
+        'Number of messages: available=2, already imported=0, retrieved=2, refused=0, errors=2, blacklisted=0'
+    ]
+];
+FilterEngine::handleMailgateShutdown();
+
+assertCondition(empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$errorKey]), 'handleMailgateShutdown clears ERROR banner for multi-mail batch');
+assertCondition(!empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]), 'handleMailgateShutdown populates INFO banner for multi-mail batch');
+$batchInfo = implode(' ', $_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]);
+assertCondition(str_contains($batchInfo, 'errors=0'), 'handleMailgateShutdown reduces errors=2 to errors=0 in batch');
+assertCondition(str_contains($batchInfo, '2 e-mail(s) succesvol samengevoegd'), 'handleMailgateShutdown confirms 2 emails merged in Dutch message');
 
 echo "SecurityIsolationTest completed successfully!\n\n";
 
