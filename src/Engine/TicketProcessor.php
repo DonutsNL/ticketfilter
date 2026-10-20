@@ -447,7 +447,7 @@ class TicketProcessor
         $sender         = self::extractSenderInfo($incomingItem);
         $subject        = (string)($incomingItem->input['name'] ?? '');
 
-        $currentStatus = (int)$targetTicket->fields['status'];
+        $currentStatus = (int)($targetTicket->fields['status'] ?? 0);
 
         if ($currentStatus === CommonITILObject::CLOSED) {
             $allowReopen = !empty($pattern[FilterPattern::FIELD_REOPENCLOSED]);
@@ -510,10 +510,38 @@ class TicketProcessor
 
         $itilFollowup = new ITILFollowup();
 
+        $originalContent = (string)($incomingItem->input['content'] ?? ($incomingItem->input['name'] ?? ''));
+
+        $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
+        $privateSuffix = $isPrivate ? ($isDutch ? ' (privé)' : ' (private)') : '';
+
+        if ($isDutch) {
+            $attributionText = sprintf(
+                'Samengevoegd via filterregel <strong>%s</strong> (match: <code>%s</code>)%s',
+                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
+                $privateSuffix
+            );
+        } else {
+            $attributionText = sprintf(
+                'Merged via filter rule <strong>%s</strong> (match: <code>%s</code>)%s',
+                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
+                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
+                $privateSuffix
+            );
+        }
+
+        $attributionBlock = sprintf(
+            '<div class="ticketfilter-attribution text-muted small mb-2 pb-1 border-bottom d-flex align-items-center gap-1"><i class="ti ti-filter text-muted"></i> <span><strong>TicketFilter:</strong> %s</span></div>',
+            $attributionText
+        );
+
+        $mergedContent = $attributionBlock . "\n" . $originalContent;
+
         $followupInput = [
             'items_id'      => $targetTicketId,
             'itemtype'      => Ticket::class,
-            'content'       => $incomingItem->input['content'] ?? ($incomingItem->input['name'] ?? ''),
+            'content'       => $mergedContent,
             'users_id'      => $sender['userId'],
             'is_private'    => ($isPrivate) ? 1 : (int)($pattern[FilterPattern::FIELD_IS_PRIVATE_FOLLOWUP] ?? 0),
             '_disablenotif' => $suppressNotif,
@@ -535,6 +563,20 @@ class TicketProcessor
                 'solved'      => false,
                 'status'      => 'followup_failed'
             ];
+        }
+
+        if (class_exists(\Log::class) && defined(\Log::class . '::HISTORY_LOG_SIMPLE_MESSAGE')) {
+            try {
+                \Log::history(
+                    $targetTicketId,
+                    Ticket::class,
+                    [0, '', sprintf('TicketFilter: matched rule "%s" (token: %s)', $patternName, $matchedToken)],
+                    0,
+                    \Log::HISTORY_LOG_SIMPLE_MESSAGE
+                );
+            } catch (\Throwable $e) {
+                // Ignore history logging errors in non-standard environments
+            }
         }
 
         $solvedPattern = (string)($pattern[FilterPattern::FIELD_SOLVEDMATCHSTR] ?? '');
@@ -590,12 +632,23 @@ class TicketProcessor
     /**
      * Safely deletes processed email from mailgate mailbox after successful merge.
      *
+     * In GLPI, MailCollector::collect() manages mailbox message deletion and folder routing
+     * natively at the conclusion of each batch. Opening a concurrent second IMAP connection
+     * during pre_item_add causes protocol race conditions and errors.
+     * This method is retained for compatibility and performs safe deletion only when called
+     * outside an active MailCollector session.
+     *
      * @param Ticket $item Incoming ticket hook object.
-     * @return bool True if deleted or not mailgate, false on failure.
+     * @return bool True if deleted or deferred to collector, false on failure.
      */
     public static function deleteMailgateEmail(Ticket $item): bool
     {
         if (!isset($item->input['_mailgate']) || !isset($item->input['_uid'])) {
+            return true;
+        }
+
+        // If called while MailCollector::collect() is active, let MailCollector handle it natively
+        if (class_exists(FilterEngine::class) && FilterEngine::getActiveMailCollector() !== null) {
             return true;
         }
 

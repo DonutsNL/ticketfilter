@@ -188,4 +188,77 @@ assertCondition($candCopyOnOriginal['authorized'] === false, 'Original candidate
 $candCopyOnCopy = TicketProcessor::verifySender($itemAttacker, $targetTicketCopy, FilterPattern::POLICY_STRICT_REQUESTER);
 assertCondition($candCopyOnCopy['authorized'] === true, 'Candidate #101 (copy) authorizes its own creator, preventing collision DoS');
 
+// 7. Test Followup Attribution on Merged Tickets
+$_SESSION['glpilanguage'] = 'nl_NL';
+$patternMock = [
+    FilterPattern::FIELD_ID   => 1,
+    FilterPattern::FIELD_NAME => 'Nieuwe aanvraag werkplek (CRU-5001)',
+];
+$incomingItemToMerge = new Ticket();
+$incomingItemToMerge->input = [
+    'name'                => 'Re: Nieuwe aanvraag werkplek (CRU-5001)',
+    'content'             => 'Dit is een testreactie vanaf een niet-geregistreerd e-mailadres.',
+    '_users_id_requester' => 10,
+];
+$initialFollowupCount = count(ITILFollowup::$createdFollowups);
+$processRes = TicketProcessor::processTicket($incomingItemToMerge, $targetTicketOriginal, $patternMock, 'CRU-5001', false);
+assertCondition($processRes['success'] === true, 'TicketProcessor::processTicket executes successfully');
+assertCondition(count(ITILFollowup::$createdFollowups) > $initialFollowupCount, 'Followup is added to target ticket');
+
+$lastFollowup = end(ITILFollowup::$createdFollowups);
+assertCondition(str_contains($lastFollowup['content'], 'ticketfilter-attribution'), 'Followup contains ticketfilter-attribution CSS block');
+assertCondition(str_contains($lastFollowup['content'], 'Samengevoegd via filterregel'), 'Followup displays Dutch attribution text when language is nl_NL');
+assertCondition(str_contains($lastFollowup['content'], 'Nieuwe aanvraag werkplek (CRU-5001)'), 'Followup attribution includes pattern name');
+assertCondition(str_contains($lastFollowup['content'], 'CRU-5001'), 'Followup attribution includes matched token');
+assertCondition(str_contains($lastFollowup['content'], 'Dit is een testreactie vanaf een niet-geregistreerd e-mailadres.'), 'Original email content is preserved below attribution header');
+
+// 8. Test Mailgate Fault Isolation: preNotImportedEmailAdd prevents bogus FAILED_OPERATION records
+$mailgateTicket = new Ticket();
+$mailgateTicket->input = [
+    'name'      => 'Test Mailgate Ticket (CRU-5001)',
+    'content'   => 'Mailgate body',
+    '_mailgate' => 42,
+    '_uid'      => '12345',
+    '_head'     => ['message_id' => '<test-msg-001@example.com>'],
+];
+
+// Trigger evaluation so FilterEngine records the mailgate message
+$patternRecord = [
+    FilterPattern::FIELD_ID                      => 5,
+    FilterPattern::FIELD_NAME                    => 'Mailgate Test Pattern',
+    FilterPattern::FIELD_TICKETMATCHSTR          => '(?<match>CRU-[0-9]+)',
+    FilterPattern::FIELD_SENDER_POLICY           => FilterPattern::POLICY_OPEN,
+    FilterPattern::FIELD_UNMATCHED_SENDER_ACTION => FilterPattern::ACTION_NEW_TICKET,
+];
+
+FilterEngine::recordMailgateInterception($mailgateTicket);
+
+// Now simulate GLPI MailCollector attempting to log FAILED_OPERATION to NotImportedEmail
+$notImported = new NotImportedEmail();
+$notImported->input = [
+    'mailcollectors_id' => 42,
+    'messageid'         => '<test-msg-001@example.com>',
+    'subject'           => 'Test Mailgate Ticket (CRU-5001)',
+    'reason'            => NotImportedEmail::FAILED_OPERATION,
+];
+FilterEngine::preNotImportedEmailAdd($notImported);
+assertCondition($notImported->input === false, 'preNotImportedEmailAdd intercepts and cancels NotImportedEmail creation for merged message');
+
+// 9. Test Mailgate Error Count & Notification Cleanup
+$errorKey = defined('ERROR') ? ERROR : 3;
+$infoKey  = defined('INFO')  ? INFO  : 0;
+$_SESSION['MESSAGE_AFTER_REDIRECT'] = [
+    $errorKey => [
+        'Number of messages: available=1, already imported=0, retrieved=1, refused=0, errors=1, blacklisted=0'
+    ]
+];
+FilterEngine::handleMailgateShutdown();
+
+assertCondition(empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$errorKey]), 'handleMailgateShutdown clears the ERROR status banner');
+assertCondition(!empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]), 'handleMailgateShutdown populates INFO status banner');
+$infoMessages = implode(' ', $_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]);
+assertCondition(str_contains($infoMessages, 'errors=0'), 'handleMailgateShutdown corrects errors=1 to errors=0');
+assertCondition(str_contains($infoMessages, 'TicketFilter:'), 'handleMailgateShutdown appends positive TicketFilter merge confirmation');
+
 echo "SecurityIsolationTest completed successfully!\n\n";
+

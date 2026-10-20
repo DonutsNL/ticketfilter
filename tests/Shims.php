@@ -51,6 +51,10 @@ spl_autoload_register(function ($class) {
     }
 });
 
+if (!isset($_SESSION['glpi_currenttime'])) {
+    $_SESSION['glpi_currenttime'] = date('Y-m-d H:i:s');
+}
+
 if (!defined('GLPI_ROOT')) {
     define('GLPI_ROOT', dirname(__DIR__, 3));
 }
@@ -108,8 +112,8 @@ if (!isset($GLOBALS['DB'])) {
 if (!class_exists('CommonDBTM', false)) {
     class CommonDBTM
     {
-        public array $fields = [];
-        public array $input  = [];
+        public false|array $fields = [];
+        public false|array $input  = [];
 
         public static function getTable($classname = null): string
         {
@@ -237,6 +241,11 @@ if (!class_exists('Session', false)) {
         {
             return 'mock_csrf_token_glpi11';
         }
+
+        public static function getLoginUserID(): int
+        {
+            return 1;
+        }
     }
 }
 
@@ -282,4 +291,25 @@ if (!class_exists('Config', false)) {
         }
     }
 }
+
+if (!class_exists('NotImportedEmail', false)) {
+    class NotImportedEmail extends CommonDBTM
+    {
+        public const FAILED_OPERATION = 3;
+    }
+}
+
+if (!class_exists('MailCollector', false)) {
+    class MailCollector extends CommonDBTM
+    {
+        public const ACCEPTED_FOLDER = 'accepted';
+        public const REFUSED_FOLDER  = 'refused';
+
+        public function deleteMails($uid, $folder = ''): bool
+        {
+            return true;
+        }
+    }
+}
+
 

@@ -102,10 +102,14 @@ function plugin_init_ticketfilter(): void
         // State plugin CSRF compliant
         $PLUGIN_HOOKS['csrf_compliant'][PLUGIN_TICKETFILTER_NAME] = true;
 
-        // Hook on pre_item_add for tickets
-        $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD][PLUGIN_TICKETFILTER_NAME] = [
-            Ticket::class => [FilterEngine::class, 'preItemAdd']
+        // Hook on pre_item_add for tickets and notimportedemails
+        $preItemAddHooks = [
+            Ticket::class => [FilterEngine::class, 'preItemAdd'],
         ];
+        if (class_exists('NotImportedEmail')) {
+            $preItemAddHooks['NotImportedEmail'] = [FilterEngine::class, 'preNotImportedEmailAdd'];
+        }
+        $PLUGIN_HOOKS[Hooks::PRE_ITEM_ADD][PLUGIN_TICKETFILTER_NAME] = $preItemAddHooks;
     }
 }
 
