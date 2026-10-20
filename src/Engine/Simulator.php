@@ -103,33 +103,69 @@ class Simulator
 
         $token = $matchResult['token'];
         $matchingTicketIds = TicketProcessor::searchTicketPool($token);
-        $collision = (count($matchingTicketIds) > 1);
+        $totalCandidates   = count($matchingTicketIds);
 
-        $wouldReopen = false;
-        $wouldSolve  = false;
-        $simulatedAction = 'WOULD_MERGE_FOLLOWUP';
+        $targetTicket    = null;
+        $targetTicketId  = 0;
+        $wouldReopen     = false;
+        $wouldSolve      = false;
+        $simulatedAction = 'NO_EXISTING_TICKET_FOUND';
 
-        if ($collision) {
-            $simulatedAction = 'WOULD_ABORT_COLLISION';
-        } elseif (!empty($matchingTicketIds)) {
-            $targetTicket = new Ticket();
-            if ($targetTicket->getFromDB($matchingTicketIds[0])) {
+        if ($totalCandidates > 0) {
+            if ($senderEmail !== '') {
+                $dummyItem = new Ticket();
+                $dummyItem->input = [
+                    'name'                      => $subject,
+                    'content'                   => $body,
+                    '_users_id_requester'       => 0,
+                    '_users_id_requester_notif' => [
+                        'alternative_email' => [$senderEmail],
+                    ],
+                    '_head' => [
+                        'from' => $senderEmail,
+                    ],
+                ];
+
+                foreach ($matchingTicketIds as $candidateId) {
+                    $cand = new Ticket();
+                    if (!$cand->getFromDB($candidateId)) {
+                        continue;
+                    }
+                    $check = TicketProcessor::verifySender($dummyItem, $cand, $senderPolicy);
+                    if ($check['authorized']) {
+                        $targetTicket   = $cand;
+                        $targetTicketId = $candidateId;
+                        break;
+                    }
+                }
+            } else {
+                // If no sender email supplied to simulator, default to lowest ID (original)
+                $cand = new Ticket();
+                if ($cand->getFromDB($matchingTicketIds[0])) {
+                    $targetTicket   = $cand;
+                    $targetTicketId = $matchingTicketIds[0];
+                }
+            }
+
+            if ($targetTicket !== null) {
                 $status = (int)$targetTicket->fields['status'];
                 if ($status === CommonITILObject::CLOSED) {
-                    $wouldReopen = true;
+                    $wouldReopen     = true;
                     $simulatedAction = 'WOULD_REOPEN_AND_MERGE';
+                } else {
+                    $simulatedAction = 'WOULD_MERGE_FOLLOWUP';
                 }
 
                 if ($solvedPattern !== '') {
                     $solvedCheck = PatternMatcher::match($solvedPattern, $subject, PatternMatcher::GROUP_SOLVED);
                     if ($solvedCheck['matched']) {
-                        $wouldSolve = true;
+                        $wouldSolve      = true;
                         $simulatedAction = ($wouldReopen) ? 'WOULD_REOPEN_MERGE_AND_SOLVE' : 'WOULD_MERGE_AND_SOLVE';
                     }
                 }
+            } else {
+                $simulatedAction = 'WOULD_SKIP_UNMATCHED_SENDER';
             }
-        } else {
-            $simulatedAction = 'NO_EXISTING_TICKET_FOUND';
         }
 
         return [
@@ -138,7 +174,7 @@ class Simulator
             'matched'          => true,
             'token'            => $token,
             'target_tickets'   => $matchingTicketIds,
-            'collision'        => $collision,
+            'collision'        => false,
             'would_reopen'     => $wouldReopen,
             'would_solve'      => $wouldSolve,
             'simulated_action' => $simulatedAction,

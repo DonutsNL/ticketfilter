@@ -65,6 +65,18 @@ class MockTicketUser
 {
     public function getActors(int $ticketId): array
     {
+        if ($ticketId === 101) {
+            return [
+                'requesters' => [
+                    [
+                        'type'              => CommonITILActor::REQUESTER,
+                        'users_id'          => 999,
+                        'alternative_email' => 'attacker@evil.com',
+                    ]
+                ]
+            ];
+        }
+
         return [
             'requesters' => [
                 [
@@ -154,5 +166,26 @@ $corruptedTicket = new Ticket();
 $corruptedTicket->input = ['name' => null]; // null name
 FilterEngine::preItemAdd($corruptedTicket);
 assertCondition(true, 'FilterEngine gracefully handles corrupted input without fatal error');
+
+// 6. Test Multi-Candidate Resolution (DoS Mitigation / Option 1)
+// Target ticket 100 (original) and Target ticket 101 (split copy)
+$targetTicketOriginal = new Ticket();
+$targetTicketOriginal->fields['id'] = 100;
+$targetTicketOriginal->userlinkclass = MockTicketUser::class;
+
+$targetTicketCopy = new Ticket();
+$targetTicketCopy->fields['id'] = 101;
+$targetTicketCopy->userlinkclass = MockTicketUser::class;
+
+// When original requester sends: candidate #100 authorizes them
+$candOriginal = TicketProcessor::verifySender($itemRequester, $targetTicketOriginal, FilterPattern::POLICY_STRICT_REQUESTER);
+assertCondition($candOriginal['authorized'] === true, 'Original candidate #100 authorizes original requester');
+
+// When copy creator sends: candidate #100 rejects them, but candidate #101 authorizes them
+$candCopyOnOriginal = TicketProcessor::verifySender($itemAttacker, $targetTicketOriginal, FilterPattern::POLICY_STRICT_REQUESTER);
+assertCondition($candCopyOnOriginal['authorized'] === false, 'Original candidate #100 rejects third-party/copy requester');
+
+$candCopyOnCopy = TicketProcessor::verifySender($itemAttacker, $targetTicketCopy, FilterPattern::POLICY_STRICT_REQUESTER);
+assertCondition($candCopyOnCopy['authorized'] === true, 'Candidate #101 (copy) authorizes its own creator, preventing collision DoS');
 
 echo "SecurityIsolationTest completed successfully!\n\n";

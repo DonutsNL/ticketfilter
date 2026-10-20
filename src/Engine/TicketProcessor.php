@@ -116,7 +116,7 @@ class TicketProcessor
             'SELECT' => ['id'],
             'FROM'   => $table,
             'WHERE'  => $where,
-            'ORDER'  => ['id DESC'],
+            'ORDER'  => ['id ASC'],
             'LIMIT'  => 10,
         ]);
 

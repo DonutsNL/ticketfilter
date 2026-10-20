@@ -138,53 +138,56 @@ class FilterEngine
             }
 
             $matchedTicketIds = TicketProcessor::searchTicketPool($token, $entitiesId);
-
-            if (count($matchedTicketIds) > 1) {
-                AuditLogger::logCollision(
-                    (int)$pattern[FilterPattern::FIELD_ID],
-                    (string)$pattern[FilterPattern::FIELD_NAME],
-                    $subject,
-                    $senderEmail,
-                    $token,
-                    $matchedTicketIds,
-                    $entitiesId
-                );
+            if (empty($matchedTicketIds)) {
                 continue;
             }
 
-            if (count($matchedTicketIds) === 1) {
-                $targetTicketId = $matchedTicketIds[0];
-                $targetTicket   = new Ticket();
+            $policy          = (string)($pattern[FilterPattern::FIELD_SENDER_POLICY] ?? FilterPattern::POLICY_STRICT_REQUESTER);
+            $totalCandidates = count($matchedTicketIds);
+            $targetTicket    = null;
+            $targetTicketId  = 0;
 
-                if (!$targetTicket->getFromDB($targetTicketId)) {
+            // Sequential candidate validation: lowest ID (original ticket) evaluated first
+            foreach ($matchedTicketIds as $candidateId) {
+                $candidate = new Ticket();
+                if (!$candidate->getFromDB($candidateId)) {
                     continue;
                 }
 
-                $policy = (string)($pattern[FilterPattern::FIELD_SENDER_POLICY] ?? FilterPattern::POLICY_STRICT_REQUESTER);
-                $verification = TicketProcessor::verifySender($item, $targetTicket, $policy);
+                $verification = TicketProcessor::verifySender($item, $candidate, $policy);
+                if ($verification['authorized']) {
+                    $targetTicket   = $candidate;
+                    $targetTicketId = $candidateId;
+                    break;
+                }
+            }
 
-                if (!$verification['authorized']) {
-                    $unmatchedAction = (string)($pattern[FilterPattern::FIELD_UNMATCHED_SENDER_ACTION] ?? FilterPattern::ACTION_NEW_TICKET);
+            if ($targetTicket === null) {
+                // Sender was not authorized on any candidate ticket for this token
+                $unmatchedAction  = (string)($pattern[FilterPattern::FIELD_UNMATCHED_SENDER_ACTION] ?? FilterPattern::ACTION_NEW_TICKET);
+                $fallbackTicketId = $matchedTicketIds[0];
 
-                    if ($unmatchedAction === FilterPattern::ACTION_REJECT) {
-                        AuditLogger::logSkippedPolicy(
-                            (int)$pattern[FilterPattern::FIELD_ID],
-                            (string)$pattern[FilterPattern::FIELD_NAME],
-                            $subject,
-                            $senderEmail,
-                            $token,
-                            $targetTicketId,
-                            $policy,
-                            $entitiesId
-                        );
-                        TicketProcessor::deleteMailgateEmail($item);
-                        $item->input = false;
-                        $item->fields = false;
-                        return true;
-                    }
+                if ($unmatchedAction === FilterPattern::ACTION_REJECT) {
+                    AuditLogger::logSkippedPolicy(
+                        (int)$pattern[FilterPattern::FIELD_ID],
+                        (string)$pattern[FilterPattern::FIELD_NAME],
+                        $subject,
+                        $senderEmail,
+                        $token,
+                        $fallbackTicketId,
+                        $policy,
+                        $entitiesId
+                    );
+                    TicketProcessor::deleteMailgateEmail($item);
+                    $item->input = false;
+                    $item->fields = false;
+                    return true;
+                }
 
-                    if ($unmatchedAction === FilterPattern::ACTION_PRIVATE_FOLLOWUP) {
-                        $processResult = TicketProcessor::processTicket($item, $targetTicket, $pattern, $token, true);
+                if ($unmatchedAction === FilterPattern::ACTION_PRIVATE_FOLLOWUP) {
+                    $fallbackTicket = new Ticket();
+                    if ($fallbackTicket->getFromDB($fallbackTicketId)) {
+                        $processResult = TicketProcessor::processTicket($item, $fallbackTicket, $pattern, $token, true);
                         if ($processResult['success']) {
                             AuditLogger::logMerged(
                                 (int)$pattern[FilterPattern::FIELD_ID],
@@ -192,7 +195,7 @@ class FilterEngine
                                 $subject,
                                 $senderEmail,
                                 $token,
-                                $targetTicketId,
+                                $fallbackTicketId,
                                 $entitiesId,
                                 ['private_followup' => true, 'policy_bypass' => 'unmatched_sender_action']
                             );
@@ -202,23 +205,54 @@ class FilterEngine
                             return true;
                         }
                     }
+                }
 
-                    AuditLogger::logSkippedPolicy(
+                AuditLogger::logSkippedPolicy(
+                    (int)$pattern[FilterPattern::FIELD_ID],
+                    (string)$pattern[FilterPattern::FIELD_NAME],
+                    $subject,
+                    $senderEmail,
+                    $token,
+                    $fallbackTicketId,
+                    $policy,
+                    $entitiesId
+                );
+                continue;
+            }
+
+            // An authorized target ticket was selected (original lowest ID prioritized)
+            $processResult = TicketProcessor::processTicket($item, $targetTicket, $pattern, $token, false);
+            if ($processResult['success']) {
+                $mergeContext = [];
+                if ($totalCandidates > 1) {
+                    $mergeContext['candidate_resolution'] = sprintf('Candidate ticket #%d matched (1 of %d with token "%s")', $targetTicketId, $totalCandidates, $token);
+                }
+
+                AuditLogger::logMerged(
+                    (int)$pattern[FilterPattern::FIELD_ID],
+                    (string)$pattern[FilterPattern::FIELD_NAME],
+                    $subject,
+                    $senderEmail,
+                    $token,
+                    $targetTicketId,
+                    $entitiesId,
+                    $mergeContext
+                );
+
+                if ($processResult['reopened']) {
+                    AuditLogger::logReopened(
                         (int)$pattern[FilterPattern::FIELD_ID],
                         (string)$pattern[FilterPattern::FIELD_NAME],
                         $subject,
                         $senderEmail,
                         $token,
                         $targetTicketId,
-                        $policy,
                         $entitiesId
                     );
-                    continue;
                 }
 
-                $processResult = TicketProcessor::processTicket($item, $targetTicket, $pattern, $token, false);
-                if ($processResult['success']) {
-                    AuditLogger::logMerged(
+                if ($processResult['solved']) {
+                    AuditLogger::logSolved(
                         (int)$pattern[FilterPattern::FIELD_ID],
                         (string)$pattern[FilterPattern::FIELD_NAME],
                         $subject,
@@ -227,36 +261,12 @@ class FilterEngine
                         $targetTicketId,
                         $entitiesId
                     );
-
-                    if ($processResult['reopened']) {
-                        AuditLogger::logReopened(
-                            (int)$pattern[FilterPattern::FIELD_ID],
-                            (string)$pattern[FilterPattern::FIELD_NAME],
-                            $subject,
-                            $senderEmail,
-                            $token,
-                            $targetTicketId,
-                            $entitiesId
-                        );
-                    }
-
-                    if ($processResult['solved']) {
-                        AuditLogger::logSolved(
-                            (int)$pattern[FilterPattern::FIELD_ID],
-                            (string)$pattern[FilterPattern::FIELD_NAME],
-                            $subject,
-                            $senderEmail,
-                            $token,
-                            $targetTicketId,
-                            $entitiesId
-                        );
-                    }
-
-                    TicketProcessor::deleteMailgateEmail($item);
-                    $item->input = false;
-                    $item->fields = false;
-                    return true;
                 }
+
+                TicketProcessor::deleteMailgateEmail($item);
+                $item->input = false;
+                $item->fields = false;
+                return true;
             }
         }
 
