@@ -1,1 +1,10 @@
 .vs/
+
+# Local test scripts, private credentials, and environment overrides
+*.local.php
+tests/local/
+scripts/private/
+local_test_*.php
+.env
+.env.local
+scratch/
