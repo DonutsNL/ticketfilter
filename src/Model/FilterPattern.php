@@ -159,7 +159,7 @@ class FilterPattern extends CommonDropdown
         $links = [];
         $title = __('TicketFilter dashboard', 'ticketfilter');
         $path  = function_exists('ticketfilter_plugin_web_dir') ? ticketfilter_plugin_web_dir() : '/plugins/ticketfilter';
-        $links[$title] = $path . '/front/config.php';
+        $links[$title] = $path . '/front/config';
         return $links;
     }
 
@@ -174,7 +174,7 @@ class FilterPattern extends CommonDropdown
         global $CFG_GLPI;
         $base = ($full && isset($CFG_GLPI['url_base'])) ? rtrim((string)$CFG_GLPI['url_base'], '/') : '';
         $path = function_exists('ticketfilter_plugin_web_dir') ? ticketfilter_plugin_web_dir() : '/plugins/ticketfilter';
-        return $base . $path . '/front/config.php';
+        return $base . $path . '/front/config';
     }
 
     /**
@@ -188,7 +188,7 @@ class FilterPattern extends CommonDropdown
         global $CFG_GLPI;
         $base = ($full && isset($CFG_GLPI['url_base'])) ? rtrim((string)$CFG_GLPI['url_base'], '/') : '';
         $path = function_exists('ticketfilter_plugin_web_dir') ? ticketfilter_plugin_web_dir() : '/plugins/ticketfilter';
-        return $base . $path . '/front/config.php';
+        return $base . $path . '/front/config';
     }
 
     /**

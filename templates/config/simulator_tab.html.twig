@@ -194,7 +194,7 @@ document.getElementById('sampleSimulatorForm').addEventListener('submit', functi
     payload.append('sender', document.getElementById('simSender').value);
     payload.append('solved_pattern', document.getElementById('simSolvedPattern').value);
 
-    fetch('{{ plugin_url }}front/simulator.php', {
+    fetch('{{ plugin_url }}front/simulator', {
         method: 'POST',
         body: payload
     })
@@ -256,7 +256,7 @@ document.getElementById('historicalSimulatorForm').addEventListener('submit', fu
     payload.append('pattern', document.getElementById('histPattern').value);
     payload.append('limit', document.getElementById('histLimit').value);
 
-    fetch('{{ plugin_url }}front/simulator.php', {
+    fetch('{{ plugin_url }}front/simulator', {
         method: 'POST',
         body: payload
     })

@@ -294,7 +294,7 @@ window.openPatternModal = function(id) {
         deleteBtn.style.display = 'inline-block';
     }
 
-    fetch('{{ plugin_url }}front/config.php?action=get_pattern&id=' + encodeURIComponent(id))
+    fetch('{{ plugin_url }}front/config?action=get_pattern&id=' + encodeURIComponent(id))
         .then(function(r) {
             if (!r.ok) {
                 throw new Error('HTTP ' + r.status + ': ' + r.statusText);
@@ -388,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            fetch('{{ plugin_url }}front/config.php', {
+            fetch('{{ plugin_url }}front/config', {
                 method: 'POST',
                 body: payload
             })
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             payload.append('action', 'delete_pattern');
             payload.append('id', id);
 
-            fetch('{{ plugin_url }}front/config.php', {
+            fetch('{{ plugin_url }}front/config', {
                 method: 'POST',
                 body: payload
             })

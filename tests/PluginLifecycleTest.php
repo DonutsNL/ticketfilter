@@ -85,8 +85,8 @@ plugin_init_ticketfilter();
 
 assertCondition(
     isset($PLUGIN_HOOKS['config_page']['ticketfilter']) &&
-    $PLUGIN_HOOKS['config_page']['ticketfilter'] === TicketFilterController::CONFIG_FILE,
-    'Config page hook is registered under ticketfilter key with front/config.php'
+    $PLUGIN_HOOKS['config_page']['ticketfilter'] === TicketFilterController::CONFIG_ROUTE,
+    'Config page hook is registered under ticketfilter key with front/config'
 );
 
 assertCondition(
@@ -112,12 +112,12 @@ assertCondition(
     'FilterPattern::getMenuContent() title is Ticket filter'
 );
 assertCondition(
-    is_array($menuContent) && ($menuContent['page'] ?? '') === '/plugins/ticketfilter/front/config.php',
-    'FilterPattern::getMenuContent() page links directly to /plugins/ticketfilter/front/config.php'
+    is_array($menuContent) && ($menuContent['page'] ?? '') === '/plugins/ticketfilter/front/config',
+    'FilterPattern::getMenuContent() page links directly to /plugins/ticketfilter/front/config'
 );
 $additionalLinks = FilterPattern::getAdditionalMenuLinks();
 assertCondition(
-    in_array('/plugins/ticketfilter/front/config.php', $additionalLinks, true),
+    in_array('/plugins/ticketfilter/front/config', $additionalLinks, true),
     'FilterPattern::getAdditionalMenuLinks() includes TicketFilter Dashboard link'
 );
 
@@ -159,12 +159,12 @@ assertCondition(
 
 // 8. Verify FilterPattern search and form URLs point directly to TicketFilter settings
 assertCondition(
-    str_ends_with(FilterPattern::getSearchURL(false), '/plugins/ticketfilter/front/config.php'),
-    'FilterPattern::getSearchURL(false) resolves to /plugins/ticketfilter/front/config.php'
+    str_ends_with(FilterPattern::getSearchURL(false), '/plugins/ticketfilter/front/config'),
+    'FilterPattern::getSearchURL(false) resolves to /plugins/ticketfilter/front/config'
 );
 assertCondition(
-    str_ends_with(FilterPattern::getFormURL(false), '/plugins/ticketfilter/front/config.php'),
-    'FilterPattern::getFormURL(false) resolves to /plugins/ticketfilter/front/config.php'
+    str_ends_with(FilterPattern::getFormURL(false), '/plugins/ticketfilter/front/config'),
+    'FilterPattern::getFormURL(false) resolves to /plugins/ticketfilter/front/config'
 );
 
 // 9. Verify TicketFilterController pattern CRUD handlers
