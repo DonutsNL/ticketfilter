@@ -55,6 +55,10 @@
     </div>
 
     {% include '@ticketfilter/config/pattern_modal.html.twig' %}
+
+    {% if csrf_token %}
+    <input type="hidden" id="glpi_csrf_token" name="_glpi_csrf_token" value="{{ csrf_token }}">
+    {% endif %}
 </div>
 
 <style>
@@ -303,11 +307,34 @@ window.TicketFilterPopoverManager = {
     }
 };
 
+window.glpiCsrfToken = {{ csrf_token|default('')|json_encode|raw }};
+
+window.updateGlpiCsrfToken = function(newToken) {
+    if (newToken && typeof newToken === 'string') {
+        window.glpiCsrfToken = newToken;
+        ['glpi_csrf_token', 'modal_csrf_token'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = newToken;
+        });
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     if (window.location.hash) {
         var triggerEl = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
-        if (triggerEl && window.bootstrap && window.bootstrap.Tab) {
-            bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+        if (triggerEl) {
+            try {
+                if (window.bootstrap && window.bootstrap.Tab) {
+                    var tab = bootstrap.Tab.getOrCreateInstance ? bootstrap.Tab.getOrCreateInstance(triggerEl) : (bootstrap.Tab.getInstance(triggerEl) || new bootstrap.Tab(triggerEl));
+                    tab.show();
+                } else if (window.jQuery && typeof $(triggerEl).tab === 'function') {
+                    $(triggerEl).tab('show');
+                } else {
+                    triggerEl.click();
+                }
+            } catch (e) {
+                console.warn('Initial tab show warning:', e);
+            }
         }
     }
 
@@ -319,6 +346,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 history.replaceState(null, null, target);
             }
         });
+    });
+
+    // Cleanup lingering modal backdrop on any modal dismiss to prevent trapped clicks
+    document.addEventListener('hidden.bs.modal', function() {
+        setTimeout(function() {
+            if (!document.querySelector('.modal.show')) {
+                document.querySelectorAll('.modal-backdrop').forEach(function(b) { b.remove(); });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+                document.body.style.removeProperty('overflow');
+            }
+        }, 150);
     });
 
     TicketFilterPopoverManager.setupGlobalListeners();

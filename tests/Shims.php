@@ -210,6 +210,11 @@ if (!class_exists('Session', false)) {
         {
             return true;
         }
+
+        public static function getNewCSRFToken(bool $standalone = false): string
+        {
+            return 'mock_csrf_token_glpi11';
+        }
     }
 }
 

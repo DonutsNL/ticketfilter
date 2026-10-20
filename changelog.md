@@ -15,6 +15,8 @@
 - Fixed preg_match false-negative warning storm caused by treating non-matching regex result (0) as an error.
 - Fixed premature process termination caused by leftover die() statement in ticket solving routine.
 - Fixed unbuffered echo and print statements interfering with CLI cron and JSON responses.
+- Fixed HTTP 403 Forbidden on AJAX operations in GLPI 11 by dynamically propagating CSRF tokens and headers across modal and simulator requests.
+- Fixed UI locking and button unresponsiveness after errors by adding automatic tab validation focus, resilient button state recovery, and modal backdrop cleanup.
 - Full compatibility with GLPI 11 and GLPI 12 with PHP 8.0+.
 
 ## 1.4.0

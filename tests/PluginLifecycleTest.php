@@ -219,6 +219,20 @@ assertCondition(
     'delete_pattern with id=0 returns success=false'
 );
 
+// Verify CSRF token is included in JSON responses when token-based CSRF is active (GLPI 11)
+assertCondition(
+    isset($dataGetInvalid['csrf_token']) && $dataGetInvalid['csrf_token'] === 'mock_csrf_token_glpi11',
+    'get_pattern JSON response includes fresh csrf_token'
+);
+assertCondition(
+    isset($dataSaveNoName['csrf_token']) && $dataSaveNoName['csrf_token'] === 'mock_csrf_token_glpi11',
+    'save_pattern JSON response includes fresh csrf_token'
+);
+assertCondition(
+    isset($dataDelInvalid['csrf_token']) && $dataDelInvalid['csrf_token'] === 'mock_csrf_token_glpi11',
+    'delete_pattern JSON response includes fresh csrf_token'
+);
+
 // 10. Verify TicketProcessor intervention message formatting & non-repudiation placeholders
 $customTemplate = 'Ticket #{ticket_id} reopened by rule {pattern_name} (ID: {pattern_id}) - match: {match_token}, sender: {sender_email}, subject: "{subject}"';
 $formatted = \GlpiPlugin\Ticketfilter\Engine\TicketProcessor::formatInterventionMessage(

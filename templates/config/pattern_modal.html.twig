@@ -2,9 +2,12 @@
 <div class="modal fade" id="patternModal" tabindex="-1" aria-labelledby="patternModalTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="patternModalForm">
+            <form id="patternModalForm" novalidate>
                 <input type="hidden" name="id" id="modalPatternId" value="0">
                 <input type="hidden" name="action" value="save_pattern">
+                {% if csrf_token %}
+                <input type="hidden" name="_glpi_csrf_token" id="modal_csrf_token" value="{{ csrf_token }}">
+                {% endif %}
 
                 <div class="modal-header">
                     <h5 class="modal-title" id="patternModalTitle">{{ __('Add filter pattern', 'ticketfilter') }}</h5>
@@ -231,7 +234,7 @@ window.insertPlaceholder = function(tag) {
     target.setSelectionRange(start + tag.length, start + tag.length);
 };
 
-window.openPatternModal = function(id) {
+window.openPatternModal = function(id, triggerBtn) {
     var errBox = document.getElementById('modalAlertError');
     if (errBox) {
         errBox.style.display = 'none';
@@ -239,18 +242,54 @@ window.openPatternModal = function(id) {
     }
 
     var modalEl = document.getElementById('patternModal');
-    if (!modalEl || !window.bootstrap) {
+    if (!modalEl) {
         return;
     }
-    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    var modal = null;
+    try {
+        if (window.bootstrap && window.bootstrap.Modal) {
+            modal = bootstrap.Modal.getOrCreateInstance ? bootstrap.Modal.getOrCreateInstance(modalEl) : (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl));
+        } else if (window.jQuery && typeof $(modalEl).modal === 'function') {
+            modal = {
+                show: function() { $(modalEl).modal('show'); },
+                hide: function() { $(modalEl).modal('hide'); }
+            };
+        }
+    } catch (e) {
+        console.error('Modal initialization error:', e);
+    }
+
     var form = document.getElementById('patternModalForm');
     var deleteBtn = document.getElementById('btnDeletePatternModal');
+    var saveBtn = document.getElementById('btnSavePatternModal');
     var titleEl = document.getElementById('patternModalTitle');
+
+    // Ensure buttons inside modal are unlocked
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-check me-1"></i> {{ __('Save pattern', 'ticketfilter') }}';
+    }
+    if (deleteBtn) {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i> {{ __('Delete pattern', 'ticketfilter') }}';
+    }
 
     // Always reset tab navigation to the first tab (Pattern rules)
     var firstTabEl = document.getElementById('modal-tab-pattern');
-    if (firstTabEl && window.bootstrap.Tab) {
-        bootstrap.Tab.getOrCreateInstance(firstTabEl).show();
+    if (firstTabEl) {
+        try {
+            if (window.bootstrap && window.bootstrap.Tab) {
+                var tabInst = bootstrap.Tab.getOrCreateInstance ? bootstrap.Tab.getOrCreateInstance(firstTabEl) : (bootstrap.Tab.getInstance(firstTabEl) || new bootstrap.Tab(firstTabEl));
+                tabInst.show();
+            } else if (window.jQuery && typeof $(firstTabEl).tab === 'function') {
+                $(firstTabEl).tab('show');
+            } else {
+                firstTabEl.click();
+            }
+        } catch (e) {
+            console.warn('Tab switch warning:', e);
+        }
     }
 
     if (!id || id <= 0) {
@@ -276,7 +315,9 @@ window.openPatternModal = function(id) {
         if (deleteBtn) {
             deleteBtn.style.display = 'none';
         }
-        modal.show();
+        if (modal) {
+            modal.show();
+        }
         if (window.TicketFilterPopoverManager) {
             window.TicketFilterPopoverManager.initAll(modalEl);
         }
@@ -294,47 +335,81 @@ window.openPatternModal = function(id) {
         deleteBtn.style.display = 'inline-block';
     }
 
-    fetch('{{ plugin_url }}front/config?action=get_pattern&id=' + encodeURIComponent(id))
-        .then(function(r) {
-            if (!r.ok) {
-                throw new Error('HTTP ' + r.status + ': ' + r.statusText);
-            }
-            return r.json();
-        })
-        .then(function(data) {
-            if (!data.success) {
-                alert(data.error || 'Failed to load pattern');
-                return;
-            }
-            var p = data.pattern;
-            document.getElementById('modalPatternName').value = p.name || '';
-            document.getElementById('modalPatternActive').checked = (parseInt(p.is_active, 10) === 1);
-            document.getElementById('modalPatternComment').value = p.comment || '';
-            document.getElementById('modalPatternMatchStr').value = p.TicketMatchString || '';
-            document.getElementById('modalPatternMatchLen').value = p.TicketMatchStringLength || 255;
-            document.getElementById('modalPatternSolvedStr').value = p.SolvedMatchString || '';
-            document.getElementById('modalPatternSolvedLen').value = p.SolvedMatchStringLength || 255;
-            document.getElementById('modalPatternPolicy').value = p.sender_policy || 'strict_requester';
-            document.getElementById('modalPatternFallback').value = p.unmatched_sender_action || 'new_ticket';
+    var triggerIcon = triggerBtn ? triggerBtn.querySelector('i') : null;
+    var originalIconClass = triggerIcon ? triggerIcon.className : '';
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        if (triggerIcon) triggerIcon.className = 'fas fa-spinner fa-spin';
+    }
 
-            var isReopen = (parseInt(p.ReopenClosedTickets, 10) === 1);
-            document.getElementById('modalPatternReopen').checked = isReopen;
-            document.getElementById('modalReopenAgeWrap').style.display = isReopen ? 'block' : 'none';
-            document.getElementById('modalPatternMaxAge').value = p.max_reopen_age_days || 30;
+    function resetTriggerBtn() {
+        if (triggerBtn) {
+            triggerBtn.disabled = false;
+            if (triggerIcon) triggerIcon.className = originalIconClass;
+        }
+    }
 
-            document.getElementById('modalPatternSuppress').checked = (parseInt(p.SuppressNotification, 10) === 1);
-            document.getElementById('modalPatternSearchBody').checked = (parseInt(p.SearchTicketBody, 10) === 1);
-            document.getElementById('modalPatternReopenMsg').value = p.reopen_message_template || '';
-            document.getElementById('modalPatternSolvedMsg').value = p.solved_message_template || '';
+    var headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+    };
+    if (window.glpiCsrfToken) {
+        headers['X-Glpi-Csrf-Token'] = window.glpiCsrfToken;
+    }
 
+    fetch('{{ plugin_url }}front/config?action=get_pattern&id=' + encodeURIComponent(id), {
+        headers: headers
+    })
+    .then(function(r) {
+        if (!r.ok) {
+            return r.text().then(function() {
+                var msg = (r.status === 403) ? '{{ __('Access denied / Forbidden (HTTP 403)', 'ticketfilter') }}' : ('HTTP ' + r.status);
+                throw new Error(msg);
+            });
+        }
+        return r.json();
+    })
+    .then(function(data) {
+        resetTriggerBtn();
+        if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+            window.updateGlpiCsrfToken(data.csrf_token);
+        }
+        if (!data.success) {
+            alert(data.error || 'Failed to load pattern');
+            return;
+        }
+        var p = data.pattern;
+        document.getElementById('modalPatternName').value = p.name || '';
+        document.getElementById('modalPatternActive').checked = (parseInt(p.is_active, 10) === 1);
+        document.getElementById('modalPatternComment').value = p.comment || '';
+        document.getElementById('modalPatternMatchStr').value = p.TicketMatchString || '';
+        document.getElementById('modalPatternMatchLen').value = p.TicketMatchStringLength || 255;
+        document.getElementById('modalPatternSolvedStr').value = p.SolvedMatchString || '';
+        document.getElementById('modalPatternSolvedLen').value = p.SolvedMatchStringLength || 255;
+        document.getElementById('modalPatternPolicy').value = p.sender_policy || 'strict_requester';
+        document.getElementById('modalPatternFallback').value = p.unmatched_sender_action || 'new_ticket';
+
+        var isReopen = (parseInt(p.ReopenClosedTickets, 10) === 1);
+        document.getElementById('modalPatternReopen').checked = isReopen;
+        document.getElementById('modalReopenAgeWrap').style.display = isReopen ? 'block' : 'none';
+        document.getElementById('modalPatternMaxAge').value = p.max_reopen_age_days || 30;
+
+        document.getElementById('modalPatternSuppress').checked = (parseInt(p.SuppressNotification, 10) === 1);
+        document.getElementById('modalPatternSearchBody').checked = (parseInt(p.SearchTicketBody, 10) === 1);
+        document.getElementById('modalPatternReopenMsg').value = p.reopen_message_template || '';
+        document.getElementById('modalPatternSolvedMsg').value = p.solved_message_template || '';
+
+        if (modal) {
             modal.show();
-            if (window.TicketFilterPopoverManager) {
-                window.TicketFilterPopoverManager.initAll(modalEl);
-            }
-        })
-        .catch(function(err) {
-            alert('Error loading pattern: ' + err.message);
-        });
+        }
+        if (window.TicketFilterPopoverManager) {
+            window.TicketFilterPopoverManager.initAll(modalEl);
+        }
+    })
+    .catch(function(err) {
+        resetTriggerBtn();
+        alert('Error loading pattern: ' + err.message);
+    });
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -368,7 +443,66 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             var btn = document.getElementById('btnSavePatternModal');
-            var originalHtml = btn ? btn.innerHTML : '';
+            var originalHtml = btn ? btn.innerHTML : '<i class="fas fa-check me-1"></i> {{ __('Save pattern', 'ticketfilter') }}';
+
+            function unlockSaveBtn() {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+
+            // Programmatic validation to prevent silent blocking on inactive tabs
+            var nameInput = document.getElementById('modalPatternName');
+            var matchInput = document.getElementById('modalPatternMatchStr');
+            var firstTabBtn = document.getElementById('modal-tab-pattern');
+
+            if (!nameInput || !nameInput.value.trim()) {
+                if (firstTabBtn) {
+                    try {
+                        if (window.bootstrap && window.bootstrap.Tab) {
+                            var tabInst = bootstrap.Tab.getOrCreateInstance ? bootstrap.Tab.getOrCreateInstance(firstTabBtn) : (bootstrap.Tab.getInstance(firstTabBtn) || new bootstrap.Tab(firstTabBtn));
+                            tabInst.show();
+                        } else if (window.jQuery && typeof $(firstTabBtn).tab === 'function') {
+                            $(firstTabBtn).tab('show');
+                        } else {
+                            firstTabBtn.click();
+                        }
+                    } catch (e) {}
+                }
+                if (errBox) {
+                    errBox.textContent = "{{ __('Pattern name is required', 'ticketfilter') }}";
+                    errBox.style.display = 'block';
+                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (nameInput) nameInput.focus();
+                unlockSaveBtn();
+                return;
+            }
+
+            if (!matchInput || !matchInput.value.trim()) {
+                if (firstTabBtn) {
+                    try {
+                        if (window.bootstrap && window.bootstrap.Tab) {
+                            var tabInst = bootstrap.Tab.getOrCreateInstance ? bootstrap.Tab.getOrCreateInstance(firstTabBtn) : (bootstrap.Tab.getInstance(firstTabBtn) || new bootstrap.Tab(firstTabBtn));
+                            tabInst.show();
+                        } else if (window.jQuery && typeof $(firstTabBtn).tab === 'function') {
+                            $(firstTabBtn).tab('show');
+                        } else {
+                            firstTabBtn.click();
+                        }
+                    } catch (e) {}
+                }
+                if (errBox) {
+                    errBox.textContent = "{{ __('Ticket match regex is required', 'ticketfilter') }}";
+                    errBox.style.display = 'block';
+                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (matchInput) matchInput.focus();
+                unlockSaveBtn();
+                return;
+            }
+
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Saving...', 'ticketfilter') }}';
@@ -388,25 +522,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
+            if (token) {
+                payload.set('_glpi_csrf_token', token);
+            }
+
+            var headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            };
+            if (token) {
+                headers['X-Glpi-Csrf-Token'] = token;
+            }
+
             fetch('{{ plugin_url }}front/config', {
                 method: 'POST',
+                headers: headers,
                 body: payload
             })
             .then(function(r) {
                 if (!r.ok) {
-                    throw new Error('HTTP ' + r.status + ': ' + r.statusText);
+                    return r.text().then(function() {
+                        var msg = (r.status === 403)
+                            ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
+                            : ('HTTP ' + r.status + ': ' + (r.statusText || 'Error'));
+                        throw new Error(msg);
+                    });
                 }
                 return r.json();
             })
             .then(function(data) {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
+                unlockSaveBtn();
+                if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+                    window.updateGlpiCsrfToken(data.csrf_token);
                 }
                 if (!data.success) {
                     if (errBox) {
                         errBox.textContent = data.error || 'Failed to save pattern';
                         errBox.style.display = 'block';
+                        errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     } else {
                         alert(data.error || 'Failed to save pattern');
                     }
@@ -416,13 +570,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.reload();
             })
             .catch(function(err) {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                }
+                unlockSaveBtn();
                 if (errBox) {
                     errBox.textContent = 'Server error: ' + err.message;
                     errBox.style.display = 'block';
+                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 } else {
                     alert('Server error: ' + err.message);
                 }
@@ -439,32 +591,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             deleteBtn.disabled = true;
+            var originalDeleteHtml = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Deleting...', 'ticketfilter') }}';
+
+            function unlockDeleteBtn() {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalDeleteHtml;
+            }
+
             var payload = new FormData();
             payload.append('action', 'delete_pattern');
             payload.append('id', id);
 
+            var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
+            if (token) {
+                payload.append('_glpi_csrf_token', token);
+            }
+
+            var headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            };
+            if (token) {
+                headers['X-Glpi-Csrf-Token'] = token;
+            }
+
             fetch('{{ plugin_url }}front/config', {
                 method: 'POST',
+                headers: headers,
                 body: payload
             })
             .then(function(r) {
                 if (!r.ok) {
-                    throw new Error('HTTP ' + r.status + ': ' + r.statusText);
+                    return r.text().then(function() {
+                        var msg = (r.status === 403)
+                            ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
+                            : ('HTTP ' + r.status + ': ' + (r.statusText || 'Error'));
+                        throw new Error(msg);
+                    });
                 }
                 return r.json();
             })
             .then(function(data) {
-                deleteBtn.disabled = false;
+                unlockDeleteBtn();
+                if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+                    window.updateGlpiCsrfToken(data.csrf_token);
+                }
                 if (!data.success) {
-                    alert(data.error || 'Failed to delete pattern');
+                    var errBox = document.getElementById('modalAlertError');
+                    if (errBox) {
+                        errBox.textContent = data.error || 'Failed to delete pattern';
+                        errBox.style.display = 'block';
+                        errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        alert(data.error || 'Failed to delete pattern');
+                    }
                     return;
                 }
                 window.location.hash = 'patterns';
                 window.location.reload();
             })
             .catch(function(err) {
-                deleteBtn.disabled = false;
-                alert('Server error: ' + err.message);
+                unlockDeleteBtn();
+                var errBox = document.getElementById('modalAlertError');
+                if (errBox) {
+                    errBox.textContent = 'Server error: ' + err.message;
+                    errBox.style.display = 'block';
+                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    alert('Server error: ' + err.message);
+                }
             });
         });
     }

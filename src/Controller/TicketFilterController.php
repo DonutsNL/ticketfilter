@@ -125,7 +125,25 @@ final class TicketFilterController extends AbstractController
             return $this->handleHistoricalSimulation($request);
         }
 
-        return new JsonResponse(['success' => false, 'error' => 'Invalid action']);
+        return $this->jsonResponse(['success' => false, 'error' => 'Invalid action']);
+    }
+
+    /**
+     * Creates a JsonResponse including a fresh CSRF token when token-based CSRF is active (GLPI 11).
+     *
+     * @param array<string, mixed> $data
+     * @param int                  $status
+     * @return JsonResponse
+     */
+    private function jsonResponse(array $data, int $status = 200): JsonResponse
+    {
+        if (method_exists(\Session::class, 'getNewCSRFToken')) {
+            $token = \Session::getNewCSRFToken();
+            if ($token !== '') {
+                $data['csrf_token'] = $token;
+            }
+        }
+        return new JsonResponse($data, $status);
     }
 
     /**
@@ -144,7 +162,7 @@ final class TicketFilterController extends AbstractController
         $policy        = (string)$request->request->get('policy', FilterPattern::POLICY_STRICT_REQUESTER);
 
         $result = Simulator::simulateSample($pattern, $subject, $body, $sender, $solvedPattern, $policy);
-        return new JsonResponse($result);
+        return $this->jsonResponse($result);
     }
 
     /**
@@ -159,7 +177,7 @@ final class TicketFilterController extends AbstractController
         $limit   = (int)$request->request->get('limit', 50);
 
         $result = Simulator::simulateHistorical($pattern, $limit);
-        return new JsonResponse($result);
+        return $this->jsonResponse($result);
     }
 
     /**
@@ -172,15 +190,15 @@ final class TicketFilterController extends AbstractController
     {
         $id = (int)($request->query->get('id') ?? $request->request->get('id') ?? 0);
         if ($id <= 0) {
-            return new JsonResponse(['success' => false, 'error' => __('Invalid pattern ID', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Invalid pattern ID', 'ticketfilter')]);
         }
 
         $pattern = new FilterPattern();
         if (!$pattern->getFromDB($id)) {
-            return new JsonResponse(['success' => false, 'error' => __('Pattern not found', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Pattern not found', 'ticketfilter')]);
         }
 
-        return new JsonResponse([
+        return $this->jsonResponse([
             'success' => true,
             'pattern' => $pattern->fields,
         ]);
@@ -199,10 +217,10 @@ final class TicketFilterController extends AbstractController
         $matchStr = trim((string)$request->request->get('TicketMatchString', ''));
 
         if ($name === '') {
-            return new JsonResponse(['success' => false, 'error' => __('Pattern name is required', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Pattern name is required', 'ticketfilter')]);
         }
         if ($matchStr === '') {
-            return new JsonResponse(['success' => false, 'error' => __('Ticket match regex is required', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Ticket match regex is required', 'ticketfilter')]);
         }
 
         // Validate match regex syntax
@@ -211,10 +229,10 @@ final class TicketFilterController extends AbstractController
             $testPattern = '/' . $testPattern . '/';
         }
         if (@preg_match($testPattern, '') === false) {
-            return new JsonResponse(['success' => false, 'error' => __('Invalid regex syntax in match pattern', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Invalid regex syntax in match pattern', 'ticketfilter')]);
         }
         if (!str_contains($testPattern, '(?<match>')) {
-            return new JsonResponse(['success' => false, 'error' => __('Match pattern must include named group (?<match>...)', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Match pattern must include named group (?<match>...)', 'ticketfilter')]);
         }
 
         // Validate solved regex syntax if provided
@@ -225,10 +243,10 @@ final class TicketFilterController extends AbstractController
                 $testSolved = '/' . $testSolved . '/';
             }
             if (@preg_match($testSolved, '') === false) {
-                return new JsonResponse(['success' => false, 'error' => __('Invalid regex syntax in solved pattern', 'ticketfilter')]);
+                return $this->jsonResponse(['success' => false, 'error' => __('Invalid regex syntax in solved pattern', 'ticketfilter')]);
             }
             if (!str_contains($testSolved, '(?<solved>')) {
-                return new JsonResponse(['success' => false, 'error' => __('Solved pattern must include named group (?<solved>...)', 'ticketfilter')]);
+                return $this->jsonResponse(['success' => false, 'error' => __('Solved pattern must include named group (?<solved>...)', 'ticketfilter')]);
             }
         }
 
@@ -257,16 +275,16 @@ final class TicketFilterController extends AbstractController
             $fields['id'] = $id;
             $success = $pattern->update($fields);
             if (!$success) {
-                return new JsonResponse(['success' => false, 'error' => __('Failed to update pattern in database', 'ticketfilter')]);
+                return $this->jsonResponse(['success' => false, 'error' => __('Failed to update pattern in database', 'ticketfilter')]);
             }
-            return new JsonResponse(['success' => true, 'id' => $id, 'message' => __('Pattern updated successfully', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => true, 'id' => $id, 'message' => __('Pattern updated successfully', 'ticketfilter')]);
         }
 
         $newId = $pattern->add($fields);
         if (!$newId) {
-            return new JsonResponse(['success' => false, 'error' => __('Failed to create pattern in database', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Failed to create pattern in database', 'ticketfilter')]);
         }
-        return new JsonResponse(['success' => true, 'id' => $newId, 'message' => __('Pattern created successfully', 'ticketfilter')]);
+        return $this->jsonResponse(['success' => true, 'id' => $newId, 'message' => __('Pattern created successfully', 'ticketfilter')]);
     }
 
     /**
@@ -279,15 +297,15 @@ final class TicketFilterController extends AbstractController
     {
         $id = (int)$request->request->get('id', 0);
         if ($id <= 0) {
-            return new JsonResponse(['success' => false, 'error' => __('Invalid pattern ID', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Invalid pattern ID', 'ticketfilter')]);
         }
 
         $pattern = new FilterPattern();
         $success = $pattern->delete(['id' => $id]);
         if (!$success) {
-            return new JsonResponse(['success' => false, 'error' => __('Failed to delete pattern', 'ticketfilter')]);
+            return $this->jsonResponse(['success' => false, 'error' => __('Failed to delete pattern', 'ticketfilter')]);
         }
-        return new JsonResponse(['success' => true, 'message' => __('Pattern deleted successfully', 'ticketfilter')]);
+        return $this->jsonResponse(['success' => true, 'message' => __('Pattern deleted successfully', 'ticketfilter')]);
     }
 
     /**
@@ -314,6 +332,7 @@ final class TicketFilterController extends AbstractController
         }
 
         $sanity = SanityChecker::check();
+        $csrfToken = method_exists(\Session::class, 'getNewCSRFToken') ? \Session::getNewCSRFToken() : '';
 
         $templateVars = [
             'patterns'    => $patterns,
@@ -321,6 +340,7 @@ final class TicketFilterController extends AbstractController
             'sanity'      => $sanity,
             'plugin_url'  => ticketfilter_webdir(),
             'glpi_url'    => $CFG_GLPI['url_base'] ?? '',
+            'csrf_token'  => $csrfToken,
         ];
 
         // Invalidate cached session menu so newly updated menu titles/links appear immediately

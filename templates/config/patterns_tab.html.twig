@@ -40,7 +40,7 @@
                 <tr>
                     <td class="text-muted">{{ p.id }}</td>
                     <td>
-                        <a href="javascript:void(0)" onclick="openPatternModal({{ p.id }})" class="fw-semibold text-decoration-none">
+                        <a href="javascript:void(0)" onclick="openPatternModal({{ p.id }}, this)" class="fw-semibold text-decoration-none">
                             {{ p.name }}
                         </a>
                         {% if p.comment %}
@@ -115,7 +115,7 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openPatternModal({{ p.id }})" title="{{ __('Edit pattern', 'ticketfilter') }}">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openPatternModal({{ p.id }}, this)" title="{{ __('Edit pattern', 'ticketfilter') }}">
                             <i class="fas fa-edit"></i>
                         </button>
                     </td>

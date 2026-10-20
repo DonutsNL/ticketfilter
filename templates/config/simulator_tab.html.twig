@@ -21,6 +21,9 @@
                 </div>
                 <div class="card-body">
                     <form id="sampleSimulatorForm">
+                        {% if csrf_token %}
+                        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+                        {% endif %}
                         <div class="mb-3">
                             <label class="form-label d-flex align-items-center" for="simPattern">
                                 <span>{{ __('Ticket identifier pattern (regex)', 'ticketfilter') }} <span class="text-danger">*</span></span>
@@ -88,6 +91,9 @@
                     </p>
 
                     <form id="historicalSimulatorForm">
+                        {% if csrf_token %}
+                        <input type="hidden" name="_glpi_csrf_token" value="{{ csrf_token }}">
+                        {% endif %}
                         <div class="mb-3">
                             <label class="form-label d-flex align-items-center" for="histPattern">
                                 <span>{{ __('Ticket identifier pattern (regex)', 'ticketfilter') }} <span class="text-danger">*</span></span>
@@ -184,8 +190,19 @@ function applyPreset(type) {
 document.getElementById('sampleSimulatorForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('btnRunSampleTest');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Testing...';
+    const originalHtml = btn ? btn.innerHTML : '<i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}';
+
+    function unlockBtn() {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Testing...', 'ticketfilter') }}';
+    }
 
     const payload = new FormData();
     payload.append('action', 'simulate_sample');
@@ -194,19 +211,40 @@ document.getElementById('sampleSimulatorForm').addEventListener('submit', functi
     payload.append('sender', document.getElementById('simSender').value);
     payload.append('solved_pattern', document.getElementById('simSolvedPattern').value);
 
+    var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
+    if (token) {
+        payload.append('_glpi_csrf_token', token);
+    }
+
+    var headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+    };
+    if (token) {
+        headers['X-Glpi-Csrf-Token'] = token;
+    }
+
     fetch('{{ plugin_url }}front/simulator', {
         method: 'POST',
+        headers: headers,
         body: payload
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+            return response.text().then(function() {
+                var msg = (response.status === 403)
+                    ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
+                    : ('HTTP ' + response.status + ': ' + (response.statusText || 'Error'));
+                throw new Error(msg);
+            });
         }
         return response.json();
     })
     .then(data => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}';
+        unlockBtn();
+        if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+            window.updateGlpiCsrfToken(data.csrf_token);
+        }
         document.getElementById('sampleSimResult').style.display = 'block';
 
         if (!data.success) {
@@ -238,9 +276,9 @@ document.getElementById('sampleSimulatorForm').addEventListener('submit', functi
         }
     })
     .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}';
-        alert('Simulation request failed.');
+        unlockBtn();
+        document.getElementById('sampleSimResult').style.display = 'block';
+        document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-times-circle me-1"></i> ' + err.message + '</div>';
     });
 });
 
@@ -248,27 +286,59 @@ document.getElementById('sampleSimulatorForm').addEventListener('submit', functi
 document.getElementById('historicalSimulatorForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('btnRunHistTest');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Scanning...';
+    const originalHtml = btn ? btn.innerHTML : '<i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}';
+
+    function unlockBtn() {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Scanning...', 'ticketfilter') }}';
+    }
 
     const payload = new FormData();
     payload.append('action', 'simulate_historical');
     payload.append('pattern', document.getElementById('histPattern').value);
     payload.append('limit', document.getElementById('histLimit').value);
 
+    var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
+    if (token) {
+        payload.append('_glpi_csrf_token', token);
+    }
+
+    var headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+    };
+    if (token) {
+        headers['X-Glpi-Csrf-Token'] = token;
+    }
+
     fetch('{{ plugin_url }}front/simulator', {
         method: 'POST',
+        headers: headers,
         body: payload
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+            return response.text().then(function() {
+                var msg = (response.status === 403)
+                    ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
+                    : ('HTTP ' + response.status + ': ' + (response.statusText || 'Error'));
+                throw new Error(msg);
+            });
         }
         return response.json();
     })
     .then(data => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}';
+        unlockBtn();
+        if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+            window.updateGlpiCsrfToken(data.csrf_token);
+        }
         document.getElementById('historicalSimResult').style.display = 'block';
 
         if (!data.success) {
@@ -297,9 +367,8 @@ document.getElementById('historicalSimulatorForm').addEventListener('submit', fu
         }
     })
     .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}';
-        alert('Batch simulation failed.');
+        unlockBtn();
+        alert('Batch simulation error: ' + err.message);
     });
 });
 </script>
