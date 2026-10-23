@@ -1,0 +1,876 @@
+# TicketFilter Plugin for GLPI - en_GB translation
+# Copyright (C) 2023-2026 Chris Gralike
+# This file is distributed under the same license as the TicketFilter package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TicketFilter 2.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/DonutsNL/ticketfilter/issues\n"
+"POT-Creation-Date: 2026-10-22 15:33+0000\n"
+"PO-Revision-Date: 2026-10-22 15:33+0000\n"
+"Last-Translator: Chris Gralike\n"
+"Language-Team: en_GB\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/config/pattern_modal.html.twig:185
+msgid "API / Webhooks"
+msgstr "API / Webhooks"
+
+#: templates/config/pattern_modal.html.twig:419
+msgid "Access denied / Forbidden (HTTP 403)"
+msgstr "Access denied / Forbidden (HTTP 403)"
+
+#: templates/config/pattern_modal.html.twig:619 templates/config/pattern_modal.html.twig:700 templates/config/simulator_tab.html.twig:236 templates/config/simulator_tab.html.twig:366
+msgid "Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions."
+msgstr "Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions."
+
+#: templates/config/audit_tab.html.twig:18
+msgid "Action"
+msgstr "Action"
+
+#: templates/config/patterns_tab.html.twig:35
+msgid "Actions"
+msgstr "Actions"
+
+#: src/Model/FilterPattern.php:272 templates/config/pattern_modal.html.twig:50 templates/config/patterns_tab.html.twig:130
+msgid "Active"
+msgstr "Active"
+
+#: src/Model/FilterPattern.php:295 templates/config/pattern_modal.html.twig:142
+msgid "Add as private followup to existing ticket"
+msgstr "Add as private followup to existing ticket"
+
+#: templates/config/pattern_modal.html.twig:13 templates/config/pattern_modal.html.twig:344
+msgid "Add filter pattern"
+msgstr "Add filter pattern"
+
+#: templates/config/patterns_tab.html.twig:9 templates/config/patterns_tab.html.twig:152
+msgid "Add new pattern"
+msgstr "Add new pattern"
+
+#: templates/config/diagnostics_tab.html.twig:32
+msgid "All system diagnostics passed successfully."
+msgstr "All system diagnostics passed successfully."
+
+#: src/Model/FilterPattern.php:316 templates/config/pattern_modal.html.twig:79
+msgid "Also search email body (if ID not found in subject)"
+msgstr "Also search email body (if ID not found in subject)"
+
+#: templates/config/patterns_tab.html.twig:83
+msgid "Always"
+msgstr "Always"
+
+#: src/Model/FilterPattern.php:284 templates/config/pattern_modal.html.twig:132
+msgid "Always (allow any sender)"
+msgstr "Always (allow any sender)"
+
+#: src/Audit/AuditLogger.php:302
+#, php-format
+msgid "Ambiguous match: token \"%s\" matched %d tickets (%s). Merge aborted to prevent data corruption."
+msgstr "Ambiguous match: token \"%s\" matched %d tickets (%s). Merge aborted to prevent data corruption."
+
+#: templates/config/patterns_tab.html.twig:79
+msgid "An actor matches"
+msgstr "An actor matches"
+
+#: src/Model/FilterPattern.php:282 templates/config/pattern_modal.html.twig:130
+msgid "An actor matches (requester, technician, or observer)"
+msgstr "An actor matches (requester, technician, or observer)"
+
+#: templates/config/pattern_modal.html.twig:662
+msgid "Are you sure you want to delete this filter pattern?"
+msgstr "Are you sure you want to delete this filter pattern?"
+
+#: src/Audit/AuditLog.php:112
+msgid "Audit Logs"
+msgstr "Audit Logs"
+
+#: templates/config/audit_tab.html.twig:4 templates/configForm.html.twig:27
+msgid "Audit log"
+msgstr "Audit log"
+
+#: templates/config/audit_tab.html.twig:92
+msgid "Audit log is currently empty"
+msgstr "Audit log is currently empty"
+
+#: src/Utility/SanityChecker.php:83
+#, php-format
+msgid "Audit log table (%s) exists."
+msgstr "Audit log table (%s) exists."
+
+#: src/Utility/SanityChecker.php:88
+#, php-format
+msgid "Audit log table (%s) is missing."
+msgstr "Audit log table (%s) is missing."
+
+#: templates/config/patterns_tab.html.twig:61
+msgid "Auto-close"
+msgstr "Auto-close"
+
+#: templates/config/patterns_tab.html.twig:61
+msgid "Auto-solve"
+msgstr "Auto-solve"
+
+#: templates/config/pattern_modal.html.twig:86
+msgid "Auto-solve / close (optional)"
+msgstr "Auto-solve / close (optional)"
+
+#: templates/config/pattern_modal.html.twig:231
+msgid "Auto-solve / close private note"
+msgstr "Auto-solve / close private note"
+
+#: templates/config/pattern_modal.html.twig:95
+msgid "Auto-solve keyword pattern"
+msgstr "Auto-solve keyword pattern"
+
+#: templates/config/simulator_tab.html.twig:47
+msgid "Auto-solve keyword pattern (optional)"
+msgstr "Auto-solve keyword pattern (optional)"
+
+#: src/Model/FilterPattern.php:259
+msgid "Auto-solve keyword pattern (optional, must contain (?<solved>...))"
+msgstr "Auto-solve keyword pattern (optional, must contain (?<solved>...))"
+
+#: templates/config/patterns_tab.html.twig:26
+msgid "Auto-solve pattern"
+msgstr "Auto-solve pattern"
+
+#: src/Model/FilterPattern.php:334
+msgid "Auto-solve private note template"
+msgstr "Auto-solve private note template"
+
+#: templates/config/pattern_modal.html.twig:154
+msgid "Automatically reopens a closed ticket when a matching follow-up email arrives within the specified age limit."
+msgstr "Automatically reopens a closed ticket when a matching follow-up email arrives within the specified age limit."
+
+#: templates/config/pattern_modal.html.twig:238
+msgid "Available placeholders (click to insert into active note field):"
+msgstr "Available placeholders (click to insert into active note field):"
+
+#: templates/config/pattern_modal.html.twig:261
+msgid "Cancel"
+msgstr "Cancel"
+
+#: templates/config/patterns_tab.html.twig:121
+msgid "Check email body"
+msgstr "Check email body"
+
+#: templates/config/pattern_modal.html.twig:240 templates/config/pattern_modal.html.twig:241 templates/config/pattern_modal.html.twig:242 templates/config/pattern_modal.html.twig:243 templates/config/pattern_modal.html.twig:244 templates/config/pattern_modal.html.twig:245 templates/config/pattern_modal.html.twig:246 templates/config/pattern_modal.html.twig:247
+msgid "Click to insert"
+msgstr "Click to insert"
+
+#: templates/config/pattern_modal.html.twig:14
+msgid "Close"
+msgstr "Close"
+
+#: templates/config/pattern_modal.html.twig:111
+msgid "Closed"
+msgstr "Closed"
+
+#: templates/config/pattern_modal.html.twig:148
+msgid "Closed ticket lifecycle"
+msgstr "Closed ticket lifecycle"
+
+#: templates/config/audit_tab.html.twig:42
+msgid "Collision aborted"
+msgstr "Collision aborted"
+
+#: templates/config/simulator_tab.html.twig:141
+msgid "Collisions"
+msgstr "Collisions"
+
+#: src/Model/FilterPattern.php:294 templates/config/pattern_modal.html.twig:141
+msgid "Create a standard new ticket"
+msgstr "Create a standard new ticket"
+
+#: src/Utility/SanityChecker.php:63
+msgid "Database connection unavailable."
+msgstr "Database connection unavailable."
+
+#: templates/config/audit_tab.html.twig:17
+msgid "Date"
+msgstr "Date"
+
+#: templates/config/pattern_modal.html.twig:257 templates/config/pattern_modal.html.twig:322
+msgid "Delete pattern"
+msgstr "Delete pattern"
+
+#: templates/config/pattern_modal.html.twig:667
+msgid "Deleting..."
+msgstr "Deleting..."
+
+#: templates/config/pattern_modal.html.twig:54
+msgid "Description / notes"
+msgstr "Description / notes"
+
+#: templates/config/audit_tab.html.twig:23
+msgid "Details"
+msgstr "Details"
+
+#: templates/config/patterns_tab.html.twig:69 templates/config/patterns_tab.html.twig:132
+msgid "Disabled"
+msgstr "Disabled"
+
+#: src/Model/FilterPattern.php:296 templates/config/pattern_modal.html.twig:143
+msgid "Discard email (do not create ticket)"
+msgstr "Discard email (do not create ticket)"
+
+#: src/Model/FilterPattern.php:322 templates/config/pattern_modal.html.twig:209
+msgid "Do not send email notification when merging"
+msgstr "Do not send email notification when merging"
+
+#: templates/config/pattern_modal.html.twig:381
+msgid "Edit filter pattern"
+msgstr "Edit filter pattern"
+
+#: templates/config/patterns_tab.html.twig:136
+msgid "Edit pattern"
+msgstr "Edit pattern"
+
+#: src/Engine/TicketProcessor.php:595
+#, php-format
+msgid "Email merged via filter rule %s (match: %s, sender: %s)%s"
+msgstr "Email merged via filter rule %s (match: %s, sender: %s)%s"
+
+#: templates/config/pattern_modal.html.twig:165
+msgid "Emails arriving after this threshold will trigger the unmatched action instead of reopening."
+msgstr "Emails arriving after this threshold will trigger the unmatched action instead of reopening."
+
+#: templates/config/pattern_modal.html.twig:89
+msgid "Enable automated ticket resolution"
+msgstr "Enable automated ticket resolution"
+
+#: templates/config/diagnostics_tab.html.twig:5
+msgid "Environment sanity checks"
+msgstr "Environment sanity checks"
+
+#: templates/config/audit_tab.html.twig:44
+msgid "Error"
+msgstr "Error"
+
+#: templates/config/audit_tab.html.twig:93
+msgid "Events will appear here automatically as incoming emails and tickets are evaluated."
+msgstr "Events will appear here automatically as incoming emails and tickets are evaluated."
+
+#: templates/config/pattern_modal.html.twig:169 templates/config/patterns_tab.html.twig:103
+msgid "Execution channels"
+msgstr "Execution channels"
+
+#: templates/config/simulator_tab.html.twig:85
+msgid "Existing tickets tester"
+msgstr "Existing tickets tester"
+
+#: templates/config/pattern_modal.html.twig:64 templates/config/simulator_tab.html.twig:30
+msgid "Expression used to extract the ticket ID from incoming email subjects or bodies. The regex must include the named capture group (?&lt;match&gt;...)."
+msgstr "Expression used to extract the ticket ID from incoming email subjects or bodies. The regex must include the named capture group (?&lt;match&gt;...)."
+
+#: templates/config/simulator_tab.html.twig:100
+msgid "Expression used to scan existing ticket titles in GLPI to find matches and check for collisions."
+msgstr "Expression used to scan existing ticket titles in GLPI to find matches and check for collisions."
+
+#: templates/config/simulator_tab.html.twig:153
+msgid "Extracted ID"
+msgstr "Extracted ID"
+
+#: templates/config/simulator_tab.html.twig:67
+msgid "Extracted ticket ID:"
+msgstr "Extracted ticket ID:"
+
+#: templates/config/diagnostics_tab.html.twig:17
+msgid "Fail"
+msgstr "Fail"
+
+#: src/Controller/TicketFilterController.php:290
+msgid "Failed to create pattern in database"
+msgstr "Failed to create pattern in database"
+
+#: src/Controller/TicketFilterController.php:311
+msgid "Failed to delete pattern"
+msgstr "Failed to delete pattern"
+
+#: src/Controller/TicketFilterController.php:283
+msgid "Failed to update pattern in database"
+msgstr "Failed to update pattern in database"
+
+#: templates/config/patterns_tab.html.twig:92
+msgid "Fallback: discard email"
+msgstr "Fallback: discard email"
+
+#: templates/config/patterns_tab.html.twig:94
+msgid "Fallback: new ticket"
+msgstr "Fallback: new ticket"
+
+#: templates/config/patterns_tab.html.twig:90
+msgid "Fallback: private followup"
+msgstr "Fallback: private followup"
+
+#: templates/config/patterns_tab.html.twig:4 templates/configForm.html.twig:11
+msgid "Filter patterns"
+msgstr "Filter patterns"
+
+#: templates/config/pattern_modal.html.twig:64 templates/config/pattern_modal.html.twig:71 templates/config/pattern_modal.html.twig:80 templates/config/pattern_modal.html.twig:96 templates/config/pattern_modal.html.twig:103 templates/config/pattern_modal.html.twig:126 templates/config/pattern_modal.html.twig:138 templates/config/pattern_modal.html.twig:154 templates/config/pattern_modal.html.twig:210 templates/config/pattern_modal.html.twig:218 templates/config/pattern_modal.html.twig:224 templates/config/pattern_modal.html.twig:232 templates/config/patterns_tab.html.twig:23 templates/config/patterns_tab.html.twig:27 templates/config/patterns_tab.html.twig:31 templates/config/simulator_tab.html.twig:30 templates/config/simulator_tab.html.twig:48 templates/config/simulator_tab.html.twig:100 templates/config/simulator_tab.html.twig:108
+msgid "Help"
+msgstr "Help"
+
+#: templates/config/audit_tab.html.twig:5
+msgid "Historical record of tickets merged, reopened, solved, or skipped by TicketFilter."
+msgstr "Historical record of tickets merged, reopened, solved, or skipped by TicketFilter."
+
+#: templates/config/pattern_modal.html.twig:59
+msgid "Identifier matching"
+msgstr "Identifier matching"
+
+#: src/Model/FilterPattern.php:291 templates/config/pattern_modal.html.twig:137
+msgid "If sender does not match"
+msgstr "If sender does not match"
+
+#: templates/config/pattern_modal.html.twig:178
+msgid "Incoming mail receivers"
+msgstr "Incoming mail receivers"
+
+#: setup.php:164
+msgid "Installed and active."
+msgstr "Installed and active."
+
+#: src/Audit/AuditLog.php:131 src/Model/FilterPattern.php:386
+#, php-format
+msgid "Installing %s table"
+msgstr "Installing %s table"
+
+#: hook.php:66
+#, php-format
+msgid "Installing TicketFilter version %s"
+msgstr "Installing TicketFilter version %s"
+
+#: templates/config/pattern_modal.html.twig:196
+msgid "Interactive manual creation"
+msgstr "Interactive manual creation"
+
+#: templates/config/pattern_modal.html.twig:217
+msgid "Intervention notes (ticket audit trail)"
+msgstr "Intervention notes (ticket audit trail)"
+
+#: src/Controller/TicketFilterController.php:193 src/Controller/TicketFilterController.php:305
+msgid "Invalid pattern ID"
+msgstr "Invalid pattern ID"
+
+#: src/Controller/TicketFilterController.php:232
+msgid "Invalid regex syntax in match pattern"
+msgstr "Invalid regex syntax in match pattern"
+
+#: src/Controller/TicketFilterController.php:246
+msgid "Invalid regex syntax in solved pattern"
+msgstr "Invalid regex syntax in solved pattern"
+
+#: src/Cron/CleanLogsTask.php:73
+msgid "Log retention period (in days, 0 for infinite)"
+msgstr "Log retention period (in days, 0 for infinite)"
+
+#: templates/config/pattern_modal.html.twig:176
+msgid "Mailgate"
+msgstr "Mailgate"
+
+#: templates/config/patterns_tab.html.twig:22
+msgid "Match pattern"
+msgstr "Match pattern"
+
+#: src/Controller/TicketFilterController.php:235
+msgid "Match pattern must include named group (?<match>...)"
+msgstr "Match pattern must include named group (?<match>...)"
+
+#: templates/config/simulator_tab.html.twig:135
+msgid "Matched"
+msgstr "Matched"
+
+#: src/Audit/AuditLogger.php:156
+#, php-format
+msgid "Matched pattern \"%s\" and added incoming ticket as followup."
+msgstr "Matched pattern \"%s\" and added incoming ticket as followup."
+
+#: templates/config/simulator_tab.html.twig:69
+msgid "Matching ticket in GLPI:"
+msgstr "Matching ticket in GLPI:"
+
+#: templates/config/pattern_modal.html.twig:70
+msgid "Max ID length"
+msgstr "Max ID length"
+
+#: templates/config/pattern_modal.html.twig:102
+msgid "Max keyword length"
+msgstr "Max keyword length"
+
+#: templates/config/patterns_tab.html.twig:53 templates/config/patterns_tab.html.twig:65
+msgid "Max length:"
+msgstr "Max length:"
+
+#: templates/config/pattern_modal.html.twig:159
+msgid "Maximum age for reopening:"
+msgstr "Maximum age for reopening:"
+
+#: templates/config/pattern_modal.html.twig:71
+msgid "Maximum allowed length for the extracted ticket identifier (in characters). Identifiers exceeding this length will be ignored to prevent false matches."
+msgstr "Maximum allowed length for the extracted ticket identifier (in characters). Identifiers exceeding this length will be ignored to prevent false matches."
+
+#: src/Model/FilterPattern.php:265
+msgid "Maximum auto-solve keyword length (characters)"
+msgstr "Maximum auto-solve keyword length (characters)"
+
+#: templates/config/pattern_modal.html.twig:103
+msgid "Maximum character length for the auto-solve keyword to prevent oversized matches from triggering ticket resolution."
+msgstr "Maximum character length for the auto-solve keyword to prevent oversized matches from triggering ticket resolution."
+
+#: src/Model/FilterPattern.php:252
+msgid "Maximum identifier length (characters)"
+msgstr "Maximum identifier length (characters)"
+
+#: src/Model/FilterPattern.php:278 templates/config/pattern_modal.html.twig:125 templates/config/patterns_tab.html.twig:30
+msgid "Merge when"
+msgstr "Merge when"
+
+#: templates/config/audit_tab.html.twig:34
+msgid "Merged followup"
+msgstr "Merged followup"
+
+#: templates/config/patterns_tab.html.twig:117
+msgid "Mute notifications"
+msgstr "Mute notifications"
+
+#: templates/config/pattern_modal.html.twig:212
+msgid "Mutes outgoing email notifications to requesters and observers when followups are added by this filter."
+msgstr "Mutes outgoing email notifications to requesters and observers when followups are added by this filter."
+
+#: templates/config/patterns_tab.html.twig:20
+msgid "Name"
+msgstr "Name"
+
+#: templates/config/patterns_tab.html.twig:148
+msgid "No patterns configured"
+msgstr "No patterns configured"
+
+#: templates/config/pattern_modal.html.twig:34
+msgid "Notifications & notes"
+msgstr "Notifications & notes"
+
+#: templates/config/diagnostics_tab.html.twig:34
+msgid "One or more diagnostic checks failed. Please check installation."
+msgstr "One or more diagnostic checks failed. Please check installation."
+
+#: src/Model/FilterPattern.php:309
+msgid "Only if closed within (days)"
+msgstr "Only if closed within (days)"
+
+#: templates/config/pattern_modal.html.twig:55
+msgid "Optional note explaining when this pattern is used"
+msgstr "Optional note explaining when this pattern is used"
+
+#: templates/config/pattern_modal.html.twig:96
+msgid "Optional regular expression to automatically mark the target ticket as solved (e.g. when an email contains [Closed] or [Resolved]). Must include named group (?&lt;solved&gt;...)."
+msgstr "Optional regular expression to automatically mark the target ticket as solved (e.g. when an email contains [Closed] or [Resolved]). Must include named group (?&lt;solved&gt;...)."
+
+#: templates/config/simulator_tab.html.twig:48
+msgid "Optional regular expression to test automatic ticket resolution when a matching keyword is found in the email subject. Must include (?&lt;solved&gt;...)."
+msgstr "Optional regular expression to test automatic ticket resolution when a matching keyword is found in the email subject. Must include (?&lt;solved&gt;...)."
+
+#: templates/config/patterns_tab.html.twig:27
+msgid "Optional regular expression with named group (?&lt;solved&gt;...) to automatically mark target tickets as solved."
+msgstr "Optional regular expression with named group (?&lt;solved&gt;...) to automatically mark target tickets as solved."
+
+#: templates/config/patterns_tab.html.twig:33
+msgid "Options"
+msgstr "Options"
+
+#: src/Utility/SanityChecker.php:100
+msgid "PCRE regex engine failed to evaluate named capture groups."
+msgstr "PCRE regex engine failed to evaluate named capture groups."
+
+#: src/Utility/SanityChecker.php:95
+msgid "PCRE2 regex engine supports named capture groups."
+msgstr "PCRE2 regex engine supports named capture groups."
+
+#: templates/config/diagnostics_tab.html.twig:15
+msgid "Pass"
+msgstr "Pass"
+
+#: src/Audit/AuditLogger.php:336
+#, php-format
+msgid "Pattern \"%s\" (entity #%d) does not apply to ticket entity #%d."
+msgstr "Pattern \"%s\" (entity #%d) does not apply to ticket entity #%d."
+
+#: templates/config/audit_tab.html.twig:20
+msgid "Pattern and token"
+msgstr "Pattern and token"
+
+#: src/Engine/PatternMatcher.php:111
+msgid "Pattern cannot be empty."
+msgstr "Pattern cannot be empty."
+
+#: src/Controller/TicketFilterController.php:292
+msgid "Pattern created successfully"
+msgstr "Pattern created successfully"
+
+#: src/Controller/TicketFilterController.php:313
+msgid "Pattern deleted successfully"
+msgstr "Pattern deleted successfully"
+
+#: src/Engine/PatternMatcher.php:132
+#, php-format
+msgid "Pattern must contain the named capture group (?<%s>...)"
+msgstr "Pattern must contain the named capture group (?<%s>...)"
+
+#: templates/config/pattern_modal.html.twig:44
+msgid "Pattern name"
+msgstr "Pattern name"
+
+#: src/Controller/TicketFilterController.php:220 templates/config/pattern_modal.html.twig:546
+msgid "Pattern name is required"
+msgstr "Pattern name is required"
+
+#: src/Controller/TicketFilterController.php:198
+msgid "Pattern not found"
+msgstr "Pattern not found"
+
+#: templates/config/pattern_modal.html.twig:24
+msgid "Pattern rules"
+msgstr "Pattern rules"
+
+#: templates/configForm.html.twig:17
+msgid "Pattern simulator"
+msgstr "Pattern simulator"
+
+#: src/Controller/TicketFilterController.php:285
+msgid "Pattern updated successfully"
+msgstr "Pattern updated successfully"
+
+#: templates/config/simulator_tab.html.twig:65
+msgid "Pattern valid:"
+msgstr "Pattern valid:"
+
+#: src/Utility/SanityChecker.php:72
+#, php-format
+msgid "Patterns table (%s) exists."
+msgstr "Patterns table (%s) exists."
+
+#: src/Utility/SanityChecker.php:77
+#, php-format
+msgid "Patterns table (%s) is missing."
+msgstr "Patterns table (%s) is missing."
+
+#: templates/config/pattern_modal.html.twig:29
+msgid "Permissions"
+msgstr "Permissions"
+
+#: templates/config/patterns_tab.html.twig:149
+msgid "Please add at least one active filter pattern to enable automated ticket matching."
+msgstr "Please add at least one active filter pattern to enable automated ticket matching."
+
+#: src/Controller/TicketFilterController.php:381
+msgid "Please browse to Setup > Ticket filter to configure matching rules."
+msgstr "Please browse to Setup > Ticket filter to configure matching rules."
+
+#: templates/config/audit_tab.html.twig:40
+msgid "Policy skipped"
+msgstr "Policy skipped"
+
+#: templates/config/pattern_modal.html.twig:224
+msgid "Private note template added when a closed ticket is reopened by this pattern. Supports dynamic non-repudiation placeholders."
+msgstr "Private note template added when a closed ticket is reopened by this pattern. Supports dynamic non-repudiation placeholders."
+
+#: templates/config/pattern_modal.html.twig:232
+msgid "Private note template added when a ticket is automatically solved by this pattern. Supports dynamic non-repudiation placeholders."
+msgstr "Private note template added when a ticket is automatically solved by this pattern. Supports dynamic non-repudiation placeholders."
+
+#: templates/config/pattern_modal.html.twig:218
+msgid "Private notes added to the ticket timeline when this rule intervenes. Visible to technicians and auditors for non-repudiation compliance without notifying external users. Leave blank to use system defaults."
+msgstr "Private notes added to the ticket timeline when this rule intervenes. Visible to technicians and auditors for non-repudiation compliance without notifying external users. Leave blank to use system defaults."
+
+#: src/Cron/CleanLogsTask.php:72
+msgid "Purge old TicketFilter audit log records"
+msgstr "Purge old TicketFilter audit log records"
+
+#: templates/config/pattern_modal.html.twig:187
+msgid "REST / XML-RPC calls"
+msgstr "REST / XML-RPC calls"
+
+#: templates/config/simulator_tab.html.twig:107
+msgid "Recent tickets to scan"
+msgstr "Recent tickets to scan"
+
+#: src/Engine/PatternMatcher.php:123
+#, php-format
+msgid "Regex compilation failed: %s"
+msgstr "Regex compilation failed: %s"
+
+#: templates/config/simulator_tab.html.twig:12
+msgid "Regex presets"
+msgstr "Regex presets"
+
+#: templates/config/patterns_tab.html.twig:23
+msgid "Regular expression with named capture group (?&lt;match&gt;...) used to extract ticket IDs from incoming emails."
+msgstr "Regular expression with named capture group (?&lt;match&gt;...) used to extract ticket IDs from incoming emails."
+
+#: templates/config/patterns_tab.html.twig:113
+#, php-format
+msgid "Reopen (<%dd)"
+msgstr "Reopen (<%dd)"
+
+#: templates/config/pattern_modal.html.twig:223
+msgid "Reopen private note"
+msgstr "Reopen private note"
+
+#: src/Model/FilterPattern.php:328
+msgid "Reopen private note template"
+msgstr "Reopen private note template"
+
+#: src/Model/FilterPattern.php:303 templates/config/pattern_modal.html.twig:153
+msgid "Reopen ticket if closed"
+msgstr "Reopen ticket if closed"
+
+#: templates/config/audit_tab.html.twig:36
+msgid "Reopened"
+msgstr "Reopened"
+
+#: src/Audit/AuditLogger.php:192
+#, php-format
+msgid "Reopened closed ticket #%d per pattern \"%s\" configuration."
+msgstr "Reopened closed ticket #%d per pattern \"%s\" configuration."
+
+#: templates/config/patterns_tab.html.twig:77 templates/config/patterns_tab.html.twig:85
+msgid "Requesters match"
+msgstr "Requesters match"
+
+#: src/Model/FilterPattern.php:281 templates/config/pattern_modal.html.twig:129
+msgid "Requesters match (ticket creator only)"
+msgstr "Requesters match (ticket creator only)"
+
+#: templates/config/simulator_tab.html.twig:71
+msgid "Resulting action:"
+msgstr "Resulting action:"
+
+#: templates/config/patterns_tab.html.twig:5
+msgid "Rules used to match incoming emails to existing tickets and merge them automatically."
+msgstr "Rules used to match incoming emails to existing tickets and merge them automatically."
+
+#: templates/config/simulator_tab.html.twig:119 templates/config/simulator_tab.html.twig:325
+msgid "Run scan on existing tickets"
+msgstr "Run scan on existing tickets"
+
+#: templates/config/simulator_tab.html.twig:36
+msgid "Sample email subject"
+msgstr "Sample email subject"
+
+#: templates/config/simulator_tab.html.twig:42
+msgid "Sample sender email"
+msgstr "Sample sender email"
+
+#: templates/config/pattern_modal.html.twig:263 templates/config/pattern_modal.html.twig:318 templates/config/pattern_modal.html.twig:518
+msgid "Save pattern"
+msgstr "Save pattern"
+
+#: templates/config/pattern_modal.html.twig:580
+msgid "Saving..."
+msgstr "Saving..."
+
+#: templates/config/simulator_tab.html.twig:125
+msgid "Scan summary"
+msgstr "Scan summary"
+
+#: templates/config/simulator_tab.html.twig:129
+msgid "Scanned"
+msgstr "Scanned"
+
+#: templates/config/simulator_tab.html.twig:336
+msgid "Scanning..."
+msgstr "Scanning..."
+
+#: templates/config/audit_tab.html.twig:8
+msgid "Search logs..."
+msgstr "Search logs..."
+
+#: templates/config/pattern_modal.html.twig:126
+msgid "Security policy governing when an incoming email is authorized to merge into an existing ticket:<br><br><b>Requesters match</b>: Only the original ticket creator can merge.<br><b>An actor matches</b>: Any requester, technician, or observer on the ticket can merge.<br><b>Sender domain matches</b>: Anyone with the same corporate domain (@company.com) as the requester can merge.<br><b>Always</b>: Any incoming email with a matching ticket ID will be merged."
+msgstr "Security policy governing when an incoming email is authorized to merge into an existing ticket:<br><br><b>Requesters match</b>: Only the original ticket creator can merge.<br><b>An actor matches</b>: Any requester, technician, or observer on the ticket can merge.<br><b>Sender domain matches</b>: Anyone with the same corporate domain (@company.com) as the requester can merge.<br><b>Always</b>: Any incoming email with a matching ticket ID will be merged."
+
+#: templates/config/pattern_modal.html.twig:113
+msgid "Select Closed if monitoring systems send recovery messages that should close tickets directly."
+msgstr "Select Closed if monitoring systems send recovery messages that should close tickets directly."
+
+#: templates/config/simulator_tab.html.twig:108
+msgid "Select how many recent tickets from the database to evaluate in the dry-run scan."
+msgstr "Select how many recent tickets from the database to evaluate in the dry-run scan."
+
+#: templates/config/audit_tab.html.twig:21
+msgid "Sender"
+msgstr "Sender"
+
+#: src/Audit/AuditLogger.php:266
+#, php-format
+msgid "Sender \"%s\" is not authorized on ticket #%d under policy \"%s\". Merge skipped."
+msgstr "Sender \"%s\" is not authorized on ticket #%d under policy \"%s\". Merge skipped."
+
+#: templates/config/pattern_modal.html.twig:121
+msgid "Sender authorization"
+msgstr "Sender authorization"
+
+#: templates/config/patterns_tab.html.twig:31
+msgid "Sender authorization policy determining when an incoming email is allowed to merge into an existing ticket."
+msgstr "Sender authorization policy determining when an incoming email is allowed to merge into an existing ticket."
+
+#: templates/config/patterns_tab.html.twig:81
+msgid "Sender domain matches"
+msgstr "Sender domain matches"
+
+#: src/Model/FilterPattern.php:283 templates/config/pattern_modal.html.twig:131
+msgid "Sender domain matches (@company.com)"
+msgstr "Sender domain matches (@company.com)"
+
+#: templates/config/simulator_tab.html.twig:8
+msgid "Single email tester"
+msgstr "Single email tester"
+
+#: templates/config/audit_tab.html.twig:38 templates/config/pattern_modal.html.twig:110
+msgid "Solved"
+msgstr "Solved"
+
+#: src/Controller/TicketFilterController.php:249
+msgid "Solved pattern must include named group (?<solved>...)"
+msgstr "Solved pattern must include named group (?<solved>...)"
+
+#: templates/config/pattern_modal.html.twig:138
+msgid "Specifies what happens if the sender is not authorized under the merge policy:<br><br><b>Create a standard new ticket</b>: Safely creates an independent new ticket.<br><b>Add as private followup</b>: Adds the message as a private note visible only to technicians.<br><b>Discard email</b>: Drops the email without creating or updating any ticket."
+msgstr "Specifies what happens if the sender is not authorized under the merge policy:<br><br><b>Create a standard new ticket</b>: Safely creates an independent new ticket.<br><b>Add as private followup</b>: Adds the message as a private note visible only to technicians.<br><b>Discard email</b>: Drops the email without creating or updating any ticket."
+
+#: templates/config/patterns_tab.html.twig:34 templates/config/simulator_tab.html.twig:154
+msgid "Status"
+msgstr "Status"
+
+#: templates/config/audit_tab.html.twig:22
+msgid "Subject"
+msgstr "Subject"
+
+#: templates/config/pattern_modal.html.twig:210
+msgid "Suppresses standard GLPI followup email notifications when this pattern merges an email into a ticket to prevent email notification loops."
+msgstr "Suppresses standard GLPI followup email notifications when this pattern merges an email into a ticket to prevent email notification loops."
+
+#: templates/configForm.html.twig:22
+msgid "System diagnostics"
+msgstr "System diagnostics"
+
+#: templates/config/pattern_modal.html.twig:108
+msgid "Target status when resolved"
+msgstr "Target status when resolved"
+
+#: templates/config/simulator_tab.html.twig:90
+msgid "Test how a pattern matches existing tickets in your database to verify matches and check for duplicates or collisions."
+msgstr "Test how a pattern matches existing tickets in your database to verify matches and check for duplicates or collisions."
+
+#: templates/config/simulator_tab.html.twig:55 templates/config/simulator_tab.html.twig:193
+msgid "Test pattern"
+msgstr "Test pattern"
+
+#: templates/config/simulator_tab.html.twig:61
+msgid "Test results"
+msgstr "Test results"
+
+#: templates/config/simulator_tab.html.twig:204
+msgid "Testing..."
+msgstr "Testing..."
+
+#: src/TicketHandler.php:146
+#, php-format
+msgid "This ticket was reopened by TicketFilter (pattern: %s)"
+msgstr "This ticket was reopened by TicketFilter (pattern: %s)"
+
+#: src/TicketHandler.php:169
+#, php-format
+msgid "This ticket was solved by TicketFilter (pattern: %s)"
+msgstr "This ticket was solved by TicketFilter (pattern: %s)"
+
+#: templates/config/audit_tab.html.twig:19 templates/config/simulator_tab.html.twig:151
+msgid "Ticket"
+msgstr "Ticket"
+
+#: src/Audit/AuditLogger.php:228
+#, php-format
+msgid "Ticket #%d marked as solved by pattern \"%s\"."
+msgstr "Ticket #%d marked as solved by pattern \"%s\"."
+
+#: hook.php:52 src/Model/FilterPattern.php:150 src/Model/FilterPattern.php:161
+msgid "Ticket filter"
+msgstr "Ticket filter"
+
+#: src/Model/FilterPattern.php:161
+msgid "Ticket filters"
+msgstr "Ticket filters"
+
+#: templates/config/pattern_modal.html.twig:63 templates/config/simulator_tab.html.twig:29 templates/config/simulator_tab.html.twig:99
+msgid "Ticket identifier pattern (regex)"
+msgstr "Ticket identifier pattern (regex)"
+
+#: src/Model/FilterPattern.php:246
+msgid "Ticket identifier pattern (regex, must contain (?<match>...))"
+msgstr "Ticket identifier pattern (regex, must contain (?<match>...))"
+
+#: src/Controller/TicketFilterController.php:223 templates/config/pattern_modal.html.twig:569
+msgid "Ticket match regex is required"
+msgstr "Ticket match regex is required"
+
+#: templates/config/simulator_tab.html.twig:152
+msgid "Ticket title"
+msgstr "Ticket title"
+
+#: src/Controller/TicketFilterController.php:380
+msgid "TicketFilter Administration"
+msgstr "TicketFilter Administration"
+
+#: src/Controller/TicketFilterController.php:357
+msgid "TicketFilter Configuration"
+msgstr "TicketFilter Configuration"
+
+#: templates/configForm.html.twig:3
+msgid "TicketFilter administration"
+msgstr "TicketFilter administration"
+
+#: src/Model/FilterPattern.php:192
+msgid "TicketFilter dashboard"
+msgstr "TicketFilter dashboard"
+
+#: src/Engine/FilterEngine.php:632
+#, php-format
+msgid "TicketFilter: %d email successfully merged into existing ticket."
+msgid_plural "TicketFilter: %d emails successfully merged into existing tickets."
+msgstr[0] "TicketFilter: %d email successfully merged into existing ticket."
+msgstr[1] "TicketFilter: %d emails successfully merged into existing tickets."
+
+#: src/Audit/AuditLog.php:171 src/Model/FilterPattern.php:570
+#, php-format
+msgid "Uninstalling %s table"
+msgstr "Uninstalling %s table"
+
+#: hook.php:95
+msgid "Uninstalling TicketFilter plugin"
+msgstr "Uninstalling TicketFilter plugin"
+
+#: templates/config/pattern_modal.html.twig:194
+msgid "Web UI"
+msgstr "Web UI"
+
+#: templates/config/pattern_modal.html.twig:80
+msgid "When enabled, scans the email body if no ticket identifier is found in the email subject line."
+msgstr "When enabled, scans the email body if no ticket identifier is found in the email subject line."
+
+#: templates/config/pattern_modal.html.twig:162
+msgid "days"
+msgstr "days"
+
+#: src/Engine/TicketProcessor.php:593
+msgid "private followup"
+msgstr "private followup"
+
+#: templates/config/simulator_tab.html.twig:111 templates/config/simulator_tab.html.twig:112 templates/config/simulator_tab.html.twig:113 templates/config/simulator_tab.html.twig:114
+msgid "tickets"
+msgstr "tickets"
+

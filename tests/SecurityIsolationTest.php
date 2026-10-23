@@ -161,6 +161,32 @@ assertCondition($resDomainPass['authorized'] === true, 'Same domain policy allow
 $resDomainFail = TicketProcessor::verifySender($itemAttacker, $targetTicket, FilterPattern::POLICY_SAME_DOMAIN);
 assertCondition($resDomainFail['authorized'] === false, 'Same domain policy BLOCKS non-matching domain');
 
+// 4b. Test Web/Interactive Impersonation Prevention (Finding 1)
+Session::$mockLoginUserId = 55;
+User::$mockUsers[55] = ['id' => 55, 'email' => 'legit.user@company.com'];
+
+$spoofedItem = new Ticket();
+$spoofedItem->input = [
+    'name'                => 'Impersonation attempt',
+    '_users_id_requester' => 10, // Attempting to claim user 10 (director/admin)
+    '_head'               => ['from' => 'director@company.com'],
+    'from'                => 'director@company.com',
+];
+
+$extracted = TicketProcessor::extractSenderInfo($spoofedItem);
+assertCondition($extracted['userId'] === 55, 'Interactive session ignores caller input and derives userId from Session::getLoginUserID()');
+assertCondition($extracted['userEmail'] === 'legit.user@company.com', 'Interactive session ignores caller input and derives userEmail from User object');
+
+// Test that interactive user lacking canAddFollowup is BLOCKED even under POLICY_OPEN
+$restrictedTargetTicket = new Ticket();
+$restrictedTargetTicket->fields['id'] = 200;
+$restrictedTargetTicket->mockCanAddFollowup = false;
+$resBlockedFollowup = TicketProcessor::verifySender($spoofedItem, $restrictedTargetTicket, FilterPattern::POLICY_OPEN);
+assertCondition($resBlockedFollowup['authorized'] === false, 'Interactive user lacking followup rights on target is BLOCKED even under open policy');
+
+// Reset interactive session mock for subsequent CLI tests
+Session::$mockLoginUserId = 0;
+
 // 5. Test Mailgate Fault Isolation: calling FilterEngine with corrupted/malformed input NEVER throws uncaught exception
 $corruptedTicket = new Ticket();
 $corruptedTicket->input = ['name' => null]; // null name
@@ -236,7 +262,21 @@ $patternRecord = [
     FilterPattern::FIELD_UNMATCHED_SENDER_ACTION => FilterPattern::ACTION_NEW_TICKET,
 ];
 
+// Verify that when NO active MailCollector is running, recordMailgateInterception REJECTS caller input
+FilterEngine::resetMailgateState();
 FilterEngine::recordMailgateInterception($mailgateTicket);
+assertCondition(count(FilterEngine::getMergedMailgateMessages()) === 0, 'recordMailgateInterception rejects caller when no active MailCollector is present');
+
+// Now provide verified active MailCollector on call stack / override
+$collectorMock = new MailCollector();
+$collectorMock->fields['id'] = 42;
+$collectorMock->fields['refused'] = 'refused_folder';
+$collectorMock->fields['accepted'] = 'accepted_folder';
+FilterEngine::$activeCollectorOverride = $collectorMock;
+
+FilterEngine::recordMailgateInterception($mailgateTicket);
+assertCondition(count(FilterEngine::getMergedMailgateMessages()) === 1, 'recordMailgateInterception records message when active MailCollector is present');
+assertCondition($collectorMock->fields['refused'] === 'refused_folder', 'Active MailCollector refused_folder is NOT mutated in memory');
 
 // Verify deleteMailgateEmail moves email to ACCEPTED_FOLDER
 MailCollector::$deletedMails = [];
@@ -276,6 +316,7 @@ assertCondition(str_contains($infoMessages, 'TicketFilter:'), 'handleMailgateShu
 
 // 10. Test Multi-Email Batch Mailgate Processing
 FilterEngine::resetMailgateState();
+FilterEngine::$activeCollectorOverride = $collectorMock;
 $batchTicket1 = new Ticket();
 $batchTicket1->input = [
     'name'      => 'First Batch Email (CRU-5001)',
@@ -316,6 +357,85 @@ assertCondition(!empty($_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]), 'handleMa
 $batchInfo = implode(' ', $_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey]);
 assertCondition(str_contains($batchInfo, 'errors=0'), 'handleMailgateShutdown reduces errors=2 to errors=0 in batch');
 assertCondition(str_contains($batchInfo, '2 e-mail(s) succesvol samengevoegd'), 'handleMailgateShutdown confirms 2 emails merged in Dutch message');
+
+// 12. Verify Entity Isolation
+assertCondition(!FilterEngine::isPatternApplicableToEntity(['entities_id' => 2, 'is_recursive' => 0], 1), 'Pattern in entity 2 does NOT apply to ticket in entity 1');
+assertCondition(FilterEngine::isPatternApplicableToEntity(['entities_id' => 1, 'is_recursive' => 0], 1), 'Pattern in entity 1 applies to ticket in entity 1');
+assertCondition(FilterEngine::isPatternApplicableToEntity(['entities_id' => 0, 'is_recursive' => 1], 99), 'Recursive pattern in root entity applies to sub-entity');
+
+$loggedEntity = \GlpiPlugin\Ticketfilter\Audit\AuditLogger::logSkippedEntity(1, 'EntityRule', 'Test Subj', 'sender@example.com', 1, 2);
+assertCondition($loggedEntity === true, 'logSkippedEntity logs ACTION_SKIPPED_ENTITY successfully');
+
+// 13. Verify LIKE wildcard escaping
+$capturedQuery = null;
+MockDB::$mockRequestCallback = function (array $query) use (&$capturedQuery) {
+    $capturedQuery = $query;
+    return [];
+};
+TicketProcessor::searchTicketPool('TEST%123_456');
+assertCondition(
+    isset($capturedQuery['WHERE']['name'][1]) && $capturedQuery['WHERE']['name'][1] === '%TEST\%123\_456%',
+    'searchTicketPool escapes % and _ wildcards to prevent broad matching'
+);
+MockDB::$mockRequestCallback = null;
+
+// 14. Verify Auto-Solve Toggle and Target Status (Solved vs Closed)
+$ticketToSolve = new Ticket();
+$ticketToSolve->fields = ['id' => 200, 'status' => CommonITILObject::INCOMING];
+$itemSolved = new Ticket();
+$itemSolved->input = [
+    'name'                      => 'Server Alert CRU-5001 [RESOLVED]',
+    'content'                   => 'Issue is fixed',
+    '_users_id_requester'       => 50,
+    '_users_id_requester_notif' => ['alternative_email' => ['user@customer.com']],
+    '_head'                     => ['from' => 'user@customer.com'],
+];
+
+// Case A: enable_auto_solve = 0 -> status is NOT changed even if keyword matches
+$resDisabled = TicketProcessor::processTicket(
+    $itemSolved,
+    $ticketToSolve,
+    [
+        'id'                        => 1,
+        'name'                      => 'Alert Rule',
+        'SolvedMatchString'         => '/.*?(?<solved>RESOLVED).*/i',
+        'enable_auto_solve'         => 0,
+        'auto_solve_status'         => 6,
+        'is_private_followup'       => 0,
+        'SuppressNotification'      => 1,
+        'sender_policy'             => 'open',
+    ],
+    'CRU-5001'
+);
+assertCondition($resDisabled['solved'] === false, 'Auto-solve is skipped when enable_auto_solve is 0');
+assertCondition($ticketToSolve->fields['status'] === CommonITILObject::INCOMING, 'Ticket status remains INCOMING when enable_auto_solve is 0');
+
+// Case B: enable_auto_solve = 1 with auto_solve_status = 6 (Closed for monitoring)
+$resEnabled = TicketProcessor::processTicket(
+    $itemSolved,
+    $ticketToSolve,
+    [
+        'id'                        => 1,
+        'name'                      => 'Alert Rule',
+        'SolvedMatchString'         => '/.*?(?<solved>RESOLVED).*/i',
+        'enable_auto_solve'         => 1,
+        'auto_solve_status'         => CommonITILObject::CLOSED,
+        'is_private_followup'       => 0,
+        'SuppressNotification'      => 1,
+        'sender_policy'             => 'open',
+    ],
+    'CRU-5001'
+);
+assertCondition($resEnabled['solved'] === true, 'Auto-solve succeeds when enable_auto_solve is 1');
+assertCondition($ticketToSolve->fields['status'] === CommonITILObject::CLOSED, 'Ticket is transitioned directly to CLOSED status for monitoring systems');
+
+// 15. Verify GNU gettext catalogs
+$potPath = dirname(__DIR__) . '/locales/ticketfilter.pot';
+$nlMoPath = dirname(__DIR__) . '/locales/nl_NL.mo';
+$enMoPath = dirname(__DIR__) . '/locales/en_GB.mo';
+assertCondition(file_exists($potPath) && filesize($potPath) > 10000, 'locales/ticketfilter.pot exists and is populated (>10KB)');
+assertCondition(file_exists($nlMoPath) && filesize($nlMoPath) > 10000, 'locales/nl_NL.mo exists and is compiled (>10KB)');
+assertCondition(file_exists($enMoPath) && filesize($enMoPath) > 10000, 'locales/en_GB.mo exists and is compiled (>10KB)');
 
 echo "SecurityIsolationTest completed successfully!\n\n";
 

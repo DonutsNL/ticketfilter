@@ -312,6 +312,40 @@ class AuditLogger
     }
 
     /**
+     * Logs an action skipped due to entity mismatch.
+     *
+     * @param int $patternId Pattern identifier.
+     * @param string $patternName Pattern name.
+     * @param string $subject Incoming subject.
+     * @param string $sender Incoming sender.
+     * @param int $ticketEntitiesId Ticket entity ID.
+     * @param int $patternEntitiesId Pattern entity ID.
+     * @return bool
+     */
+    public static function logSkippedEntity(
+        int $patternId,
+        string $patternName,
+        string $subject,
+        string $sender,
+        int $ticketEntitiesId,
+        int $patternEntitiesId
+    ): bool {
+        return self::logEvent(
+            AuditLog::ACTION_SKIPPED_ENTITY,
+            AuditLog::STATUS_INFO,
+            sprintf(__('Pattern "%s" (entity #%d) does not apply to ticket entity #%d.', 'ticketfilter'), $patternName, $patternEntitiesId, $ticketEntitiesId),
+            $patternId,
+            $patternName,
+            $subject,
+            $sender,
+            '',
+            0,
+            ['ticket_entity' => $ticketEntitiesId, 'pattern_entity' => $patternEntitiesId],
+            $ticketEntitiesId
+        );
+    }
+
+    /**
      * Logs an error caught during processing.
      *
      * @param string $errorMessage Error description.

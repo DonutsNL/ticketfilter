@@ -174,7 +174,7 @@ class Simulator
             'matched'          => true,
             'token'            => $token,
             'target_tickets'   => $matchingTicketIds,
-            'collision'        => false,
+            'collision'        => ($totalCandidates > 1),
             'would_reopen'     => $wouldReopen,
             'would_solve'      => $wouldSolve,
             'simulated_action' => $simulatedAction,

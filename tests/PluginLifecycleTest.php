@@ -298,8 +298,15 @@ assertCondition(
     defined(FilterPattern::class . '::FIELD_SOLVED_MESSAGE_TEMPLATE') && FilterPattern::FIELD_SOLVED_MESSAGE_TEMPLATE === 'solved_message_template',
     'FIELD_SOLVED_MESSAGE_TEMPLATE constant is defined'
 );
+assertCondition(FilterPattern::$rightname === 'config', 'FilterPattern::$rightname must be config');
+assertCondition(defined(FilterPattern::class . '::FIELD_APPLY_TO_MAILGATE') && FilterPattern::FIELD_APPLY_TO_MAILGATE === 'apply_to_mailgate', 'FIELD_APPLY_TO_MAILGATE must be defined');
+assertCondition(defined(FilterPattern::class . '::FIELD_APPLY_TO_API') && FilterPattern::FIELD_APPLY_TO_API === 'apply_to_api', 'FIELD_APPLY_TO_API must be defined');
+assertCondition(defined(FilterPattern::class . '::FIELD_APPLY_TO_WEB') && FilterPattern::FIELD_APPLY_TO_WEB === 'apply_to_web', 'FIELD_APPLY_TO_WEB must be defined');
+assertCondition(defined(FilterPattern::class . '::FIELD_ENABLE_AUTO_SOLVE') && FilterPattern::FIELD_ENABLE_AUTO_SOLVE === 'enable_auto_solve', 'FIELD_ENABLE_AUTO_SOLVE must be defined');
+assertCondition(defined(FilterPattern::class . '::FIELD_AUTO_SOLVE_STATUS') && FilterPattern::FIELD_AUTO_SOLVE_STATUS === 'auto_solve_status', 'FIELD_AUTO_SOLVE_STATUS must be defined');
 FilterPattern::ensureSchema();
 
 echo "PluginLifecycleTest completed successfully!\n\n";
+
 
 

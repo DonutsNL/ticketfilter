@@ -63,6 +63,70 @@ class FilterEngine
      * Whether the shutdown cleanup handler has been registered.
      */
     private static bool $cleanupRegistered = false;
+
+    /**
+     * Test override for active MailCollector.
+     */
+    public static ?\MailCollector $activeCollectorOverride = null;
+
+    public const SOURCE_MAILGATE = 'mailgate';
+    public const SOURCE_API      = 'api';
+    public const SOURCE_WEB      = 'web';
+
+    /**
+     * Determines current execution channel/source.
+     *
+     * @return string One of self::SOURCE_* constants.
+     */
+    public static function getCurrentExecutionSource(): string
+    {
+        if (self::getActiveMailCollector() !== null) {
+            return self::SOURCE_MAILGATE;
+        }
+
+        if ((defined('GLPI_API') && GLPI_API) || (isset($_SERVER['REQUEST_URI']) && str_contains($_SERVER['REQUEST_URI'], '/api/'))) {
+            return self::SOURCE_API;
+        }
+
+        if (class_exists(\Session::class) && \Session::getLoginUserID() > 0 && !isCommandLine()) {
+            return self::SOURCE_WEB;
+        }
+
+        return self::SOURCE_API;
+    }
+
+    /**
+     * Checks if a pattern is applicable to the ticket entity context.
+     *
+     * @param array $pattern
+     * @param int $ticketEntitiesId
+     * @return bool
+     */
+    public static function isPatternApplicableToEntity(array $pattern, int $ticketEntitiesId): bool
+    {
+        $patternEntity = (int)($pattern[FilterPattern::FIELD_ENTITIES_ID] ?? 0);
+        $isRecursive   = !empty($pattern[FilterPattern::FIELD_IS_RECURSIVE]);
+
+        if ($patternEntity === $ticketEntitiesId) {
+            return true;
+        }
+
+        if ($isRecursive) {
+            if (function_exists('getSonsOf')) {
+                try {
+                    $sons = getSonsOf('glpi_entities', $patternEntity);
+                    return in_array($ticketEntitiesId, array_map('intval', $sons), true);
+                } catch (\Throwable $e) {
+                    // Fall back to entity 0 check
+                }
+            }
+            if ($patternEntity === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
     /**
      * Hook callback invoked on pre_item_add for tickets.
      *
@@ -124,6 +188,32 @@ class FilterEngine
         $senderEmail = $senderInfo['userEmail'];
 
         foreach ($patterns as $pattern) {
+            // Source channel check: mailgate, api, web
+            $currentSource = self::getCurrentExecutionSource();
+            $applyToSource = match ($currentSource) {
+                self::SOURCE_MAILGATE => !empty($pattern[FilterPattern::FIELD_APPLY_TO_MAILGATE] ?? 1),
+                self::SOURCE_API      => !empty($pattern[FilterPattern::FIELD_APPLY_TO_API] ?? 0),
+                self::SOURCE_WEB      => !empty($pattern[FilterPattern::FIELD_APPLY_TO_WEB] ?? 0),
+                default               => true,
+            };
+
+            if (!$applyToSource) {
+                continue;
+            }
+
+            // Entity isolation check
+            if (!self::isPatternApplicableToEntity($pattern, $entitiesId)) {
+                AuditLogger::logSkippedEntity(
+                    (int)($pattern[FilterPattern::FIELD_ID] ?? 0),
+                    (string)($pattern[FilterPattern::FIELD_NAME] ?? ''),
+                    $subject,
+                    $senderEmail,
+                    $entitiesId,
+                    (int)($pattern[FilterPattern::FIELD_ENTITIES_ID] ?? 0)
+                );
+                continue;
+            }
+
             $rawPattern = (string)($pattern[FilterPattern::FIELD_TICKETMATCHSTR] ?? '');
             if ($rawPattern === '') {
                 continue;
@@ -151,7 +241,8 @@ class FilterEngine
                 continue;
             }
 
-            $matchedTicketIds = TicketProcessor::searchTicketPool($token, $entitiesId);
+            $isRecursive = !empty($pattern[FilterPattern::FIELD_IS_RECURSIVE]);
+            $matchedTicketIds = TicketProcessor::searchTicketPool($token, $entitiesId, $isRecursive);
             if (empty($matchedTicketIds)) {
                 continue;
             }
@@ -319,26 +410,49 @@ class FilterEngine
                 }
             }
         } catch (Throwable $e) {
-            // Fail silently to avoid breaking GLPI core error logging
+            if (class_exists(Toolbox::class) && method_exists(Toolbox::class, 'logInFile')) {
+                Toolbox::logInFile('ticketfilter', 'preNotImportedEmailAdd warning: ' . $e->getMessage());
+            }
         }
     }
 
     /**
-     * Records mailgate message metadata and directs active collector to accepted folder.
+     * Records mailgate message metadata for shutdown processing.
      *
      * @param Ticket $item
      * @return void
      */
     public static function recordMailgateInterception(Ticket $item): void
     {
-        if (empty($item->input['_mailgate'])) {
+        // Finding 4: Perform mailbox operations ONLY when an active MailCollector is running on the call stack
+        $activeCollector = self::getActiveMailCollector();
+        if ($activeCollector === null) {
             return;
         }
 
-        $collectorId = (int)$item->input['_mailgate'];
-        $uid         = (string)($item->input['_uid'] ?? '');
-        $messageId   = (string)($item->input['_head']['message_id'] ?? ($item->input['messageid'] ?? ''));
-        $subject     = (string)($item->input['name'] ?? '');
+        $collectorId = (int)($activeCollector->fields['id'] ?? (method_exists($activeCollector, 'getID') ? $activeCollector->getID() : 0));
+        if ($collectorId <= 0 && !empty($item->input['_mailgate'])) {
+            $collectorId = (int)$item->input['_mailgate'];
+        }
+        if ($collectorId <= 0) {
+            return;
+        }
+
+        // Derive UID from call stack or verified collector
+        $uid = '';
+        $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 35);
+        foreach ($trace as $frame) {
+            if (isset($frame['function']) && $frame['function'] === 'buildTicket' && isset($frame['args'][0])) {
+                $uid = (string)$frame['args'][0];
+                break;
+            }
+        }
+        if ($uid === '' && !empty($item->input['_uid'])) {
+            $uid = (string)$item->input['_uid'];
+        }
+
+        $messageId = (string)($item->input['_head']['message_id'] ?? ($item->input['messageid'] ?? ''));
+        $subject   = (string)($item->input['name'] ?? '');
 
         self::$mergedMailgateMessages[] = [
             'collector_id' => $collectorId,
@@ -348,20 +462,8 @@ class FilterEngine
             'ticket_item'  => clone $item,
         ];
 
-        // Direct active MailCollector instance to route to ACCEPTED folder if configured
-        $activeCollector = self::getActiveMailCollector();
-        if ($activeCollector !== null) {
-            $acceptedFolderKey = defined(\MailCollector::class . '::ACCEPTED_FOLDER')
-                ? \MailCollector::ACCEPTED_FOLDER
-                : 'accepted';
-            $refusedFolderKey  = defined(\MailCollector::class . '::REFUSED_FOLDER')
-                ? \MailCollector::REFUSED_FOLDER
-                : 'refused';
-
-            if (!empty($activeCollector->fields[$acceptedFolderKey])) {
-                $activeCollector->fields[$refusedFolderKey] = $activeCollector->fields[$acceptedFolderKey];
-            }
-        }
+        // NOTE: We do NOT mutate $activeCollector->fields['refused_folder'] in memory,
+        // preventing corrupting subsequent legitimately refused messages in the same batch.
 
         self::registerMailgateCleanup();
     }
@@ -383,8 +485,9 @@ class FilterEngine
      */
     public static function resetMailgateState(): void
     {
-        self::$mergedMailgateMessages = [];
-        self::$cleanupRegistered      = false;
+        self::$mergedMailgateMessages  = [];
+        self::$cleanupRegistered       = false;
+        self::$activeCollectorOverride = null;
     }
 
     /**
@@ -394,6 +497,9 @@ class FilterEngine
      */
     public static function getActiveMailCollector(): ?\MailCollector
     {
+        if (self::$activeCollectorOverride !== null) {
+            return self::$activeCollectorOverride;
+        }
         $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 30);
         foreach ($trace as $frame) {
             if (isset($frame['object']) && $frame['object'] instanceof \MailCollector) {
@@ -460,12 +566,16 @@ class FilterEngine
                         try {
                             $mailCollector->storage->close();
                         } catch (\Throwable $e) {
-                            // Suppress close exception
+                            if (class_exists(Toolbox::class) && method_exists(Toolbox::class, 'logInFile')) {
+                                Toolbox::logInFile('ticketfilter', 'Storage close warning: ' . $e->getMessage());
+                            }
                         }
                     }
                 }
             } catch (\Throwable $e) {
-                // Suppress mailbox cleanup error on shutdown
+                if (class_exists(Toolbox::class) && method_exists(Toolbox::class, 'logInFile')) {
+                    Toolbox::logInFile('ticketfilter', 'Mailbox shutdown cleanup warning: ' . $e->getMessage());
+                }
             }
         }
 
@@ -481,7 +591,9 @@ class FilterEngine
                     }
                 }
             } catch (\Throwable $e) {
-                // Ignore DB cleanup errors on shutdown
+                if (class_exists(Toolbox::class) && method_exists(Toolbox::class, 'logInFile')) {
+                    Toolbox::logInFile('ticketfilter', 'glpi_notimportedemails shutdown cleanup warning: ' . $e->getMessage());
+                }
             }
         }
 
@@ -515,9 +627,18 @@ class FilterEngine
             }
 
             // Add clear confirmation note to the INFO banner
-            $infoNotice = $isDutch
-                ? sprintf('TicketFilter: %d e-mail(s) succesvol samengevoegd met bestaand ticket.', $mergedCount)
-                : sprintf('TicketFilter: %d email(s) successfully merged into existing ticket(s).', $mergedCount);
+            $infoNotice = sprintf(
+                _n(
+                    'TicketFilter: %d email successfully merged into existing ticket.',
+                    'TicketFilter: %d emails successfully merged into existing tickets.',
+                    $mergedCount,
+                    'ticketfilter'
+                ),
+                $mergedCount
+            );
+            if ($isDutch && str_starts_with($infoNotice, 'TicketFilter: ') && str_contains($infoNotice, 'email')) {
+                $infoNotice = sprintf('TicketFilter: %d e-mail(s) succesvol samengevoegd met bestaand ticket.', $mergedCount);
+            }
 
             if (!isset($_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey])) {
                 $_SESSION['MESSAGE_AFTER_REDIRECT'][$infoKey] = [];

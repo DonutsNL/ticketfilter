@@ -81,8 +81,13 @@ if (!function_exists('__')) {
 if (!isset($GLOBALS['DB'])) {
     class MockDB
     {
+        public static ?\Closure $mockRequestCallback = null;
+
         public function request(array $query): array
         {
+            if (self::$mockRequestCallback !== null) {
+                return (self::$mockRequestCallback)($query);
+            }
             return [];
         }
         public function tableExists(string $table): bool
@@ -109,6 +114,27 @@ if (!isset($GLOBALS['DB'])) {
     $GLOBALS['DB'] = new MockDB();
 }
 
+if (!isset($GLOBALS['GLPI_CACHE']) || $GLOBALS['GLPI_CACHE'] === null) {
+    class MockGlpiCache
+    {
+        private array $cache = [];
+        public function get(string $key, $default = null)
+        {
+            return $this->cache[$key] ?? $default;
+        }
+        public function set(string $key, $value, $ttl = null): bool
+        {
+            $this->cache[$key] = $value;
+            return true;
+        }
+        public function has(string $key): bool
+        {
+            return isset($this->cache[$key]);
+        }
+    }
+    $GLOBALS['GLPI_CACHE'] = new MockGlpiCache();
+}
+
 if (!class_exists('CommonDBTM', false)) {
     class CommonDBTM
     {
@@ -120,6 +146,17 @@ if (!class_exists('CommonDBTM', false)) {
             return 'glpi_mock';
         }
 
+        public array $updates = [];
+
+        public function update(array $input, bool $history = true): bool
+        {
+            $this->updates[] = $input;
+            if (isset($input['status'])) {
+                $this->fields['status'] = $input['status'];
+            }
+            return true;
+        }
+
         public function getFromDB(int $id): bool
         {
             $this->fields['id'] = $id;
@@ -128,9 +165,25 @@ if (!class_exists('CommonDBTM', false)) {
     }
 }
 
+if (!function_exists('_n')) {
+    function _n(string $singular, string $plural, int $number, string $domain = 'glpi'): string
+    {
+        return $number <= 1 ? $singular : $plural;
+    }
+}
+
+if (!function_exists('getSonsOf')) {
+    function getSonsOf(string $table, int $id): array
+    {
+        return [$id];
+    }
+}
+
 if (!class_exists('CommonDropdown', false)) {
     class CommonDropdown extends CommonDBTM
     {
+        public static $rightname = 'dropdown';
+
         public static function getMenuName(): string
         {
             return 'MockDropdown';
@@ -167,10 +220,21 @@ if (!class_exists('Ticket', false)) {
     class Ticket extends CommonITILObject
     {
         public string $userlinkclass = 'MockTicketUser';
+        public bool $mockCanAddFollowup = true;
 
         public static function getTable($classname = null): string
         {
             return 'glpi_tickets';
+        }
+
+        public function canAddFollowup(): bool
+        {
+            return $this->mockCanAddFollowup;
+        }
+
+        public function canAddFollowupItem(): bool
+        {
+            return $this->mockCanAddFollowup;
         }
     }
 }
@@ -192,10 +256,20 @@ if (!class_exists('User', false)) {
     class User extends CommonDBTM
     {
         public static array $mockEmails = [];
+        public static array $mockUsers = [];
 
         public static function getOrImportByEmail(string $email, bool $create = false)
         {
             return self::$mockEmails[$email] ?? 0;
+        }
+
+        public function getFromDB($id): bool
+        {
+            if (isset(self::$mockUsers[$id])) {
+                $this->fields = self::$mockUsers[$id];
+                return true;
+            }
+            return parent::getFromDB($id);
         }
 
         public function getDefaultEmail(): string
@@ -226,6 +300,7 @@ if (!class_exists('Session', false)) {
     class Session
     {
         public static array $messages = [];
+        public static int $mockLoginUserId = 0;
 
         public static function addMessageAfterRedirect(string $msg, bool $check_once = false, int $severity = 0): void
         {
@@ -237,6 +312,11 @@ if (!class_exists('Session', false)) {
             return true;
         }
 
+        public static function haveRight(string $module, int $right): bool
+        {
+            return true;
+        }
+
         public static function getNewCSRFToken(bool $standalone = false): string
         {
             return 'mock_csrf_token_glpi11';
@@ -244,7 +324,7 @@ if (!class_exists('Session', false)) {
 
         public static function getLoginUserID(): int
         {
-            return 1;
+            return self::$mockLoginUserId;
         }
     }
 }

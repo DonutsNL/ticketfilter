@@ -105,13 +105,11 @@ class TicketHandler
      */
     public function setStatusToNew(): bool
     {
-        global $DB;
         if ($this->ticket && $this->getId() > 0) {
-            return (bool)$DB->update(
-                $this->ticket->getTable(),
-                ['status' => CommonITILObject::INCOMING],
-                ['id' => $this->getId()]
-            );
+            return (bool)$this->ticket->update([
+                'id'     => $this->getId(),
+                'status' => CommonITILObject::INCOMING,
+            ]);
         }
         return false;
     }
@@ -123,13 +121,11 @@ class TicketHandler
      */
     public function setStatusToSolved(): bool
     {
-        global $DB;
         if ($this->ticket && $this->getId() > 0) {
-            return (bool)$DB->update(
-                $this->ticket->getTable(),
-                ['status' => CommonITILObject::SOLVED],
-                ['id' => $this->getId()]
-            );
+            return (bool)$this->ticket->update([
+                'id'     => $this->getId(),
+                'status' => CommonITILObject::SOLVED,
+            ]);
         }
         return false;
     }

@@ -35,7 +35,7 @@ if [ -d "$GLPIPATH" ]; then
 	cd "$GLPIPATH" || exit 1
 	if [ -d './ticketfilter' ]; then 
 		mkdir -p ./ticketfilter/release
-		zip -r ./ticketfilter/release/ticketfilter.zip ./ticketfilter -x "/ticketfilter/tools/*" "/ticketfilter/ticketfilter.xml" "/ticketfilter/.vscode/*" "/ticketfilter/.gitignore" "/ticketfilter/.github/*" "/ticketfilter/.git/*" "/ticketfilter/release/*" "/ticketfilter/composer.lock" "/ticketfilter/composer.json" "/ticketfilter/vendor/*" "/ticketfilter/tests/*"
+		zip -r ./ticketfilter/release/ticketfilter.zip ./ticketfilter -x "/ticketfilter/tools/*" "/ticketfilter/ticketfilter.xml" "/ticketfilter/.vscode/*" "/ticketfilter/.gitignore" "/ticketfilter/.github/*" "/ticketfilter/.git/*" "/ticketfilter/release/*" "/ticketfilter/composer.lock" "/ticketfilter/composer.json" "/ticketfilter/vendor/*" "/ticketfilter/tests/*" "/ticketfilter/docs/superpowers/*"
 		cp ./ticketfilter/release/ticketfilter.zip ./ticketfilter/release/ticketfilter_${NEWVERSION}.zip
 		echo "✅ Release packages created:"
 		echo "   - $GLPIPATH/ticketfilter/release/ticketfilter.zip"

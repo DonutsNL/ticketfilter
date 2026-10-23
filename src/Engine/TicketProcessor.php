@@ -97,15 +97,20 @@ class TicketProcessor
 
         $ticket = new Ticket();
         $table  = $ticket->getTable();
+        $escapedToken = addcslashes($token, '%_');
         $where  = [
-            'name'       => ['LIKE', '%' . $token . '%'],
+            'name'       => ['LIKE', '%' . $escapedToken . '%'],
             'is_deleted' => 0,
         ];
 
-        if ($entitiesId > 0) {
+        if ($entitiesId >= 0) {
             if ($isRecursive && function_exists('getSonsOf')) {
-                $entities = getSonsOf('glpi_entities', $entitiesId);
-                $where['entities_id'] = $entities;
+                try {
+                    $entities = getSonsOf('glpi_entities', $entitiesId);
+                    $where['entities_id'] = $entities;
+                } catch (\Throwable $e) {
+                    $where['entities_id'] = $entitiesId;
+                }
             } else {
                 $where['entities_id'] = $entitiesId;
             }
@@ -167,6 +172,28 @@ class TicketProcessor
     {
         $userId    = 0;
         $userEmail = '';
+
+        $hasActiveMailCollector = (class_exists(FilterEngine::class) && method_exists(FilterEngine::class, 'getActiveMailCollector') && FilterEngine::getActiveMailCollector() !== null);
+        $loginUserId = (class_exists(\Session::class) && method_exists(\Session::class, 'getLoginUserID')) ? (int)\Session::getLoginUserID() : 0;
+
+        // Context 1: Interactive user session (Web UI / API).
+        // Identity MUST come strictly from Session::getLoginUserID(), NEVER caller-supplied input keys!
+        if ($loginUserId > 0 && !$hasActiveMailCollector) {
+            $userId = $loginUserId;
+            if (class_exists(\User::class)) {
+                $u = new \User();
+                if ($u->getFromDB($userId)) {
+                    $uEmail = method_exists($u, 'getDefaultEmail') ? $u->getDefaultEmail() : '';
+                    if (!empty($uEmail)) {
+                        $userEmail = self::cleanEmail($uEmail);
+                    }
+                }
+            }
+            return [
+                'userId'    => $userId,
+                'userEmail' => $userEmail,
+            ];
+        }
 
         if (!empty($item->input['_users_id_requester'])) {
             if (is_numeric($item->input['_users_id_requester'])) {
@@ -288,6 +315,29 @@ class TicketProcessor
         $sender = self::extractSenderInfo($incomingItem);
         $senderEmail = $sender['userEmail'];
         $senderId    = $sender['userId'];
+
+        $hasActiveMailCollector = (class_exists(FilterEngine::class) && method_exists(FilterEngine::class, 'getActiveMailCollector') && FilterEngine::getActiveMailCollector() !== null);
+        $loginUserId = (class_exists(\Session::class) && method_exists(\Session::class, 'getLoginUserID')) ? (int)\Session::getLoginUserID() : 0;
+        $isInteractive = ($loginUserId > 0 && !$hasActiveMailCollector);
+
+        // Security check for interactive (Web / API) sessions:
+        // The user MUST have rights to add a followup to the target ticket!
+        if ($isInteractive) {
+            $canAddFollowup = false;
+            if (method_exists($targetTicket, 'canAddFollowup')) {
+                $canAddFollowup = (bool)$targetTicket->canAddFollowup();
+            } elseif (method_exists($targetTicket, 'canAddFollowupItem')) {
+                $canAddFollowup = (bool)$targetTicket->canAddFollowupItem();
+            }
+            if (!$canAddFollowup) {
+                return [
+                    'authorized'  => false,
+                    'reason'      => 'Logged-in user lacks followup rights on target ticket',
+                    'senderEmail' => $senderEmail,
+                    'senderId'    => $senderId,
+                ];
+            }
+        }
 
         if ($policy === FilterPattern::POLICY_OPEN) {
             return [
@@ -476,11 +526,10 @@ class TicketProcessor
                 }
             }
 
-            $DB->update(
-                $targetTicket->getTable(),
-                ['status' => CommonITILObject::INCOMING],
-                ['id' => $targetTicketId]
-            );
+            $targetTicket->update([
+                'id'     => $targetTicketId,
+                'status' => CommonITILObject::INCOMING,
+            ]);
 
             $reopenContent = self::formatInterventionMessage(
                 (string)($pattern[FilterPattern::FIELD_REOPEN_MESSAGE_TEMPLATE] ?? ''),
@@ -541,26 +590,14 @@ class TicketProcessor
 
         // Create an independent private followup with TicketFilter details
         // so technicians can see the rule match without exposing technical details to requesters.
-        $isDutch = (isset($_SESSION['glpilanguage']) && str_starts_with((string)$_SESSION['glpilanguage'], 'nl'));
-        $privateSuffix = $isPrivate ? ($isDutch ? ' (privé reactie)' : ' (private followup)') : '';
-
-        if ($isDutch) {
-            $auditContent = sprintf(
-                'E-mail samengevoegd via filterregel <strong>%s</strong> (match: <code>%s</code>, afzender: <code>%s</code>)%s',
-                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
-                $privateSuffix
-            );
-        } else {
-            $auditContent = sprintf(
-                'Email merged via filter rule <strong>%s</strong> (match: <code>%s</code>, sender: <code>%s</code>)%s',
-                htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8'),
-                htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8'),
-                $privateSuffix
-            );
-        }
+        $privateSuffix = $isPrivate ? ' (' . __('private followup', 'ticketfilter') . ')' : '';
+        $auditContent = sprintf(
+            __('Email merged via filter rule %s (match: %s, sender: %s)%s', 'ticketfilter'),
+            '<strong>' . htmlspecialchars($patternName, ENT_QUOTES, 'UTF-8') . '</strong>',
+            '<code>' . htmlspecialchars($matchedToken, ENT_QUOTES, 'UTF-8') . '</code>',
+            '<code>' . htmlspecialchars($sender['userEmail'], ENT_QUOTES, 'UTF-8') . '</code>',
+            $privateSuffix
+        );
 
         try {
             $auditFollowup = new ITILFollowup();
@@ -590,18 +627,23 @@ class TicketProcessor
             }
         }
 
-        $solvedPattern = (string)($pattern[FilterPattern::FIELD_SOLVEDMATCHSTR] ?? '');
-        if ($solvedPattern !== '') {
+        $enableAutoSolve = !empty($pattern[FilterPattern::FIELD_ENABLE_AUTO_SOLVE]);
+        $solvedPattern   = (string)($pattern[FilterPattern::FIELD_SOLVEDMATCHSTR] ?? '');
+        if ($enableAutoSolve && $solvedPattern !== '') {
             $solvedMatch = PatternMatcher::match($solvedPattern, $subject, PatternMatcher::GROUP_SOLVED);
 
             if ($solvedMatch['matched'] && $solvedMatch['token'] !== null) {
                 $maxLen = (int)($pattern[FilterPattern::FIELD_SOLVEDMATCHSTRLEN] ?? 25);
                 if (mb_strlen($solvedMatch['token']) <= $maxLen) {
-                    $DB->update(
-                        $targetTicket->getTable(),
-                        ['status' => CommonITILObject::SOLVED],
-                        ['id' => $targetTicketId]
-                    );
+                    $targetStatus = (int)($pattern[FilterPattern::FIELD_AUTO_SOLVE_STATUS] ?? CommonITILObject::SOLVED);
+                    if (!in_array($targetStatus, [CommonITILObject::SOLVED, CommonITILObject::CLOSED], true)) {
+                        $targetStatus = CommonITILObject::SOLVED;
+                    }
+
+                    $targetTicket->update([
+                        'id'     => $targetTicketId,
+                        'status' => $targetStatus,
+                    ]);
 
                     $solvedContent = self::formatInterventionMessage(
                         (string)($pattern[FilterPattern::FIELD_SOLVED_MESSAGE_TEMPLATE] ?? ''),

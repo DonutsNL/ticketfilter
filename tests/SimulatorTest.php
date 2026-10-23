@@ -78,4 +78,13 @@ assertCondition($resInvalid['success'] === false, 'Simulator detects invalid pat
 assertCondition($resInvalid['simulated_action'] === 'INVALID_REGEX', 'Simulator returns INVALID_REGEX');
 assertCondition($resInvalid['error'] !== null, 'Simulator provides error message');
 
+// 4. Test ambiguous collision detection in simulator
+MockDB::$mockRequestCallback = function (array $query) {
+    return [['id' => 101], ['id' => 102]];
+};
+$resCollision = Simulator::simulateSample($pattern, $subject, '', 'tech@domain.com');
+assertCondition($resCollision['collision'] === true, 'Simulator accurately identifies ambiguous collision (>1 tickets)');
+assertCondition(count($resCollision['target_tickets']) === 2, 'Simulator returns all colliding candidate tickets');
+MockDB::$mockRequestCallback = null;
+
 echo "SimulatorTest completed successfully!\n\n";

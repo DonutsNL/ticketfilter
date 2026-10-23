@@ -54,11 +54,19 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if p.SolvedMatchString %}
+                        {% if p.enable_auto_solve and p.SolvedMatchString %}
                             <code>{{ p.SolvedMatchString }}</code>
+                            <div class="mt-1">
+                                <span class="badge bg-blue-lt">
+                                    {{ p.auto_solve_status == 6 ? __('Auto-close', 'ticketfilter') : __('Auto-solve', 'ticketfilter') }}
+                                </span>
+                            </div>
                             {% if p.SolvedMatchStringLength %}
                                 <div class="text-muted small">{{ __('Max length:', 'ticketfilter') }} {{ p.SolvedMatchStringLength }}</div>
                             {% endif %}
+                        {% elseif p.SolvedMatchString %}
+                            <code class="text-muted">{{ p.SolvedMatchString }}</code>
+                            <div class="text-muted small">{{ __('Disabled', 'ticketfilter') }}</div>
                         {% else %}
                             <span class="text-muted small">—</span>
                         {% endif %}
@@ -90,6 +98,16 @@
                     <td>
                         <div class="d-flex flex-wrap gap-1">
                             {% set has_options = false %}
+                            {% if p.apply_to_mailgate or p.apply_to_api or p.apply_to_web %}
+                                {% set has_options = true %}
+                                <span class="badge bg-secondary-lt" title="{{ __('Execution channels', 'ticketfilter') }}">
+                                    {% set channels = [] %}
+                                    {% if p.apply_to_mailgate %}{% set channels = channels|merge(['Mail']) %}{% endif %}
+                                    {% if p.apply_to_api %}{% set channels = channels|merge(['API']) %}{% endif %}
+                                    {% if p.apply_to_web %}{% set channels = channels|merge(['Web']) %}{% endif %}
+                                    {{ channels|join(', ') }}
+                                </span>
+                            {% endif %}
                             {% if p.ReopenClosedTickets %}
                                 {% set has_options = true %}
                                 <span class="badge bg-secondary-lt">{{ __('Reopen (<%dd)', 'ticketfilter')|replace({'%d': p.max_reopen_age_days|default(30)}) }}</span>

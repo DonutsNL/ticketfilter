@@ -83,21 +83,35 @@
                                 </div>
                             </div>
 
-                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3 mt-4">{{ __('Auto-solve keyword (optional)', 'ticketfilter') }}</div>
-                            <div class="row g-3 mb-2">
-                                <div class="col-md-8">
-                                    <label class="form-label d-flex align-items-center" for="modalPatternSolvedStr">
-                                        <span>{{ __('Auto-solve keyword pattern (optional)', 'ticketfilter') }}</span>
-                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Optional regular expression to automatically mark the target ticket as solved (e.g. when an email contains [Closed] or [Resolved]). Must include named group (?&lt;solved&gt;...).', 'ticketfilter') }}">?</span>
-                                    </label>
-                                    <input type="text" class="form-control font-monospace" name="SolvedMatchString" id="modalPatternSolvedStr" placeholder="/.*?(?<solved>Closed|Resolved).*/i">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label d-flex align-items-center" for="modalPatternSolvedLen">
-                                        <span>{{ __('Max keyword length', 'ticketfilter') }}</span>
-                                        <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Maximum character length for the auto-solve keyword to prevent oversized matches from triggering ticket resolution.', 'ticketfilter') }}">?</span>
-                                    </label>
-                                    <input type="number" class="form-control" name="SolvedMatchStringLength" id="modalPatternSolvedLen" value="255" min="1">
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3 mt-4">{{ __('Auto-solve / close (optional)', 'ticketfilter') }}</div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input me-2" type="checkbox" name="enable_auto_solve" id="modalPatternEnableAutoSolve" value="1">
+                                <label class="form-check-label fw-semibold" for="modalPatternEnableAutoSolve">{{ __('Enable automated ticket resolution', 'ticketfilter') }}</label>
+                            </div>
+                            <div id="modalAutoSolveWrap" style="display: none;">
+                                <div class="row g-3 mb-2">
+                                    <div class="col-md-8">
+                                        <label class="form-label d-flex align-items-center" for="modalPatternSolvedStr">
+                                            <span>{{ __('Auto-solve keyword pattern', 'ticketfilter') }}</span>
+                                            <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Optional regular expression to automatically mark the target ticket as solved (e.g. when an email contains [Closed] or [Resolved]). Must include named group (?&lt;solved&gt;...).', 'ticketfilter') }}">?</span>
+                                        </label>
+                                        <input type="text" class="form-control font-monospace" name="SolvedMatchString" id="modalPatternSolvedStr" placeholder="/.*?(?<solved>Closed|Resolved).*/i">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label d-flex align-items-center" for="modalPatternSolvedLen">
+                                            <span>{{ __('Max keyword length', 'ticketfilter') }}</span>
+                                            <span class="form-help ms-1" tabindex="0" data-bs-toggle="popover" data-bs-placement="top" data-bs-html="true" data-bs-title="{{ __('Help', 'ticketfilter') }}" data-bs-content="{{ __('Maximum character length for the auto-solve keyword to prevent oversized matches from triggering ticket resolution.', 'ticketfilter') }}">?</span>
+                                        </label>
+                                        <input type="number" class="form-control" name="SolvedMatchStringLength" id="modalPatternSolvedLen" value="255" min="1">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="modalPatternAutoSolveStatus">{{ __('Target status when resolved', 'ticketfilter') }}</label>
+                                        <select class="form-select" name="auto_solve_status" id="modalPatternAutoSolveStatus">
+                                            <option value="5">{{ __('Solved', 'ticketfilter') }}</option>
+                                            <option value="6">{{ __('Closed', 'ticketfilter') }}</option>
+                                        </select>
+                                        <div class="form-text small text-muted">{{ __('Select Closed if monitoring systems send recovery messages that should close tickets directly.', 'ticketfilter') }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -149,6 +163,39 @@
                                         </div>
                                     </div>
                                     <div class="form-text small text-muted mt-1">{{ __('Emails arriving after this threshold will trigger the unmatched action instead of reopening.', 'ticketfilter') }}</div>
+                                </div>
+                            </div>
+
+                            <div class="text-muted fw-semibold small text-uppercase border-bottom pb-1 mb-3 mt-4">{{ __('Execution channels', 'ticketfilter') }}</div>
+                            <div class="card bg-light-subtle border p-3">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="apply_to_mailgate" id="modalPatternApplyMailgate" value="1" checked>
+                                            <label class="form-check-label fw-semibold" for="modalPatternApplyMailgate">
+                                                <i class="fas fa-envelope text-muted me-1"></i> {{ __('Mailgate', 'ticketfilter') }}
+                                            </label>
+                                            <div class="form-text small text-muted">{{ __('Incoming mail receivers', 'ticketfilter') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="apply_to_api" id="modalPatternApplyApi" value="1">
+                                            <label class="form-check-label fw-semibold" for="modalPatternApplyApi">
+                                                <i class="fas fa-plug text-muted me-1"></i> {{ __('API / Webhooks', 'ticketfilter') }}
+                                            </label>
+                                            <div class="form-text small text-muted">{{ __('REST / XML-RPC calls', 'ticketfilter') }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="apply_to_web" id="modalPatternApplyWeb" value="1">
+                                            <label class="form-check-label fw-semibold" for="modalPatternApplyWeb">
+                                                <i class="fas fa-desktop text-muted me-1"></i> {{ __('Web UI', 'ticketfilter') }}
+                                            </label>
+                                            <div class="form-text small text-muted">{{ __('Interactive manual creation', 'ticketfilter') }}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -312,6 +359,12 @@ window.openPatternModal = function(id, triggerBtn) {
         document.getElementById('modalPatternSearchBody').checked = false;
         document.getElementById('modalPatternReopenMsg').value = '';
         document.getElementById('modalPatternSolvedMsg').value = '';
+        document.getElementById('modalPatternApplyMailgate').checked = true;
+        document.getElementById('modalPatternApplyApi').checked = false;
+        document.getElementById('modalPatternApplyWeb').checked = false;
+        document.getElementById('modalPatternEnableAutoSolve').checked = false;
+        document.getElementById('modalAutoSolveWrap').style.display = 'none';
+        document.getElementById('modalPatternAutoSolveStatus').value = '5';
         if (deleteBtn) {
             deleteBtn.style.display = 'none';
         }
@@ -399,6 +452,15 @@ window.openPatternModal = function(id, triggerBtn) {
         document.getElementById('modalPatternReopenMsg').value = p.reopen_message_template || '';
         document.getElementById('modalPatternSolvedMsg').value = p.solved_message_template || '';
 
+        document.getElementById('modalPatternApplyMailgate').checked = (parseInt(p.apply_to_mailgate, 10) === 1);
+        document.getElementById('modalPatternApplyApi').checked = (parseInt(p.apply_to_api, 10) === 1);
+        document.getElementById('modalPatternApplyWeb').checked = (parseInt(p.apply_to_web, 10) === 1);
+
+        var isAutoSolve = (parseInt(p.enable_auto_solve, 10) === 1);
+        document.getElementById('modalPatternEnableAutoSolve').checked = isAutoSolve;
+        document.getElementById('modalAutoSolveWrap').style.display = isAutoSolve ? 'block' : 'none';
+        document.getElementById('modalPatternAutoSolveStatus').value = p.auto_solve_status || '5';
+
         if (modal) {
             modal.show();
         }
@@ -426,6 +488,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (reopenCheck) {
         reopenCheck.addEventListener('change', function() {
             var wrap = document.getElementById('modalReopenAgeWrap');
+            if (wrap) {
+                wrap.style.display = this.checked ? 'block' : 'none';
+            }
+        });
+    }
+
+    var autoSolveCheck = document.getElementById('modalPatternEnableAutoSolve');
+    if (autoSolveCheck) {
+        autoSolveCheck.addEventListener('change', function() {
+            var wrap = document.getElementById('modalAutoSolveWrap');
             if (wrap) {
                 wrap.style.display = this.checked ? 'block' : 'none';
             }

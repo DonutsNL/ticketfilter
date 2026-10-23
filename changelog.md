@@ -22,7 +22,14 @@
 - Isolated technical merge audit trail into independent private followups (`ITILFollowup` with `is_private=1`, `users_id=0`, `_disablenotif=true`), preventing internal filter metadata from leaking into customer-facing notifications.
 - Resolved anonymous and alternative email requester identification in mailgate collections.
 - Suppressed bogus `glpi_notimportedemails` error records and synchronized mailgate redirect session counters on successfully merged tickets.
-- Added comprehensive architectural mailgate processing flow documentation (`docs/mailgate_flow.md`).
+- Added execution source targeting per pattern to selectively process Mailgate, Web API, or Web UI submissions.
+- Added automated monitoring ticket resolution with direct status transitions to Solved or Closed via standard GLPI ticket lifecycle.
+- Added standard GNU gettext internationalization (`locales/`) with pre-compiled catalogs for Dutch (`nl_NL`) and British English (`en_GB`).
+- Security: Prevented sender identity spoofing in interactive sessions by deriving user identity strictly from authenticated session state and enforcing target ticket followup permissions.
+- Security: Eliminated DOM-based XSS vulnerabilities in regex simulator by transitioning dynamic tables and alerts to standard DOM creation and `textContent`.
+- Security: Enforced strict `config` permission boundaries across `FilterPattern` lifecycle operations.
+- Security: Hardened mailgate interception by requiring verified active `MailCollector` on call stack and eliminating runtime mutations of mail collector properties.
+- Security: Enforced strict entity boundary isolation and escaped LIKE wildcards during ticket pool lookups.
 - Full compatibility with GLPI 11 and GLPI 12 with PHP 8.0+.
 
 ## 1.4.0

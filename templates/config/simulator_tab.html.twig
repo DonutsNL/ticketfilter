@@ -245,10 +245,20 @@ document.getElementById('sampleSimulatorForm').addEventListener('submit', functi
         if (data && data.csrf_token && window.updateGlpiCsrfToken) {
             window.updateGlpiCsrfToken(data.csrf_token);
         }
-        document.getElementById('sampleSimResult').style.display = 'block';
+        function setAlertBadge(containerId, alertClass, iconClass, message) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const div = document.createElement('div');
+            div.className = 'alert ' + alertClass + ' py-2 mb-0';
+            const icon = document.createElement('i');
+            icon.className = iconClass + ' me-1';
+            div.appendChild(icon);
+            div.appendChild(document.createTextNode(' ' + message));
+            container.replaceChildren(div);
+        }
 
         if (!data.success) {
-            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-times-circle me-1"></i> ' + (data.error || 'Syntax error') + '</div>';
+            setAlertBadge('sampleSimBadge', 'alert-danger', 'fas fa-times-circle', data.error || 'Syntax error');
             document.getElementById('resPatternValid').innerText = 'No';
             document.getElementById('resMatchedToken').innerText = '—';
             document.getElementById('resTargetTickets').innerText = '—';
@@ -257,28 +267,54 @@ document.getElementById('sampleSimulatorForm').addEventListener('submit', functi
         }
 
         document.getElementById('resPatternValid').innerText = 'Yes (Valid)';
-        document.getElementById('resMatchedToken').innerHTML = data.token ? '<code>' + data.token + '</code>' : 'None';
 
-        if (data.target_tickets && data.target_tickets.length > 0) {
-            document.getElementById('resTargetTickets').innerHTML = data.target_tickets.map(id => '<a href="{{ glpi_url }}/front/ticket.form.php?id=' + id + '" target="_blank" class="badge bg-secondary-lt text-decoration-none me-1">#' + id + '</a>').join('');
+        const tokenEl = document.getElementById('resMatchedToken');
+        if (data.token) {
+            const code = document.createElement('code');
+            code.textContent = data.token;
+            tokenEl.replaceChildren(code);
         } else {
-            document.getElementById('resTargetTickets').innerText = 'None found in pool';
+            tokenEl.textContent = 'None';
+        }
+
+        const targetEl = document.getElementById('resTargetTickets');
+        targetEl.replaceChildren();
+        if (data.target_tickets && data.target_tickets.length > 0) {
+            data.target_tickets.forEach(id => {
+                const a = document.createElement('a');
+                a.href = '{{ glpi_url }}/front/ticket.form.php?id=' + encodeURIComponent(id);
+                a.target = '_blank';
+                a.className = 'badge bg-secondary-lt text-decoration-none me-1';
+                a.textContent = '#' + id;
+                targetEl.appendChild(a);
+            });
+        } else {
+            targetEl.textContent = 'None found in pool';
         }
 
         document.getElementById('resSimulatedAction').innerText = data.simulated_action;
 
         if (data.collision) {
-            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i> Collision: multiple tickets matched. Action would be aborted.</div>';
+            setAlertBadge('sampleSimBadge', 'alert-danger', 'fas fa-exclamation-triangle', 'Collision: multiple tickets matched. Action would be aborted.');
         } else if (data.matched) {
-            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-1"></i> Pattern matched successfully. Simulated action: ' + data.simulated_action + '</div>';
+            setAlertBadge('sampleSimBadge', 'alert-success', 'fas fa-check-circle', 'Pattern matched successfully. Simulated action: ' + (data.simulated_action || ''));
         } else {
-            document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-secondary py-2 mb-0"><i class="fas fa-info-circle me-1"></i> Pattern did not match this subject (normal non-match).</div>';
+            setAlertBadge('sampleSimBadge', 'alert-secondary', 'fas fa-info-circle', 'Pattern did not match this subject (normal non-match).');
         }
     })
     .catch(err => {
         unlockBtn();
         document.getElementById('sampleSimResult').style.display = 'block';
-        document.getElementById('sampleSimBadge').innerHTML = '<div class="alert alert-danger py-2 mb-0"><i class="fas fa-times-circle me-1"></i> ' + err.message + '</div>';
+        const container = document.getElementById('sampleSimBadge');
+        if (container) {
+            const div = document.createElement('div');
+            div.className = 'alert alert-danger py-2 mb-0';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-times-circle me-1';
+            div.appendChild(icon);
+            div.appendChild(document.createTextNode(' ' + err.message));
+            container.replaceChildren(div);
+        }
     });
 });
 
@@ -356,10 +392,36 @@ document.getElementById('historicalSimulatorForm').addEventListener('submit', fu
         if (data.matches && data.matches.length > 0) {
             data.matches.forEach(m => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = '<td><a href="{{ glpi_url }}/front/ticket.form.php?id=' + m.ticket_id + '" target="_blank" class="fw-semibold text-decoration-none">#' + m.ticket_id + '</a></td>' +
-                    '<td class="small text-truncate" style="max-width: 200px;" title="' + m.ticket_name + '">' + m.ticket_name + '</td>' +
-                    '<td><code>' + m.token + '</code></td>' +
-                    '<td>' + (m.is_collision ? '<span class="badge bg-danger-lt">Collision</span>' : '<span class="badge bg-green-lt">Unique</span>') + '</td>';
+
+                const tdId = document.createElement('td');
+                const aLink = document.createElement('a');
+                aLink.href = '{{ glpi_url }}/front/ticket.form.php?id=' + encodeURIComponent(m.ticket_id);
+                aLink.target = '_blank';
+                aLink.className = 'fw-semibold text-decoration-none';
+                aLink.textContent = '#' + m.ticket_id;
+                tdId.appendChild(aLink);
+
+                const tdName = document.createElement('td');
+                tdName.className = 'small text-truncate';
+                tdName.style.maxWidth = '200px';
+                tdName.setAttribute('title', m.ticket_name || '');
+                tdName.textContent = m.ticket_name || '';
+
+                const tdToken = document.createElement('td');
+                const code = document.createElement('code');
+                code.textContent = m.token || '';
+                tdToken.appendChild(code);
+
+                const tdCol = document.createElement('td');
+                const colBadge = document.createElement('span');
+                colBadge.className = m.is_collision ? 'badge bg-danger-lt' : 'badge bg-green-lt';
+                colBadge.textContent = m.is_collision ? 'Collision' : 'Unique';
+                tdCol.appendChild(colBadge);
+
+                tr.appendChild(tdId);
+                tr.appendChild(tdName);
+                tr.appendChild(tdToken);
+                tr.appendChild(tdCol);
                 tbody.appendChild(tr);
             });
         } else {

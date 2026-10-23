@@ -48,6 +48,8 @@ use Migration;
  */
 class FilterPattern extends CommonDropdown
 {
+    public static $rightname = 'config';
+
     /**
      * Database table name.
      */
@@ -81,6 +83,11 @@ class FilterPattern extends CommonDropdown
     public const FIELD_SOLVED_MESSAGE_TEMPLATE = 'solved_message_template';
     public const FIELD_ENTITIES_ID             = 'entities_id';
     public const FIELD_IS_RECURSIVE            = 'is_recursive';
+    public const FIELD_APPLY_TO_MAILGATE       = 'apply_to_mailgate';
+    public const FIELD_APPLY_TO_API            = 'apply_to_api';
+    public const FIELD_APPLY_TO_WEB            = 'apply_to_web';
+    public const FIELD_ENABLE_AUTO_SOLVE       = 'enable_auto_solve';
+    public const FIELD_AUTO_SOLVE_STATUS       = 'auto_solve_status';
 
     /**
      * Sender policy constants.
@@ -106,6 +113,31 @@ class FilterPattern extends CommonDropdown
     public static function getTable($classname = null): string
     {
         return self::TABLE;
+    }
+
+    public static function canView(): bool
+    {
+        return \Session::haveRight('config', READ);
+    }
+
+    public static function canCreate(): bool
+    {
+        return \Session::haveRight('config', UPDATE);
+    }
+
+    public function canUpdateItem(): bool
+    {
+        return \Session::haveRight('config', UPDATE);
+    }
+
+    public function canPurgeItem(): bool
+    {
+        return \Session::haveRight('config', UPDATE);
+    }
+
+    public function canDeleteItem(): bool
+    {
+        return \Session::haveRight('config', UPDATE);
     }
 
     /**
@@ -380,6 +412,11 @@ class FilterPattern extends CommonDropdown
                 `solved_message_template`   text NULL,
                 `entities_id`               int {$defaultKeySign} NOT NULL DEFAULT '0',
                 `is_recursive`              tinyint NOT NULL DEFAULT '1',
+                `apply_to_mailgate`         tinyint NOT NULL DEFAULT '1',
+                `apply_to_api`              tinyint NOT NULL DEFAULT '0',
+                `apply_to_web`              tinyint NOT NULL DEFAULT '0',
+                `enable_auto_solve`         tinyint NOT NULL DEFAULT '0',
+                `auto_solve_status`         tinyint NOT NULL DEFAULT '5',
                 PRIMARY KEY (`id`),
                 KEY `name` (`name`),
                 KEY `is_active` (`is_active`),
@@ -389,16 +426,17 @@ class FilterPattern extends CommonDropdown
 
             $DB->doQuery($query);
 
-            // Insert safe default example
+            // Insert safe default example (inactive by default for administrator review)
             $exampleQuery = <<<SQL
             INSERT INTO `$table` (
                 `name`, `comment`, `is_active`, `TicketMatchString`, `TicketMatchStringLength`,
                 `SolvedMatchString`, `SolvedMatchStringLength`, `sender_policy`, `unmatched_sender_action`,
-                `ReopenClosedTickets`, `max_reopen_age_days`, `SuppressNotification`
+                `ReopenClosedTickets`, `max_reopen_age_days`, `SuppressNotification`,
+                `apply_to_mailgate`, `apply_to_api`, `apply_to_web`, `enable_auto_solve`, `auto_solve_status`
             ) VALUES (
                 'Jira Issue Matcher',
                 'Matches external Jira issue keys such as (JIRA-1234) in the email subject',
-                '1',
+                '0',
                 '/.*?(?<match>\([A-Z]{2,10}-[0-9]{1,6}\)).*/i',
                 '25',
                 '/.*?(?<solved>Resolved|Closed).*/i',
@@ -407,7 +445,12 @@ class FilterPattern extends CommonDropdown
                 'new_ticket',
                 '1',
                 '30',
-                '1'
+                '1',
+                '1',
+                '0',
+                '0',
+                '1',
+                '5'
             );
             SQL;
 
@@ -437,6 +480,21 @@ class FilterPattern extends CommonDropdown
             }
             if (!$DB->fieldExists($table, self::FIELD_IS_RECURSIVE)) {
                 $migration->addField($table, self::FIELD_IS_RECURSIVE, 'tinyint', ['value' => 1]);
+            }
+            if (!$DB->fieldExists($table, self::FIELD_APPLY_TO_MAILGATE)) {
+                $migration->addField($table, self::FIELD_APPLY_TO_MAILGATE, 'tinyint', ['value' => 1]);
+            }
+            if (!$DB->fieldExists($table, self::FIELD_APPLY_TO_API)) {
+                $migration->addField($table, self::FIELD_APPLY_TO_API, 'tinyint', ['value' => 0]);
+            }
+            if (!$DB->fieldExists($table, self::FIELD_APPLY_TO_WEB)) {
+                $migration->addField($table, self::FIELD_APPLY_TO_WEB, 'tinyint', ['value' => 0]);
+            }
+            if (!$DB->fieldExists($table, self::FIELD_ENABLE_AUTO_SOLVE)) {
+                $migration->addField($table, self::FIELD_ENABLE_AUTO_SOLVE, 'tinyint', ['value' => 0]);
+            }
+            if (!$DB->fieldExists($table, self::FIELD_AUTO_SOLVE_STATUS)) {
+                $migration->addField($table, self::FIELD_AUTO_SOLVE_STATUS, 'tinyint', ['value' => 5]);
             }
             $migration->migrationOneTable($table);
         }
@@ -481,6 +539,21 @@ class FilterPattern extends CommonDropdown
             }
             if (!$DB->fieldExists($table, self::FIELD_IS_RECURSIVE)) {
                 $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_IS_RECURSIVE . "` TINYINT NOT NULL DEFAULT 1");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_APPLY_TO_MAILGATE)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_APPLY_TO_MAILGATE . "` TINYINT NOT NULL DEFAULT 1");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_APPLY_TO_API)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_APPLY_TO_API . "` TINYINT NOT NULL DEFAULT 0");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_APPLY_TO_WEB)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_APPLY_TO_WEB . "` TINYINT NOT NULL DEFAULT 0");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_ENABLE_AUTO_SOLVE)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_ENABLE_AUTO_SOLVE . "` TINYINT NOT NULL DEFAULT 0");
+            }
+            if (!$DB->fieldExists($table, self::FIELD_AUTO_SOLVE_STATUS)) {
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_AUTO_SOLVE_STATUS . "` TINYINT NOT NULL DEFAULT 5");
             }
         }
     }

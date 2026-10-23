@@ -268,6 +268,11 @@ final class TicketFilterController extends AbstractController
             'SearchTicketBody'        => (int)(bool)$request->request->get('SearchTicketBody', 0),
             'reopen_message_template' => trim((string)$request->request->get('reopen_message_template', '')),
             'solved_message_template' => trim((string)$request->request->get('solved_message_template', '')),
+            'apply_to_mailgate'       => (int)(bool)$request->request->get('apply_to_mailgate', 0),
+            'apply_to_api'            => (int)(bool)$request->request->get('apply_to_api', 0),
+            'apply_to_web'            => (int)(bool)$request->request->get('apply_to_web', 0),
+            'enable_auto_solve'       => (int)(bool)$request->request->get('enable_auto_solve', 0),
+            'auto_solve_status'       => in_array((int)$request->request->get('auto_solve_status', 5), [5, 6], true) ? (int)$request->request->get('auto_solve_status', 5) : 5,
         ];
 
         $pattern = new FilterPattern();

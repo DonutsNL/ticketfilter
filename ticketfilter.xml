@@ -12,12 +12,14 @@
 
 Key Features:
 - Regular Expression Matching: Extract custom tokens from email subjects to correlate with existing tickets.
+- Execution Source Targeting: Selectively apply rules to incoming Mailgate emails, Web API requests, or Web UI submissions.
 - Sender Authorization Policies: Restrict merging by requester, all ticket actors, domain matching, or open policy.
 - Candidate Prioritization: Automatically prioritizes original tickets (lowest ID) when multiple tickets share a token.
-- Automatic Reopening &amp; Auto-Solving: Automatically reopen closed tickets within configurable age thresholds or solve tickets based on resolution keywords.
+- Automatic Reopening &amp; Auto-Solving: Automatically reopen closed tickets within configurable age thresholds or solve tickets directly for monitoring systems.
 - Private Audit Followups: Log non-intrusive private audit followups visible to technicians without leaking internal filter details to requesters.
 - Mailgate Fault Isolation: Seamless multi-email batch processing without IMAP desynchronization, compatible with Microsoft 365 Exchange Online and standard IMAP servers.
 - Interactive Simulator &amp; Audit Trail: Test regex patterns against sample subjects and audit match history with automatic retention cleanup.
+- Multilingual Support: Built-in GNU gettext translations for English and Dutch.
 
 Compatible with GLPI 11 and GLPI 12.</en>
         </long>
@@ -33,17 +35,12 @@ Compatible with GLPI 11 and GLPI 12.</en>
         <version>
             <num>2.0.0</num>
             <compatibility>&gt;=11.0.0 &lt;13.0.0</compatibility>
-            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v2.0.0-rc1/ticketfilter_2.0.0.zip</download_url>
+            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v2.0.0/ticketfilter_2.0.0.zip</download_url>
         </version>
         <version>
             <num>1.4.0</num>
             <compatibility>~11.0.0</compatibility>
             <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.4.0/ticketfilter_1.4.0.zip</download_url>
-        </version>
-        <version>
-            <num>1.3.0</num>
-            <compatibility>~11.0.0</compatibility>
-            <download_url>https://github.com/DonutsNL/ticketfilter/releases/download/v1.3.0/ticketfilter_1.3.0.zip</download_url>
         </version>
         <version>
             <num>1.2.0</num>
