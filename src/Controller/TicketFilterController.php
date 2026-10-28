@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.0
+ *  @version    2.0.1
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+

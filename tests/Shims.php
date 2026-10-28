@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.0
+ *  @version    2.0.1
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -180,20 +180,37 @@ if (!function_exists('getSonsOf')) {
 }
 
 if (!class_exists('CommonDropdown', false)) {
-    class CommonDropdown extends CommonDBTM
-    {
-        public static $rightname = 'dropdown';
+    if (defined('GLPI_VERSION') && ((int) explode('.', (string) GLPI_VERSION)[0] >= 12)) {
+        class CommonDropdown extends CommonDBTM
+        {
+            public static string $rightname = 'dropdown';
 
-        public static function getMenuName(): string
-        {
-            return 'MockDropdown';
+            public static function getMenuName(): string
+            {
+                return 'MockDropdown';
+            }
+            public static function getSearchURL($full = true): string
+            {
+                return '/mock';
+            }
         }
-        public static function getSearchURL($full = true): string
+    } else {
+        class CommonDropdown extends CommonDBTM
         {
-            return '/mock';
+            public static $rightname = 'dropdown';
+
+            public static function getMenuName(): string
+            {
+                return 'MockDropdown';
+            }
+            public static function getSearchURL($full = true): string
+            {
+                return '/mock';
+            }
         }
     }
 }
+
 
 if (!class_exists('CommonITILObject', false)) {
     class CommonITILObject extends CommonDBTM

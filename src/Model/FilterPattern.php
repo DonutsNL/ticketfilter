@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.0
+ *  @version    2.0.1
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -38,17 +38,23 @@ declare(strict_types=1);
 
 namespace GlpiPlugin\Ticketfilter\Model;
 
-use CommonDropdown;
 use Config;
 use DBConnection;
+use GlpiPlugin\Ticketfilter\Compat\FilterPatternCompat;
 use Migration;
+
+// Version-selected compatibility layer (GLPI 11 untyped / GLPI 12 typed core properties).
+require_once dirname(__DIR__) . '/Compat/FilterPatternCompat.php';
 
 /**
  * FilterPattern configuration model representing ticket regex matching rules.
+ *
+ * $rightname ('config') is carried by FilterPatternCompat, version-typed for
+ * GLPI 11 and GLPI 12; redeclaring it here would be a fatal type-invariance error
+ * on one of the two cores.
  */
-class FilterPattern extends CommonDropdown
+class FilterPattern extends FilterPatternCompat
 {
-    public static $rightname = 'config';
 
     /**
      * Database table name.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1
+- Fixed fatal compile error under GLPI 12 / PHP 8.1+ (`Type of FilterPattern::$rightname must be string`): introduced version-selected compatibility intermediate `FilterPatternCompat` (`src/Compat/FilterPatternCompat.php`) with typed `public static string $rightname = 'config'` on GLPI 12 and untyped `$rightname` on GLPI 11.
+- Updated test shims (`tests/Shims.php`) to declare typed `CommonDropdown::$rightname` under GLPI 12.
+
 ## 2.0.0
 - Restructured codebase into modern modular service architecture aligned with modern GLPI standards (`Engine`, `Controller`, `Audit`, `Cron`, `Model`).
 - Redesigned pattern configuration modal into 3 focused tabs (*Pattern rules*, *Permissions*, *Notifications & notes*) following native Tabler/Bootstrap design.

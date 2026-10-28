@@ -7,8 +7,8 @@
 #
 #  This script is part of the TicketFilter package for GLPI.
 
-OLDVERSION='1.5.0'
-NEWVERSION='2.0.0'
+OLDVERSION='2.0.0'
+NEWVERSION='2.0.1'
 
 # Figure out what the GLPIpath is.
 FULLPATH=$(readlink -f "$0")
@@ -17,7 +17,7 @@ GLPIPATH="${FULLPATH%$KNOWN_SUFFIX}"
 
 # Verify GLPIPATH points to a directory.
 if [ -d "$GLPIPATH" ]; then
-	find "$GLPIPATH/ticketfilter" -type f -name "*.php" -not -path "*/vendor/*" -exec sed -i "s/$OLDVERSION/$NEWVERSION/g" {} +
+	find "$GLPIPATH/ticketfilter" -type f -name "*.php" -not -path "*/vendor/*" -exec sed -i -E "s/\b$OLDVERSION\b/$NEWVERSION/g" {} +
 
 	# Run automated tests and verify success before release
 	echo "Running automated test suite..."
