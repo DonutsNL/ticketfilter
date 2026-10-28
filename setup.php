@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.1
+ *  @version    2.0.2
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -48,7 +48,7 @@ if (!defined('PLUGIN_TICKETFILTER_NAME')) {
     define('PLUGIN_TICKETFILTER_NAME', 'ticketfilter');
 }
 if (!defined('PLUGIN_TICKETFILTER_VERSION')) {
-    define('PLUGIN_TICKETFILTER_VERSION', '2.0.1');
+    define('PLUGIN_TICKETFILTER_VERSION', '2.0.2');
 }
 if (!defined('PLUGIN_TICKETFILTER_MIN_GLPI')) {
     define('PLUGIN_TICKETFILTER_MIN_GLPI', '11.0.0');

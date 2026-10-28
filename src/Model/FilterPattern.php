@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.1
+ *  @version    2.0.2
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -482,7 +482,7 @@ class FilterPattern extends FilterPatternCompat
                 $migration->addField($table, self::FIELD_SOLVED_MESSAGE_TEMPLATE, 'text', ['value' => null]);
             }
             if (!$DB->fieldExists($table, self::FIELD_ENTITIES_ID)) {
-                $migration->addField($table, self::FIELD_ENTITIES_ID, 'integer', ['value' => 0]);
+                $migration->addField($table, self::FIELD_ENTITIES_ID, 'integer', ['value' => 0, 'unsigned' => true]);
             }
             if (!$DB->fieldExists($table, self::FIELD_IS_RECURSIVE)) {
                 $migration->addField($table, self::FIELD_IS_RECURSIVE, 'tinyint', ['value' => 1]);
@@ -522,6 +522,8 @@ class FilterPattern extends FilterPatternCompat
             return;
         }
         if (method_exists($DB, 'fieldExists')) {
+            $defaultKeySign = DBConnection::getDefaultPrimaryKeySignOption();
+
             if (!$DB->fieldExists($table, self::FIELD_SENDER_POLICY)) {
                 $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_SENDER_POLICY . "` VARCHAR(30) NOT NULL DEFAULT '" . self::POLICY_STRICT_REQUESTER . "'");
             }
@@ -541,8 +543,16 @@ class FilterPattern extends FilterPatternCompat
                 $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_SOLVED_MESSAGE_TEMPLATE . "` TEXT NULL");
             }
             if (!$DB->fieldExists($table, self::FIELD_ENTITIES_ID)) {
-                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_ENTITIES_ID . "` INT NOT NULL DEFAULT 0");
+                $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_ENTITIES_ID . "` INT {$defaultKeySign} NOT NULL DEFAULT 0");
+            } else {
+                $colRes = $DB->doQuery("SHOW COLUMNS FROM `{$table}` WHERE `Field` = '" . self::FIELD_ENTITIES_ID . "'");
+                if ($colRes && ($colData = $DB->fetchAssoc($colRes))) {
+                    if (isset($colData['Type']) && !str_contains(strtolower((string)$colData['Type']), 'unsigned')) {
+                        $DB->doQuery("ALTER TABLE `{$table}` MODIFY COLUMN `" . self::FIELD_ENTITIES_ID . "` INT {$defaultKeySign} NOT NULL DEFAULT 0");
+                    }
+                }
             }
+
             if (!$DB->fieldExists($table, self::FIELD_IS_RECURSIVE)) {
                 $DB->doQuery("ALTER TABLE `{$table}` ADD COLUMN `" . self::FIELD_IS_RECURSIVE . "` TINYINT NOT NULL DEFAULT 1");
             }

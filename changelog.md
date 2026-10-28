@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.2
+- Fixed signed integer warning on `entities_id` foreign key (`migration:unsigned_keys`): aligned `entities_id` in `FilterPattern` migration and schema self-healing to unsigned integer adhering to GLPI database primary and foreign key conventions.
+
 ## 2.0.1
 - Fixed fatal compile error under GLPI 12 / PHP 8.1+ (`Type of FilterPattern::$rightname must be string`): introduced version-selected compatibility intermediate `FilterPatternCompat` (`src/Compat/FilterPatternCompat.php`) with typed `public static string $rightname = 'config'` on GLPI 12 and untyped `$rightname` on GLPI 11.
 - Updated test shims (`tests/Shims.php`) to declare typed `CommonDropdown::$rightname` under GLPI 12.
