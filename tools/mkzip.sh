@@ -7,8 +7,8 @@
 #
 #  This script is part of the TicketFilter package for GLPI.
 
-OLDVERSION='2.0.1'
-NEWVERSION='2.0.2'
+OLDVERSION='2.0.2'
+NEWVERSION='2.0.3'
 
 # Figure out what the GLPIpath is.
 FULLPATH=$(readlink -f "$0")

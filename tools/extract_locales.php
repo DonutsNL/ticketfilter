@@ -94,7 +94,7 @@ $pot = <<<POT
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TicketFilter 2.0.2\\n"
+"Project-Id-Version: TicketFilter 2.0.3\\n"
 "Report-Msgid-Bugs-To: https://github.com/DonutsNL/ticketfilter/issues\\n"
 "POT-Creation-Date: {$date}\\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"

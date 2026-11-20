@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.3
+- Fixed fatal `TypeError` in `FilterPattern::canView()` and related right-check methods under GLPI 11 with `strict_types=1`: cast `Session::haveRight()` bitwise integer return values explicitly to `bool` and aligned `canUpdate()`, `canDelete()`, and `canPurge()` with `'config'` `UPDATE` permissions.
+- Made plugin fully compatible with GLPI Content Security Policy (CSP): declared `'csp_compliant' => true` in `plugin_version_ticketfilter()`, migrated all inline `onclick` handlers and `javascript:void(0)` links in configuration, modal, and simulator Twig templates to `data-*` attributes with delegated event listeners, and eliminated `.innerHTML` DOM assignments in favor of safe DOM construction.
+- Fixed single-email simulator result container visibility on successful dry-runs (`simulator_tab.html.twig`).
+- Added automated `BackwardCompatibilityAndCspTest` suite verifying isolated GLPI 11 & GLPI 12 runtime compatibility and zero CSP violations on every release build.
+
 ## 2.0.2
 - Fixed signed integer warning on `entities_id` foreign key (`migration:unsigned_keys`): aligned `entities_id` in `FilterPattern` migration and schema self-healing to unsigned integer adhering to GLPI database primary and foreign key conventions.
 

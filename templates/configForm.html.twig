@@ -113,7 +113,7 @@
     border-bottom: 2px solid var(--tb-primary, #206bc4);
 }
 
-/* Popover card styling with cyan accent matching samlSSO */
+/* Popover card styling */
 .popover.ticketfilter-popover-info {
     border-left: 4px solid #9eeaf9 !important;
     z-index: 1090 !important;
@@ -320,7 +320,7 @@ window.updateGlpiCsrfToken = function(newToken) {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.hash) {
+    if (window.location.hash && /^#[a-zA-Z0-9_-]+$/.test(window.location.hash)) {
         var triggerEl = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
         if (triggerEl) {
             try {

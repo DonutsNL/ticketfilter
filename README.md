@@ -15,8 +15,14 @@
   - Unknown senders are never elevated to ticket actors.
   - Multi-entity boundary isolation.
   - Collision guard preventing mass-merges if a regex matches multiple tickets in the pool.
-- **GLPI 11 & GLPI 12 Compatible**: Fully compatible with GLPI 11 and GLPI 12 using modern Twig templates, controllers, and dynamic asset path resolvers.
+- **GLPI 11 & GLPI 12 Compatible (CSP Ready)**: Fully compatible with GLPI 11 and GLPI 12 using modern Twig templates, controllers, dynamic asset path resolvers, and full Content Security Policy compliance (`'csp_compliant' => true`).
 - **Automated Retention**: Built-in GLPI `CronTask` (`cleanLogs`) automatically purges audit trail records older than 60 days.
+
+---
+
+## Documentation
+
+For complete setup guides, regex recipes, simulator workflows, mailgate flow diagrams, and troubleshooting instructions, see the **[TicketFilter Wiki](https://github.com/DonutsNL/ticketfilter/wiki)**.
 
 ---
 
@@ -40,8 +46,7 @@ Patterns are standard regular expressions:
 
 ## Architecture & Code Standards
 
-TicketFilter is structured according to the architectural patterns of the **samlsso** plugin:
 - Full PSR-12 and PSR-4 namespace mapping (`GlpiPlugin\Ticketfilter\`).
-- Strict separation into service layers (`Audit`, `Engine`, `Model`, `Cron`, `Controller`).
-- Comprehensive unit test suite in `tests/RunAllTests.php`.
+- Strict separation into service layers (`Audit`, `Engine`, `Model`, `Cron`, `Controller`, `Compat`, `Utility`).
+- Comprehensive automated test suite in `tests/RunAllTests.php` (including isolated GLPI 11/12 backward-compatibility probes and CSP compliance scanning).
 - Strict traceability with Architectural Decision Records in `ADRS/` and version logging in `changelog.md`.

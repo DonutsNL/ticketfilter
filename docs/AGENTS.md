@@ -18,3 +18,12 @@
 ## 4. Git Remote Synchronization
 - **Always push individual fixes to the remote repository.** Never leave verified fixes or commits sitting solely on the local branch. Individual fixes and commits must always be pushed to the remote repository (`origin`) promptly once verified.
 
+## 5. Mandatory Backward-Compatibility & CSP Compliance Verification
+- **Always verify GLPI 11 & GLPI 12 backward compatibility before releasing.**
+  - **PHP 8 `strict_types=1` vs. GLPI 11 untyped Core APIs**: Never return untyped GLPI Core calls (e.g. `Session::haveRight()`, which returns a bitwise `int` in GLPI 11 vs. `bool` in GLPI 12) directly from typed methods without explicit casts (`(bool)`, `(int)`, `(string)`).
+  - **Property type invariance**: Keep version-selected `*Compat` intermediates (`FilterPatternCompat`) so GLPI 11 (untyped `$rightname`) and GLPI 12 (typed `string $rightname`) both compile cleanly.
+  - **Schema & facades**: Keep foreign keys `INT UNSIGNED` (`migration:unsigned_keys`), preserve backward-compatible class facades (`Filter`, `FilterPattern`, `TicketHandler`), and support both token-based (GLPI 11) and tokenless (GLPI 12) CSRF workflows.
+- **Enforce GLPI Content Security Policy (CSP) compliance (`script-src 'nonce-...' 'unsafe-eval'`):**
+  - Declare `'csp_compliant' => true` in `plugin_version_ticketfilter()`.
+  - Never use inline event handlers (`onclick`, `onchange`, `oninput`, `onsubmit`, etc.), `javascript:` URLs, PHP-printed `<script>` blocks, or `.innerHTML` DOM sinks. Use `data-*` attributes with delegated listeners inside literal Twig `<script>` blocks (which receive automatic GLPI nonces) and safe DOM builders (`createElement`, `textContent`, `replaceChildren`).
+  - Run `php tests/RunAllTests.php` (including `tests/BackwardCompatibilityAndCspTest.php`) before every commit and release.

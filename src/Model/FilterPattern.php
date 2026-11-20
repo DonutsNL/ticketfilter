@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.2
+ *  @version    2.0.3
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -123,27 +123,42 @@ class FilterPattern extends FilterPatternCompat
 
     public static function canView(): bool
     {
-        return \Session::haveRight('config', READ);
+        return (bool) \Session::haveRight('config', READ);
     }
 
     public static function canCreate(): bool
     {
-        return \Session::haveRight('config', UPDATE);
+        return (bool) \Session::haveRight('config', UPDATE);
+    }
+
+    public static function canUpdate(): bool
+    {
+        return (bool) \Session::haveRight('config', UPDATE);
+    }
+
+    public static function canDelete(): bool
+    {
+        return (bool) \Session::haveRight('config', UPDATE);
+    }
+
+    public static function canPurge(): bool
+    {
+        return (bool) \Session::haveRight('config', UPDATE);
     }
 
     public function canUpdateItem(): bool
     {
-        return \Session::haveRight('config', UPDATE);
+        return (bool) \Session::haveRight('config', UPDATE);
     }
 
     public function canPurgeItem(): bool
     {
-        return \Session::haveRight('config', UPDATE);
+        return (bool) \Session::haveRight('config', UPDATE);
     }
 
     public function canDeleteItem(): bool
     {
-        return \Session::haveRight('config', UPDATE);
+        return (bool) \Session::haveRight('config', UPDATE);
     }
 
     /**

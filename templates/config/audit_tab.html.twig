@@ -77,14 +77,18 @@
     </div>
 
     <script>
-        document.getElementById('auditLogSearch').addEventListener('keyup', function() {
-            const query = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#auditLogTable tbody tr');
-            rows.forEach(function(row) {
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
+        (function() {
+            var auditSearch = document.getElementById('auditLogSearch');
+            if (!auditSearch) return;
+            auditSearch.addEventListener('keyup', function() {
+                var query = this.value.toLowerCase();
+                var rows = document.querySelectorAll('#auditLogTable tbody tr');
+                rows.forEach(function(row) {
+                    var text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(query) ? '' : 'none';
+                });
             });
-        });
+        })();
     </script>
     {% else %}
     <div class="alert alert-secondary d-flex align-items-center mb-0" role="alert">

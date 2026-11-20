@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.2
+ *  @version    2.0.3
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -329,8 +329,12 @@ if (!class_exists('Session', false)) {
             return true;
         }
 
-        public static function haveRight(string $module, int $right): bool
+        public static function haveRight(string $module, int $right)
         {
+            if (isset($_SESSION['glpiactiveprofile'][$module])) {
+                // Mirror GLPI 11 untyped Session::haveRight() returning bitwise int
+                return (int) $_SESSION['glpiactiveprofile'][$module] & $right;
+            }
             return true;
         }
 
@@ -437,6 +441,3 @@ if (!class_exists('TicketTask', false)) {
         }
     }
 }
-
-
-

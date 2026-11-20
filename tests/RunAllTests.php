@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.2
+ *  @version    2.0.3
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -39,6 +39,7 @@ declare(strict_types=1);
 $testDir = __DIR__;
 $testFiles = [
     'PluginLifecycleTest.php',
+    'BackwardCompatibilityAndCspTest.php',
     'PatternMatcherTest.php',
     'SimulatorTest.php',
     'SecurityIsolationTest.php',

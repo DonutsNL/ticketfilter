@@ -237,14 +237,14 @@
                             <div class="p-2 border rounded small bg-light-subtle">
                                 <div class="text-muted small mb-1">{{ __('Available placeholders (click to insert into active note field):', 'ticketfilter') }}</div>
                                 <div class="d-flex flex-wrap gap-1">
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{pattern_name}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{pattern_name}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{pattern_id}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{pattern_id}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{match_token}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{match_token}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{solved_token}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{solved_token}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{sender_email}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{sender_email}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{subject}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{subject}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{ticket_id}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{ticket_id}</code>
-                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" onclick="insertPlaceholder('{datetime}')" role="button" title="{{ __('Click to insert', 'ticketfilter') }}">{datetime}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{pattern_name}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{pattern_name}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{pattern_id}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{pattern_id}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{match_token}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{match_token}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{solved_token}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{solved_token}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{sender_email}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{sender_email}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{subject}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{subject}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{ticket_id}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{ticket_id}</code>
+                                    <code class="cursor-pointer badge bg-white text-dark border py-1 px-2" data-placeholder="{datetime}" role="button" tabindex="0" title="{{ __('Click to insert', 'ticketfilter') }}">{datetime}</code>
                                 </div>
                             </div>
                         </div>
@@ -271,6 +271,27 @@
 
 <script>
 var lastFocusedNoteInput = null;
+var ticketfilterModalLabels = {
+    addTitle: {{ __('Add filter pattern', 'ticketfilter')|json_encode|raw }},
+    editTitle: {{ __('Edit filter pattern', 'ticketfilter')|json_encode|raw }},
+    saveBtn: {{ __('Save pattern', 'ticketfilter')|json_encode|raw }},
+    savingBtn: {{ __('Saving...', 'ticketfilter')|json_encode|raw }},
+    deleteBtn: {{ __('Delete pattern', 'ticketfilter')|json_encode|raw }},
+    deletingBtn: {{ __('Deleting...', 'ticketfilter')|json_encode|raw }},
+    nameRequired: {{ __('Pattern name is required', 'ticketfilter')|json_encode|raw }},
+    regexRequired: {{ __('Ticket match regex is required', 'ticketfilter')|json_encode|raw }},
+    forbidden403: {{ __('Access denied / Forbidden (HTTP 403)', 'ticketfilter')|json_encode|raw }},
+    forbidden403Csrf: {{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter')|json_encode|raw }},
+    confirmDelete: {{ __('Are you sure you want to delete this filter pattern?', 'ticketfilter')|json_encode|raw }}
+};
+
+function setModalButtonContent(btn, iconClass, labelText) {
+    if (!btn) return;
+    var icon = document.createElement('i');
+    icon.className = iconClass;
+    btn.replaceChildren(icon, document.createTextNode(' ' + labelText));
+}
+
 window.insertPlaceholder = function(tag) {
     var target = lastFocusedNoteInput || document.getElementById('modalPatternReopenMsg');
     if (!target) return;
@@ -315,11 +336,11 @@ window.openPatternModal = function(id, triggerBtn) {
     // Ensure buttons inside modal are unlocked
     if (saveBtn) {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-check me-1"></i> {{ __('Save pattern', 'ticketfilter') }}';
+        setModalButtonContent(saveBtn, 'fas fa-check me-1', ticketfilterModalLabels.saveBtn);
     }
     if (deleteBtn) {
         deleteBtn.disabled = false;
-        deleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i> {{ __('Delete pattern', 'ticketfilter') }}';
+        setModalButtonContent(deleteBtn, 'fas fa-trash me-1', ticketfilterModalLabels.deleteBtn);
     }
 
     // Always reset tab navigation to the first tab (Pattern rules)
@@ -341,7 +362,7 @@ window.openPatternModal = function(id, triggerBtn) {
 
     if (!id || id <= 0) {
         if (titleEl) {
-            titleEl.textContent = "{{ __('Add filter pattern', 'ticketfilter') }}";
+            titleEl.textContent = ticketfilterModalLabels.addTitle;
         }
         if (form) {
             form.reset();
@@ -378,7 +399,7 @@ window.openPatternModal = function(id, triggerBtn) {
     }
 
     if (titleEl) {
-        titleEl.textContent = "{{ __('Edit filter pattern', 'ticketfilter') }} (#" + id + ")";
+        titleEl.textContent = ticketfilterModalLabels.editTitle + ' (#' + id + ')';
     }
     if (form) {
         form.reset();
@@ -416,7 +437,7 @@ window.openPatternModal = function(id, triggerBtn) {
     .then(function(r) {
         if (!r.ok) {
             return r.text().then(function() {
-                var msg = (r.status === 403) ? '{{ __('Access denied / Forbidden (HTTP 403)', 'ticketfilter') }}' : ('HTTP ' + r.status);
+                var msg = (r.status === 403) ? ticketfilterModalLabels.forbidden403 : ('HTTP ' + r.status);
                 throw new Error(msg);
             });
         }
@@ -428,7 +449,13 @@ window.openPatternModal = function(id, triggerBtn) {
             window.updateGlpiCsrfToken(data.csrf_token);
         }
         if (!data.success) {
-            alert(data.error || 'Failed to load pattern');
+            if (errBox) {
+                errBox.textContent = data.error || 'Failed to load pattern';
+                errBox.style.display = 'block';
+            }
+            if (modal) {
+                modal.show();
+            }
             return;
         }
         var p = data.pattern;
@@ -470,11 +497,49 @@ window.openPatternModal = function(id, triggerBtn) {
     })
     .catch(function(err) {
         resetTriggerBtn();
-        alert('Error loading pattern: ' + err.message);
+        if (errBox) {
+            errBox.textContent = 'Error loading pattern: ' + err.message;
+            errBox.style.display = 'block';
+        }
+        if (modal) {
+            modal.show();
+        }
     });
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Delegated CSP-compliant listener for pattern creation and edit triggers
+    document.addEventListener('click', function(e) {
+        var trigger = e.target.closest('[data-action="open-pattern-modal"]');
+        if (trigger) {
+            e.preventDefault();
+            var patternId = parseInt(trigger.getAttribute('data-pattern-id') || '0', 10);
+            window.openPatternModal(isNaN(patternId) ? 0 : patternId, trigger);
+            return;
+        }
+
+        var placeholderEl = e.target.closest('#patternModal [data-placeholder]');
+        if (placeholderEl) {
+            e.preventDefault();
+            var tag = placeholderEl.getAttribute('data-placeholder');
+            if (tag) {
+                window.insertPlaceholder(tag);
+            }
+        }
+    });
+
+    // Keyboard activation for placeholder badges
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var placeholderEl = e.target.closest('#patternModal [data-placeholder]');
+        if (!placeholderEl) return;
+        e.preventDefault();
+        var tag = placeholderEl.getAttribute('data-placeholder');
+        if (tag) {
+            window.insertPlaceholder(tag);
+        }
+    });
+
     var reopenInput = document.getElementById('modalPatternReopenMsg');
     var solvedInput = document.getElementById('modalPatternSolvedMsg');
     if (reopenInput) {
@@ -515,12 +580,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             var btn = document.getElementById('btnSavePatternModal');
-            var originalHtml = btn ? btn.innerHTML : '<i class="fas fa-check me-1"></i> {{ __('Save pattern', 'ticketfilter') }}';
 
             function unlockSaveBtn() {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = originalHtml;
+                    setModalButtonContent(btn, 'fas fa-check me-1', ticketfilterModalLabels.saveBtn);
                 }
             }
 
@@ -543,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (e) {}
                 }
                 if (errBox) {
-                    errBox.textContent = "{{ __('Pattern name is required', 'ticketfilter') }}";
+                    errBox.textContent = ticketfilterModalLabels.nameRequired;
                     errBox.style.display = 'block';
                     errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
@@ -566,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (e) {}
                 }
                 if (errBox) {
-                    errBox.textContent = "{{ __('Ticket match regex is required', 'ticketfilter') }}";
+                    errBox.textContent = ticketfilterModalLabels.regexRequired;
                     errBox.style.display = 'block';
                     errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
@@ -577,7 +641,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Saving...', 'ticketfilter') }}';
+                setModalButtonContent(btn, 'fas fa-spinner fa-spin me-1', ticketfilterModalLabels.savingBtn);
             }
 
             var payload = new FormData(form);
@@ -616,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!r.ok) {
                     return r.text().then(function() {
                         var msg = (r.status === 403)
-                            ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
+                            ? ticketfilterModalLabels.forbidden403Csrf
                             : ('HTTP ' + r.status + ': ' + (r.statusText || 'Error'));
                         throw new Error(msg);
                     });
@@ -633,8 +697,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         errBox.textContent = data.error || 'Failed to save pattern';
                         errBox.style.display = 'block';
                         errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    } else {
-                        alert(data.error || 'Failed to save pattern');
                     }
                     return;
                 }
@@ -647,8 +709,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     errBox.textContent = 'Server error: ' + err.message;
                     errBox.style.display = 'block';
                     errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    alert('Server error: ' + err.message);
                 }
             });
         });
@@ -659,16 +719,15 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteBtn.addEventListener('click', function() {
             var id = document.getElementById('modalPatternId').value;
             if (!id || id <= 0) return;
-            if (!confirm("{{ __('Are you sure you want to delete this filter pattern?', 'ticketfilter') }}")) {
+            if (!confirm(ticketfilterModalLabels.confirmDelete)) {
                 return;
             }
             deleteBtn.disabled = true;
-            var originalDeleteHtml = deleteBtn.innerHTML;
-            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Deleting...', 'ticketfilter') }}';
+            setModalButtonContent(deleteBtn, 'fas fa-spinner fa-spin me-1', ticketfilterModalLabels.deletingBtn);
 
             function unlockDeleteBtn() {
                 deleteBtn.disabled = false;
-                deleteBtn.innerHTML = originalDeleteHtml;
+                setModalButtonContent(deleteBtn, 'fas fa-trash me-1', ticketfilterModalLabels.deleteBtn);
             }
 
             var payload = new FormData();
@@ -697,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!r.ok) {
                     return r.text().then(function() {
                         var msg = (r.status === 403)
-                            ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
+                            ? ticketfilterModalLabels.forbidden403Csrf
                             : ('HTTP ' + r.status + ': ' + (r.statusText || 'Error'));
                         throw new Error(msg);
                     });
@@ -715,8 +774,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         errBox.textContent = data.error || 'Failed to delete pattern';
                         errBox.style.display = 'block';
                         errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    } else {
-                        alert(data.error || 'Failed to delete pattern');
                     }
                     return;
                 }
@@ -730,8 +787,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     errBox.textContent = 'Server error: ' + err.message;
                     errBox.style.display = 'block';
                     errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    alert('Server error: ' + err.message);
                 }
             });
         });

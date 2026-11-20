@@ -12,10 +12,10 @@
                             <i class="fas fa-magic me-1"></i>{{ __('Regex presets', 'ticketfilter') }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="regexPresetsBtn">
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('jira')">Jira: <code>(?&lt;match&gt;[A-Z]+-[0-9]+)</code></a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('github')">GitHub / GitLab: <code>(?&lt;match&gt;#[0-9]+)</code></a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('servicenow')">ServiceNow: <code>(?&lt;match&gt;INC[0-9]{7})</code></a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="applyPreset('bracket')">Bracketed: <code>\[(?&lt;match&gt;[^\]]+)\]</code></a></li>
+                            <li><button type="button" class="dropdown-item" data-preset="jira">Jira: <code>(?&lt;match&gt;[A-Z]+-[0-9]+)</code></button></li>
+                            <li><button type="button" class="dropdown-item" data-preset="github">GitHub / GitLab: <code>(?&lt;match&gt;#[0-9]+)</code></button></li>
+                            <li><button type="button" class="dropdown-item" data-preset="servicenow">ServiceNow: <code>(?&lt;match&gt;INC[0-9]{7})</code></button></li>
+                            <li><button type="button" class="dropdown-item" data-preset="bracket">Bracketed: <code>\[(?&lt;match&gt;[^\]]+)\]</code></button></li>
                         </ul>
                     </div>
                 </div>
@@ -165,272 +165,325 @@
 </div>
 
 <script>
-function applyPreset(type) {
-    let p = '';
-    let s = '';
-    if (type === 'jira') {
-        p = '/.*?(?<match>\\([A-Z]{2,10}-[0-9]{1,6}\\)).*/i';
-        s = '/.*?(?<solved>Closed|Resolved).*/i';
-    } else if (type === 'github') {
-        p = '/.*?(?<match>#[0-9]{1,6}).*/';
-        s = '/.*?(?<solved>Closed|Fixed).*/i';
-    } else if (type === 'servicenow') {
-        p = '/.*?(?<match>(?:INC|REQ|TASK)[0-9]{7}).*/i';
-        s = '/.*?(?<solved>Resolved|Closed).*/i';
-    } else if (type === 'bracket') {
-        p = '/.*?\\[(?<match>[A-Za-z0-9_\\-#]+)\\].*/';
-        s = '';
-    }
-    document.getElementById('simPattern').value = p;
-    document.getElementById('histPattern').value = p;
-    document.getElementById('simSolvedPattern').value = s;
-}
-
-// Handle Sample Simulation Form Submission
-document.getElementById('sampleSimulatorForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btnRunSampleTest');
-    const originalHtml = btn ? btn.innerHTML : '<i class="fas fa-play me-1"></i> {{ __('Test pattern', 'ticketfilter') }}';
-
-    function unlockBtn() {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
-
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Testing...', 'ticketfilter') }}';
-    }
-
-    const payload = new FormData();
-    payload.append('action', 'simulate_sample');
-    payload.append('pattern', document.getElementById('simPattern').value);
-    payload.append('subject', document.getElementById('simSubject').value);
-    payload.append('sender', document.getElementById('simSender').value);
-    payload.append('solved_pattern', document.getElementById('simSolvedPattern').value);
-
-    var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
-    if (token) {
-        payload.append('_glpi_csrf_token', token);
-    }
-
-    var headers = {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json'
+(function() {
+    var simLabels = {
+        testBtn: {{ __('Test pattern', 'ticketfilter')|json_encode|raw }},
+        testingBtn: {{ __('Testing...', 'ticketfilter')|json_encode|raw }},
+        scanBtn: {{ __('Run scan on existing tickets', 'ticketfilter')|json_encode|raw }},
+        scanningBtn: {{ __('Scanning...', 'ticketfilter')|json_encode|raw }},
+        forbidden403: {{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter')|json_encode|raw }}
     };
-    if (token) {
-        headers['X-Glpi-Csrf-Token'] = token;
+
+    function setSimulatorButtonContent(btn, iconClass, labelText) {
+        if (!btn) return;
+        var icon = document.createElement('i');
+        icon.className = iconClass;
+        btn.replaceChildren(icon, document.createTextNode(' ' + labelText));
     }
 
-    fetch('{{ plugin_url }}front/simulator', {
-        method: 'POST',
-        headers: headers,
-        body: payload
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(function() {
-                var msg = (response.status === 403)
-                    ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
-                    : ('HTTP ' + response.status + ': ' + (response.statusText || 'Error'));
-                throw new Error(msg);
-            });
+    function applyPreset(type) {
+        var p = '';
+        var s = '';
+        if (type === 'jira') {
+            p = '/.*?(?<match>\\([A-Z]{2,10}-[0-9]{1,6}\\)).*/i';
+            s = '/.*?(?<solved>Closed|Resolved).*/i';
+        } else if (type === 'github') {
+            p = '/.*?(?<match>#[0-9]{1,6}).*/';
+            s = '/.*?(?<solved>Closed|Fixed).*/i';
+        } else if (type === 'servicenow') {
+            p = '/.*?(?<match>(?:INC|REQ|TASK)[0-9]{7}).*/i';
+            s = '/.*?(?<solved>Resolved|Closed).*/i';
+        } else if (type === 'bracket') {
+            p = '/.*?\\[(?<match>[A-Za-z0-9_\\-#]+)\\].*/';
+            s = '';
         }
-        return response.json();
-    })
-    .then(data => {
-        unlockBtn();
-        if (data && data.csrf_token && window.updateGlpiCsrfToken) {
-            window.updateGlpiCsrfToken(data.csrf_token);
-        }
-        function setAlertBadge(containerId, alertClass, iconClass, message) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            const div = document.createElement('div');
-            div.className = 'alert ' + alertClass + ' py-2 mb-0';
-            const icon = document.createElement('i');
-            icon.className = iconClass + ' me-1';
-            div.appendChild(icon);
-            div.appendChild(document.createTextNode(' ' + message));
-            container.replaceChildren(div);
-        }
+        document.getElementById('simPattern').value = p;
+        document.getElementById('histPattern').value = p;
+        document.getElementById('simSolvedPattern').value = s;
+    }
 
-        if (!data.success) {
-            setAlertBadge('sampleSimBadge', 'alert-danger', 'fas fa-times-circle', data.error || 'Syntax error');
-            document.getElementById('resPatternValid').innerText = 'No';
-            document.getElementById('resMatchedToken').innerText = '—';
-            document.getElementById('resTargetTickets').innerText = '—';
-            document.getElementById('resSimulatedAction').innerText = 'ERROR';
-            return;
-        }
-
-        document.getElementById('resPatternValid').innerText = 'Yes (Valid)';
-
-        const tokenEl = document.getElementById('resMatchedToken');
-        if (data.token) {
-            const code = document.createElement('code');
-            code.textContent = data.token;
-            tokenEl.replaceChildren(code);
-        } else {
-            tokenEl.textContent = 'None';
-        }
-
-        const targetEl = document.getElementById('resTargetTickets');
-        targetEl.replaceChildren();
-        if (data.target_tickets && data.target_tickets.length > 0) {
-            data.target_tickets.forEach(id => {
-                const a = document.createElement('a');
-                a.href = '{{ glpi_url }}/front/ticket.form.php?id=' + encodeURIComponent(id);
-                a.target = '_blank';
-                a.className = 'badge bg-secondary-lt text-decoration-none me-1';
-                a.textContent = '#' + id;
-                targetEl.appendChild(a);
-            });
-        } else {
-            targetEl.textContent = 'None found in pool';
-        }
-
-        document.getElementById('resSimulatedAction').innerText = data.simulated_action;
-
-        if (data.collision) {
-            setAlertBadge('sampleSimBadge', 'alert-danger', 'fas fa-exclamation-triangle', 'Collision: multiple tickets matched. Action would be aborted.');
-        } else if (data.matched) {
-            setAlertBadge('sampleSimBadge', 'alert-success', 'fas fa-check-circle', 'Pattern matched successfully. Simulated action: ' + (data.simulated_action || ''));
-        } else {
-            setAlertBadge('sampleSimBadge', 'alert-secondary', 'fas fa-info-circle', 'Pattern did not match this subject (normal non-match).');
-        }
-    })
-    .catch(err => {
-        unlockBtn();
-        document.getElementById('sampleSimResult').style.display = 'block';
-        const container = document.getElementById('sampleSimBadge');
-        if (container) {
-            const div = document.createElement('div');
-            div.className = 'alert alert-danger py-2 mb-0';
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-times-circle me-1';
-            div.appendChild(icon);
-            div.appendChild(document.createTextNode(' ' + err.message));
-            container.replaceChildren(div);
-        }
+    // Delegated CSP-compliant listener for regex preset buttons
+    document.querySelectorAll('.simulator-tab-content [data-preset]').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            applyPreset(this.getAttribute('data-preset') || '');
+        });
     });
-});
 
-// Handle Historical Simulation Form Submission
-document.getElementById('historicalSimulatorForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btnRunHistTest');
-    const originalHtml = btn ? btn.innerHTML : '<i class="fas fa-search me-1"></i> {{ __('Run scan on existing tickets', 'ticketfilter') }}';
+    // Handle Sample Simulation Form Submission
+    var sampleForm = document.getElementById('sampleSimulatorForm');
+    if (sampleForm) {
+        sampleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('btnRunSampleTest');
 
-    function unlockBtn() {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
+            function unlockBtn() {
+                if (btn) {
+                    btn.disabled = false;
+                    setSimulatorButtonContent(btn, 'fas fa-play me-1', simLabels.testBtn);
+                }
+            }
 
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {{ __('Scanning...', 'ticketfilter') }}';
-    }
+            if (btn) {
+                btn.disabled = true;
+                setSimulatorButtonContent(btn, 'fas fa-spinner fa-spin me-1', simLabels.testingBtn);
+            }
 
-    const payload = new FormData();
-    payload.append('action', 'simulate_historical');
-    payload.append('pattern', document.getElementById('histPattern').value);
-    payload.append('limit', document.getElementById('histLimit').value);
+            var payload = new FormData();
+            payload.append('action', 'simulate_sample');
+            payload.append('pattern', document.getElementById('simPattern').value);
+            payload.append('subject', document.getElementById('simSubject').value);
+            payload.append('sender', document.getElementById('simSender').value);
+            payload.append('solved_pattern', document.getElementById('simSolvedPattern').value);
 
-    var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
-    if (token) {
-        payload.append('_glpi_csrf_token', token);
-    }
+            var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
+            if (token) {
+                payload.append('_glpi_csrf_token', token);
+            }
 
-    var headers = {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json'
-    };
-    if (token) {
-        headers['X-Glpi-Csrf-Token'] = token;
-    }
+            var headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            };
+            if (token) {
+                headers['X-Glpi-Csrf-Token'] = token;
+            }
 
-    fetch('{{ plugin_url }}front/simulator', {
-        method: 'POST',
-        headers: headers,
-        body: payload
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(function() {
-                var msg = (response.status === 403)
-                    ? '{{ __('Access denied / Forbidden (HTTP 403). Please verify CSRF token and permissions.', 'ticketfilter') }}'
-                    : ('HTTP ' + response.status + ': ' + (response.statusText || 'Error'));
-                throw new Error(msg);
+            fetch('{{ plugin_url }}front/simulator', {
+                method: 'POST',
+                headers: headers,
+                body: payload
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    return response.text().then(function() {
+                        var msg = (response.status === 403)
+                            ? simLabels.forbidden403
+                            : ('HTTP ' + response.status + ': ' + (response.statusText || 'Error'));
+                        throw new Error(msg);
+                    });
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                unlockBtn();
+                if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+                    window.updateGlpiCsrfToken(data.csrf_token);
+                }
+                document.getElementById('sampleSimResult').style.display = 'block';
+
+                function setAlertBadge(containerId, alertClass, iconClass, message) {
+                    var container = document.getElementById(containerId);
+                    if (!container) return;
+                    var div = document.createElement('div');
+                    div.className = 'alert ' + alertClass + ' py-2 mb-0';
+                    var icon = document.createElement('i');
+                    icon.className = iconClass + ' me-1';
+                    div.appendChild(icon);
+                    div.appendChild(document.createTextNode(' ' + message));
+                    container.replaceChildren(div);
+                }
+
+                if (!data.success) {
+                    setAlertBadge('sampleSimBadge', 'alert-danger', 'fas fa-times-circle', data.error || 'Syntax error');
+                    document.getElementById('resPatternValid').textContent = 'No';
+                    document.getElementById('resMatchedToken').textContent = '—';
+                    document.getElementById('resTargetTickets').textContent = '—';
+                    document.getElementById('resSimulatedAction').textContent = 'ERROR';
+                    return;
+                }
+
+                document.getElementById('resPatternValid').textContent = 'Yes (Valid)';
+
+                var tokenEl = document.getElementById('resMatchedToken');
+                if (data.token) {
+                    var code = document.createElement('code');
+                    code.textContent = data.token;
+                    tokenEl.replaceChildren(code);
+                } else {
+                    tokenEl.textContent = 'None';
+                }
+
+                var targetEl = document.getElementById('resTargetTickets');
+                targetEl.replaceChildren();
+                if (data.target_tickets && data.target_tickets.length > 0) {
+                    data.target_tickets.forEach(function(id) {
+                        var a = document.createElement('a');
+                        a.href = '{{ glpi_url }}/front/ticket.form.php?id=' + encodeURIComponent(id);
+                        a.target = '_blank';
+                        a.className = 'badge bg-secondary-lt text-decoration-none me-1';
+                        a.textContent = '#' + id;
+                        targetEl.appendChild(a);
+                    });
+                } else {
+                    targetEl.textContent = 'None found in pool';
+                }
+
+                document.getElementById('resSimulatedAction').textContent = data.simulated_action;
+
+                if (data.collision) {
+                    setAlertBadge('sampleSimBadge', 'alert-danger', 'fas fa-exclamation-triangle', 'Collision: multiple tickets matched. Action would be aborted.');
+                } else if (data.matched) {
+                    setAlertBadge('sampleSimBadge', 'alert-success', 'fas fa-check-circle', 'Pattern matched successfully. Simulated action: ' + (data.simulated_action || ''));
+                } else {
+                    setAlertBadge('sampleSimBadge', 'alert-secondary', 'fas fa-info-circle', 'Pattern did not match this subject (normal non-match).');
+                }
+            })
+            .catch(function(err) {
+                unlockBtn();
+                document.getElementById('sampleSimResult').style.display = 'block';
+                var container = document.getElementById('sampleSimBadge');
+                if (container) {
+                    var div = document.createElement('div');
+                    div.className = 'alert alert-danger py-2 mb-0';
+                    var icon = document.createElement('i');
+                    icon.className = 'fas fa-times-circle me-1';
+                    div.appendChild(icon);
+                    div.appendChild(document.createTextNode(' ' + err.message));
+                    container.replaceChildren(div);
+                }
             });
-        }
-        return response.json();
-    })
-    .then(data => {
-        unlockBtn();
-        if (data && data.csrf_token && window.updateGlpiCsrfToken) {
-            window.updateGlpiCsrfToken(data.csrf_token);
-        }
-        document.getElementById('historicalSimResult').style.display = 'block';
+        });
+    }
 
-        if (!data.success) {
-            alert('Simulation error: ' + (data.error || 'Unknown error'));
-            return;
-        }
+    // Handle Historical Simulation Form Submission
+    var histForm = document.getElementById('historicalSimulatorForm');
+    if (histForm) {
+        histForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('btnRunHistTest');
 
-        document.getElementById('histScannedCount').innerText = data.total_scanned;
-        document.getElementById('histMatchedCount').innerText = data.total_matched;
-        document.getElementById('histCollisionCount').innerText = data.collisions;
+            function unlockBtn() {
+                if (btn) {
+                    btn.disabled = false;
+                    setSimulatorButtonContent(btn, 'fas fa-search me-1', simLabels.scanBtn);
+                }
+            }
 
-        const tbody = document.querySelector('#histMatchesTable tbody');
-        tbody.innerHTML = '';
+            if (btn) {
+                btn.disabled = true;
+                setSimulatorButtonContent(btn, 'fas fa-spinner fa-spin me-1', simLabels.scanningBtn);
+            }
 
-        if (data.matches && data.matches.length > 0) {
-            data.matches.forEach(m => {
-                const tr = document.createElement('tr');
+            var payload = new FormData();
+            payload.append('action', 'simulate_historical');
+            payload.append('pattern', document.getElementById('histPattern').value);
+            payload.append('limit', document.getElementById('histLimit').value);
 
-                const tdId = document.createElement('td');
-                const aLink = document.createElement('a');
-                aLink.href = '{{ glpi_url }}/front/ticket.form.php?id=' + encodeURIComponent(m.ticket_id);
-                aLink.target = '_blank';
-                aLink.className = 'fw-semibold text-decoration-none';
-                aLink.textContent = '#' + m.ticket_id;
-                tdId.appendChild(aLink);
+            var token = window.glpiCsrfToken || (document.getElementById('glpi_csrf_token') ? document.getElementById('glpi_csrf_token').value : '');
+            if (token) {
+                payload.append('_glpi_csrf_token', token);
+            }
 
-                const tdName = document.createElement('td');
-                tdName.className = 'small text-truncate';
-                tdName.style.maxWidth = '200px';
-                tdName.setAttribute('title', m.ticket_name || '');
-                tdName.textContent = m.ticket_name || '';
+            var headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            };
+            if (token) {
+                headers['X-Glpi-Csrf-Token'] = token;
+            }
 
-                const tdToken = document.createElement('td');
-                const code = document.createElement('code');
-                code.textContent = m.token || '';
-                tdToken.appendChild(code);
+            fetch('{{ plugin_url }}front/simulator', {
+                method: 'POST',
+                headers: headers,
+                body: payload
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    return response.text().then(function() {
+                        var msg = (response.status === 403)
+                            ? simLabels.forbidden403
+                            : ('HTTP ' + response.status + ': ' + (response.statusText || 'Error'));
+                        throw new Error(msg);
+                    });
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                unlockBtn();
+                if (data && data.csrf_token && window.updateGlpiCsrfToken) {
+                    window.updateGlpiCsrfToken(data.csrf_token);
+                }
+                document.getElementById('historicalSimResult').style.display = 'block';
 
-                const tdCol = document.createElement('td');
-                const colBadge = document.createElement('span');
-                colBadge.className = m.is_collision ? 'badge bg-danger-lt' : 'badge bg-green-lt';
-                colBadge.textContent = m.is_collision ? 'Collision' : 'Unique';
-                tdCol.appendChild(colBadge);
+                var tbody = document.querySelector('#histMatchesTable tbody');
+                tbody.replaceChildren();
 
-                tr.appendChild(tdId);
-                tr.appendChild(tdName);
-                tr.appendChild(tdToken);
-                tr.appendChild(tdCol);
-                tbody.appendChild(tr);
+                if (!data.success) {
+                    var errRow = document.createElement('tr');
+                    var errCell = document.createElement('td');
+                    errCell.colSpan = 4;
+                    errCell.className = 'text-center text-danger py-3';
+                    errCell.textContent = 'Simulation error: ' + (data.error || 'Unknown error');
+                    errRow.appendChild(errCell);
+                    tbody.appendChild(errRow);
+                    return;
+                }
+
+                document.getElementById('histScannedCount').textContent = data.total_scanned;
+                document.getElementById('histMatchedCount').textContent = data.total_matched;
+                document.getElementById('histCollisionCount').textContent = data.collisions;
+
+                if (data.matches && data.matches.length > 0) {
+                    data.matches.forEach(function(m) {
+                        var tr = document.createElement('tr');
+
+                        var tdId = document.createElement('td');
+                        var aLink = document.createElement('a');
+                        aLink.href = '{{ glpi_url }}/front/ticket.form.php?id=' + encodeURIComponent(m.ticket_id);
+                        aLink.target = '_blank';
+                        aLink.className = 'fw-semibold text-decoration-none';
+                        aLink.textContent = '#' + m.ticket_id;
+                        tdId.appendChild(aLink);
+
+                        var tdName = document.createElement('td');
+                        tdName.className = 'small text-truncate';
+                        tdName.style.maxWidth = '200px';
+                        tdName.setAttribute('title', m.ticket_name || '');
+                        tdName.textContent = m.ticket_name || '';
+
+                        var tdToken = document.createElement('td');
+                        var code = document.createElement('code');
+                        code.textContent = m.token || '';
+                        tdToken.appendChild(code);
+
+                        var tdCol = document.createElement('td');
+                        var colBadge = document.createElement('span');
+                        colBadge.className = m.is_collision ? 'badge bg-danger-lt' : 'badge bg-green-lt';
+                        colBadge.textContent = m.is_collision ? 'Collision' : 'Unique';
+                        tdCol.appendChild(colBadge);
+
+                        tr.appendChild(tdId);
+                        tr.appendChild(tdName);
+                        tr.appendChild(tdToken);
+                        tr.appendChild(tdCol);
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    var emptyRow = document.createElement('tr');
+                    var emptyCell = document.createElement('td');
+                    emptyCell.colSpan = 4;
+                    emptyCell.className = 'text-center text-muted py-3';
+                    emptyCell.textContent = 'No matching tickets found in the scanned range.';
+                    emptyRow.appendChild(emptyCell);
+                    tbody.appendChild(emptyRow);
+                }
+            })
+            .catch(function(err) {
+                unlockBtn();
+                document.getElementById('historicalSimResult').style.display = 'block';
+                var tbody = document.querySelector('#histMatchesTable tbody');
+                if (tbody) {
+                    var errRow = document.createElement('tr');
+                    var errCell = document.createElement('td');
+                    errCell.colSpan = 4;
+                    errCell.className = 'text-center text-danger py-3';
+                    errCell.textContent = 'Batch simulation error: ' + err.message;
+                    errRow.appendChild(errCell);
+                    tbody.replaceChildren(errRow);
+                }
             });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No matching tickets found in the scanned range.</td></tr>';
-        }
-    })
-    .catch(err => {
-        unlockBtn();
-        alert('Batch simulation error: ' + err.message);
-    });
-});
+        });
+    }
+})();
 </script>

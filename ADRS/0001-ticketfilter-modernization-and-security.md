@@ -19,7 +19,7 @@ The `ticketfilter` plugin provides automated ticket matching, followup injection
 
 ## Decision
 
-We restructure `ticketfilter` to follow the architectural patterns and coding standards established in the `samlsso` plugin:
+We structure `ticketfilter` around modular services, strict security controls, and continuous GLPI 11/12/13 compatibility:
 
 1. **Modular Service Layer**:
    - `FilterEngine`: Hook dispatcher with top-level `try ... catch (\Throwable $e)` mailgate isolation.
@@ -38,9 +38,13 @@ We restructure `ticketfilter` to follow the architectural patterns and coding st
    - Model entities define static `install(Migration $migration)` and `uninstall(Migration $migration)`.
    - Plugin constants: `PLUGIN_NAME`, `PLUGIN_TICKETFILTER_VERSION` (2.0.0), `PLUGIN_TICKETFILTER_MIN_GLPI` (11.0.0), `PLUGIN_TICKETFILTER_MAX_GLPI` (12.9.99).
    - Lifecycle classes listed in `PLUGIN_TICKETFILTER_CLASSES`.
-4. **GLPI 11 & 12 Compatibility**:
+4. **GLPI 11, 12 & 13 Compatibility and CSP Readiness**:
    - Dynamic web directory resolver `ticketfilter_plugin_web_dir()` compatible with GLPI 11 and GLPI 12.
-   - Dual interface support: Twig-based configuration with tabbed views for Patterns, Audit Trail, Simulator, and Global Settings.
+   - Version-selected compatibility intermediate `FilterPatternCompat` bridging PHP 8 property-type invariance (`$rightname`) between GLPI 11 (untyped) and GLPI 12 (typed `string`).
+   - Explicit scalar casts (`(bool)`, `(int)`) on all untyped GLPI 11 Core method returns (`Session::haveRight()`, `Session::getLoginUserID()`, `CommonDBTM` mutations) under `declare(strict_types=1)`.
+   - Full Content Security Policy (CSP) compliance (`'csp_compliant' => true` in `plugin_version_ticketfilter()`): zero inline event handlers (`onclick`, `onchange`, etc.), zero `javascript:` URLs, zero raw `<script>` printed from PHP, and zero `.innerHTML` DOM sinks; all UI interactions use `data-*` attributes and delegated event listeners inside literal Twig `<script>` blocks.
+   - Dual-core compatibility and CSP compliance are continuously gated by `tests/BackwardCompatibilityAndCspTest.php`.
+   - Dual interface support: Twig-based configuration with tabbed views for Patterns, Simulator, System Diagnostics, and Audit Log.
    - Automated log cleanup via GLPI `CronTask`.
 
 ## Consequences

@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.2
+ *  @version    2.0.3
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -306,7 +306,37 @@ assertCondition(defined(FilterPattern::class . '::FIELD_ENABLE_AUTO_SOLVE') && F
 assertCondition(defined(FilterPattern::class . '::FIELD_AUTO_SOLVE_STATUS') && FilterPattern::FIELD_AUTO_SOLVE_STATUS === 'auto_solve_status', 'FIELD_AUTO_SOLVE_STATUS must be defined');
 FilterPattern::ensureSchema();
 
+// 11. Verify GLPI 11 strict_types compatibility when Session::haveRight() returns bitwise int
+if (!defined('READ')) {
+    define('READ', 1);
+}
+if (!defined('UPDATE')) {
+    define('UPDATE', 2);
+}
+try {
+    $_SESSION['glpiactiveprofile']['config'] = READ | UPDATE; // 3 -> bitwise & returns int 1 or 2 on GLPI 11
+    $patternInstance = new FilterPattern();
+
+    assertCondition(FilterPattern::canView() === true, 'FilterPattern::canView() returns strict bool true when Session::haveRight returns int 1');
+    assertCondition(FilterPattern::canCreate() === true, 'FilterPattern::canCreate() returns strict bool true when Session::haveRight returns int 2');
+    assertCondition(FilterPattern::canUpdate() === true, 'FilterPattern::canUpdate() returns strict bool true when Session::haveRight returns int 2');
+    assertCondition(FilterPattern::canDelete() === true, 'FilterPattern::canDelete() returns strict bool true when Session::haveRight returns int 2');
+    assertCondition(FilterPattern::canPurge() === true, 'FilterPattern::canPurge() returns strict bool true when Session::haveRight returns int 2');
+    assertCondition($patternInstance->canUpdateItem() === true, 'FilterPattern::canUpdateItem() returns strict bool true when Session::haveRight returns int 2');
+    assertCondition($patternInstance->canPurgeItem() === true, 'FilterPattern::canPurgeItem() returns strict bool true when Session::haveRight returns int 2');
+    assertCondition($patternInstance->canDeleteItem() === true, 'FilterPattern::canDeleteItem() returns strict bool true when Session::haveRight returns int 2');
+
+    $_SESSION['glpiactiveprofile']['config'] = READ; // read-only profile -> READ & 1 = 1, UPDATE & 2 = 0 (int)
+    assertCondition(FilterPattern::canView() === true, 'Read-only config profile canView() === true');
+    assertCondition(FilterPattern::canCreate() === false, 'Read-only config profile canCreate() === false (int 0 cast to bool)');
+    assertCondition(FilterPattern::canUpdate() === false, 'Read-only config profile canUpdate() === false (int 0 cast to bool)');
+    assertCondition(FilterPattern::canDelete() === false, 'Read-only config profile canDelete() === false (int 0 cast to bool)');
+    assertCondition(FilterPattern::canPurge() === false, 'Read-only config profile canPurge() === false (int 0 cast to bool)');
+    assertCondition($patternInstance->canUpdateItem() === false, 'Read-only config profile canUpdateItem() === false (int 0 cast to bool)');
+    assertCondition($patternInstance->canPurgeItem() === false, 'Read-only config profile canPurgeItem() === false (int 0 cast to bool)');
+    assertCondition($patternInstance->canDeleteItem() === false, 'Read-only config profile canDeleteItem() === false (int 0 cast to bool)');
+} finally {
+    unset($_SESSION['glpiactiveprofile']['config']);
+}
+
 echo "PluginLifecycleTest completed successfully!\n\n";
-
-
-

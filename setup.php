@@ -26,7 +26,7 @@
  *  ------------------------------------------------------------------------
  *
  *  @package    TicketFilter
- *  @version    2.0.2
+ *  @version    2.0.3
  *  @author     Chris Gralike
  *  @copyright  Copyright (c) 2023-2026 by Chris Gralike
  *  @license    GPLv3+
@@ -48,7 +48,7 @@ if (!defined('PLUGIN_TICKETFILTER_NAME')) {
     define('PLUGIN_TICKETFILTER_NAME', 'ticketfilter');
 }
 if (!defined('PLUGIN_TICKETFILTER_VERSION')) {
-    define('PLUGIN_TICKETFILTER_VERSION', '2.0.2');
+    define('PLUGIN_TICKETFILTER_VERSION', '2.0.3');
 }
 if (!defined('PLUGIN_TICKETFILTER_MIN_GLPI')) {
     define('PLUGIN_TICKETFILTER_MIN_GLPI', '11.0.0');
@@ -121,12 +121,13 @@ function plugin_init_ticketfilter(): void
 function plugin_version_ticketfilter(): array
 {
     return [
-        'name'         => 'TicketFilter',
-        'version'      => PLUGIN_TICKETFILTER_VERSION,
-        'author'       => 'Chris Gralike',
-        'license'      => 'GPLv3+',
-        'homepage'     => 'https://github.com/DonutsNL/ticketfilter',
-        'requirements' => [
+        'name'          => 'TicketFilter',
+        'version'       => PLUGIN_TICKETFILTER_VERSION,
+        'author'        => 'Chris Gralike',
+        'license'       => 'GPLv3+',
+        'homepage'      => 'https://github.com/DonutsNL/ticketfilter',
+        'csp_compliant' => true,
+        'requirements'  => [
             'glpi' => [
                 'min' => PLUGIN_TICKETFILTER_MIN_GLPI,
                 'max' => PLUGIN_TICKETFILTER_MAX_GLPI,

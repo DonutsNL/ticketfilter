@@ -5,7 +5,7 @@
             <div class="text-muted small">{{ __('Rules used to match incoming emails to existing tickets and merge them automatically.', 'ticketfilter') }}</div>
         </div>
         <div>
-            <button type="button" class="btn btn-primary btn-sm" onclick="openPatternModal(0)">
+            <button type="button" class="btn btn-primary btn-sm" data-action="open-pattern-modal" data-pattern-id="0">
                 <i class="fas fa-plus me-1"></i> {{ __('Add new pattern', 'ticketfilter') }}
             </button>
         </div>
@@ -40,7 +40,7 @@
                 <tr>
                     <td class="text-muted">{{ p.id }}</td>
                     <td>
-                        <a href="javascript:void(0)" onclick="openPatternModal({{ p.id }}, this)" class="fw-semibold text-decoration-none">
+                        <a href="#" data-action="open-pattern-modal" data-pattern-id="{{ p.id }}" class="fw-semibold text-decoration-none">
                             {{ p.name }}
                         </a>
                         {% if p.comment %}
@@ -133,7 +133,7 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openPatternModal({{ p.id }}, this)" title="{{ __('Edit pattern', 'ticketfilter') }}">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-action="open-pattern-modal" data-pattern-id="{{ p.id }}" title="{{ __('Edit pattern', 'ticketfilter') }}">
                             <i class="fas fa-edit"></i>
                         </button>
                     </td>
@@ -148,7 +148,7 @@
             <div class="fw-semibold">{{ __('No patterns configured', 'ticketfilter') }}</div>
             <div class="small">{{ __('Please add at least one active filter pattern to enable automated ticket matching.', 'ticketfilter') }}</div>
         </div>
-        <button type="button" class="btn btn-primary btn-sm ms-3" onclick="openPatternModal(0)">
+        <button type="button" class="btn btn-primary btn-sm ms-3" data-action="open-pattern-modal" data-pattern-id="0">
             <i class="fas fa-plus me-1"></i> {{ __('Add new pattern', 'ticketfilter') }}
         </button>
     </div>
